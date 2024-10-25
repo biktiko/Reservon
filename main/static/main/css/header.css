@@ -1,0 +1,112 @@
+/* Стили для header */
+
+header {
+    background: linear-gradient(90deg, #000, #333);
+    color: #fff;
+    padding: 10px 0;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+  }
+  
+  .header-container {
+    width: 80%;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .logo h1 {
+    margin: 0;
+    font-family: 'Moderne Sans', sans-serif;
+    font-size: 2.5rem;
+    letter-spacing: .5rem;
+  }
+  
+  .logo a {
+    color: #fff;
+    text-decoration: none;
+  }
+  
+  .navigation ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+  }
+  
+  .navigation li {
+    margin-left: 20px;
+  }
+  
+  .navigation a {
+    color: #fff;
+    text-decoration: none;
+    font-size: 1rem;
+    transition: color 0.3s;
+    display: flex;
+    align-items: center;
+  }
+  
+  .navigation a i {
+    margin-right: 8px;
+  }
+  
+  .navigation a:hover {
+    color: #f0a500;
+  }
+  
+  .auth-buttons {
+    display: flex;
+  }
+  
+  .auth-buttons .btn {
+    margin-left: 15px;
+    padding: 8px 15px;
+    border-radius: 5px;
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: background 0.3s;
+  }
+  
+  .auth-buttons .login-btn {
+    background-color: transparent;
+    color: #fff;
+    border: 1px solid #fff;
+  }
+  
+  .auth-buttons .register-btn {
+    background-color: #f0a500;
+    color: #000;
+    border: 1px solid #f0a500;
+  }
+  
+  .auth-buttons .btn:hover {
+    background-color: #fff;
+    color: #000;
+  }
+  
+  header:hover {
+    background: linear-gradient(90deg, #333, #000);
+  }
+  
+  @media (max-width: 768px) {
+    .header-container {
+      flex-direction: column;
+    }
+  
+    .navigation ul {
+      flex-direction: column;
+      align-items: center;
+    }
+  
+    .navigation li {
+      margin: 10px 0;
+    }
+  
+    .auth-buttons {
+      margin-top: 10px;
+    }
+  }
+  

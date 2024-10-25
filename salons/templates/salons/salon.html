@@ -1,0 +1,16 @@
+{% load static %}
+
+<div class="salon-card">
+    <div class="salon-image">
+        {% if salon.logo %}
+            <img src="{{ salon.logo.url }}" alt="{{ salon.salon_name }}">
+        {% else %}
+            <img src="{% static 'salons/img/default-salon.jpg' %}" alt="{{ salon.salon_name }}">
+        {% endif %}
+    </div>
+    <div class="salon-info">
+        <h2>{{ salon.salon_name }}</h2>
+        <p class="address">{{ salon.address }}</p>
+        <p class="description">{{ salon.description }}</p>
+    </div>
+</div>

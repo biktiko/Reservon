@@ -1,0 +1,65 @@
+.salon-list {
+    width: 80%;
+    margin: 0 auto;
+    padding: 20px 0;
+}
+
+/* Карточка салона */
+.salon-card {
+    background-color: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 8px;
+    margin: 20px 0; /* Добавляем отступ между карточками */
+    overflow: hidden;
+    display: flex;
+    flex-direction: row; /* Размещаем изображение и информацию в ряд */
+}
+
+.salon-image img {
+    width: 200px; /* Фиксированная ширина для изображений */
+    height: auto;
+    display: block;
+    padding: 10px;
+    padding-top: 10%;
+}
+
+.salon-info {
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.salon-info h2 {
+    margin: 0 0 10px;
+    font-size: 1.5em;
+}
+
+.salon-info .address {
+    font-size: 0.9em;
+    color: #ccc;
+    margin-bottom: 10px;
+}
+
+.salon-info .description {
+    flex-grow: 1;
+    margin-bottom: 20px;
+    line-height: 1.4em;
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 600px) {
+    .salon-card {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .salon-image img {
+        width: 100%;
+    }
+
+    .salon-info {
+        align-items: center;
+        text-align: center;
+    }
+}

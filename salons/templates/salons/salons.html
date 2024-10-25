@@ -1,0 +1,12 @@
+{% load static %}
+
+<div class="salon-list">
+    <link rel="stylesheet" href="{% static 'salons/css/salons.css' %}">
+    {% for salon in salons %}
+        {% include 'salons/salon.html' %}
+    {% empty %}
+        <p>Нет доступных салонов.</p>
+    {% endfor %}
+</div>
+
+

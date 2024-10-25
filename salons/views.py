@@ -1,4 +1,7 @@
+# salons/views.py
 from django.shortcuts import render
+from .models import salons
 
 def main(request):
-    return render(request, 'main/index.html')
+    salons_list = salons.objects.all()  # Получаем все объекты из таблицы salons
+    return render(request, 'salons/salons.html', {"salons": salons_list})
