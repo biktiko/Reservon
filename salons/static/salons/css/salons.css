@@ -31,8 +31,8 @@
 }
 
 .salon-info h2 {
-    margin: 0 0 10px;
-    font-size: 1.5em;
+    margin: 0 0 -10px;
+    font-size: 1.6em;
 }
 
 .salon-info .address {
@@ -62,4 +62,40 @@
         align-items: center;
         text-align: center;
     }
+}
+
+/* Карточка салона */
+.salon-card {
+    background-color: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 8px;
+    margin: 20px 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: row;
+    text-decoration: none; /* Убираем стандартное подчеркивание ссылок */
+    color: inherit; /* Наследуем цвет текста */
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Эффект при наведении */
+.salon-card:hover {
+    transform: scale(1.03); /* Небольшое увеличение */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Добавляем тень */
+}
+
+.salon-info h2, .salon-info .address, .salon-info .description {
+    color: #fff; /* Устанавливаем цвет текста */
+    transition: color 0.3s ease;
+}
+
+.salon-card:hover .salon-info h2,
+.salon-card:hover .salon-info .address,
+.salon-card:hover .salon-info .description {
+    color: #f0a500; /* Меняем цвет текста при наведении */
+}
+
+/* Убираем стандартный фиолетовый цвет для посещенных ссылок */
+.salon-card:visited {
+    color: inherit;
 }

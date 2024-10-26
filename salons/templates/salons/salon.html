@@ -1,6 +1,6 @@
 {% load static %}
 
-<div class="salon-card">
+<a href="{% url 'salon_detail' salon.id %}" class="salon-card">
     <div class="salon-image">
         {% if salon.logo %}
             <img src="{{ salon.logo.url }}" alt="{{ salon.salon_name }}">
@@ -11,6 +11,6 @@
     <div class="salon-info">
         <h2>{{ salon.salon_name }}</h2>
         <p class="address">{{ salon.address }}</p>
-        <p class="description">{{ salon.description }}</p>
+        <p class="description">{{ salon.shortDescription_hy }}</p>
     </div>
-</div>
+</a>

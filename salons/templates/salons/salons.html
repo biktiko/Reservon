@@ -1,12 +1,20 @@
+{% extends 'main/base.html' %}
 {% load static %}
 
-<div class="salon-list">
-    <link rel="stylesheet" href="{% static 'salons/css/salons.css' %}">
-    {% for salon in salons %}
-        {% include 'salons/salon.html' %}
-    {% empty %}
-        <p>Нет доступных салонов.</p>
-    {% endfor %}
-</div>
+{% block content %}
+    <div class="salon-list">
+        <link rel="stylesheet" href="{% static 'salons/css/salons.css' %}">
+        {% for salon in salons %}
+            {% include 'salons/salon.html' %}
+        {% empty %}
+            <p>Нет доступных салонов.</p>
+        {% endfor %}
+    </div>
+{% endblock %}
+
+
+
+
+
 
 

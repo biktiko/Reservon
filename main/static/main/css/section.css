@@ -1,0 +1,34 @@
+/* Intro Section */
+.intro-section {
+    background: linear-gradient(90deg, #333, #555); /* Цвет фона */
+    color: #fff;
+    padding: 25px 10%;
+    text-align: center;
+  }
+  
+  .intro-content h2 {
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+  }
+  
+  .intro-content p {
+    font-size: 1.2rem;
+    line-height: 1.6;
+    margin-bottom: 30px;
+  }
+  
+  .intro-content .btn.learn-more {
+    padding: 10px 20px;
+    background-color: #f0a500;
+    color: #000;
+    text-decoration: none;
+    border-radius: 5px;
+    font-size: 1rem;
+    transition: background-color 0.3s, color 0.3s;
+  }
+  
+  .intro-content .btn.learn-more:hover {
+    background-color: #fff;
+    color: #000;
+  }
+  

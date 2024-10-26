@@ -1,8 +1,14 @@
 from django.contrib import admin
-from .models import salons
+from .models import salons, Service
 
-# class AuthorAdmin(admin.ModelAdmin):
-#     pass
+class ServiceInline(admin.TabularInline):
+    model = Service
+    extra = 1
 
-# Register your models here.
-admin.site.register(salons)
+@admin.register(salons)
+class SalonAdmin(admin.ModelAdmin):
+    inlines = [ServiceInline]
+
+@admin.register(Service)
+class ServiceAdmin(admin.ModelAdmin):
+    list_display = ('name', 'price', 'duration', 'salon')

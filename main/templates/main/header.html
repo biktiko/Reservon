@@ -1,17 +1,39 @@
+{% load i18n %}
+{% get_current_language as LANGUAGE_CODE %}
+{% get_available_languages as LANGUAGES %}
+{% get_language_info_list for LANGUAGES as languages %}
+
 <div class="header-container">
-    <div class="logo">
-      <h1><a href="/">Reservon</a></h1>
-    </div>
-    <nav class="navigation">
-      <ul>
-        <li><a href="/"><i class="fa-solid fa-house"></i> {% trans Home }</a></li>
-        <li><a href="/salons/"><i class="fas fa-cut"></i> Салоны</a></li>
-        <li><a href="/about/"><i class="fas fa-info-circle"></i> О нас</a></li>
-        <li><a href="/contact/"><i class="fas fa-envelope"></i> Контакты</a></li>
-      </ul>
-    </nav>
-    <div class="auth-buttons">
-      <a href="/login/" class="btn login-btn">Войти</a>
-      <a href="/register/" class="btn register-btn">Регистрация</a>
-    </div>
+  <div class="logo">
+    <h1><a href="/">Reservon</a></h1>
   </div>
+  <button class="menu-toggle" id="menu-toggle">
+    <span></span>
+    <span></span>
+    <span></span>
+  </button>
+  <nav class="navigation" id="navigation">
+    <ul>
+      <li><a href="/"><i class="fa-solid fa-house"></i> {% trans "Home" %}</a></li>
+      <li><a href="/salons/"><i class="fas fa-cut"></i> {% trans "Salons" %}</a></li>
+      <li><a href="/about/"><i class="fas fa-info-circle"></i> {% trans "About" %}</a></li>
+      <li><a href="/contact/"><i class="fas fa-envelope"></i> {% trans "Contact" %}</a></li>
+    </ul>
+    <!-- Добавляем auth-buttons внутрь навигации -->
+    <div class="auth-buttons">
+      <a href="/login/" class="btn login-btn">{% trans "Login" %}</a>
+      <a href="/register/" class="btn register-btn">{% trans "Register" %}</a>
+      <form action="{% url 'set_language' %}" method="post" class="language-switcher">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ request.path }}">
+        <select name="language" onchange="this.form.submit()">
+          {% for language in languages %}
+            <option value="{{ language.code }}" {% if language.code == LANGUAGE_CODE %}selected{% endif %}>
+              {{ language.name_local }}
+            </option>
+          {% endfor %}
+        </select>
+      </form>
+    </div>
+  </nav>
+</div>
