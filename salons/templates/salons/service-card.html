@@ -1,0 +1,14 @@
+<!-- templates/salons/service-card.html -->
+
+{% load duration_extras %}
+{% load static %}
+
+<div class="service-card" data-price="{{ service.price }}" data-duration="{{ service.duration|duration_minutes }}" data-service-id="{{ service.id }}">
+    {% if service.image %}
+        <img src="{{ service.image.url }}" alt="{{ service.name }}" class="service-image">
+    {% endif %}
+    <div class="service-info">
+        <h4 class="service-name">{{ service.name }}</h4>
+        <p class="service-details">{{ service.price|floatformat:0 }} драм • {{ service.duration|duration_minutes }} минут</p>
+    </div>
+</div>

@@ -1,15 +1,17 @@
 {% load static %}
 
+
+
 <a href="{% url 'salon_detail' salon.id %}" class="salon-card">
     <div class="salon-image">
         {% if salon.logo %}
-            <img src="{{ salon.logo.url }}" alt="{{ salon.salon_name }}">
+            <img src="{{ salon.logo.url }}" alt="{{ salon.name }}">
         {% else %}
-            <img src="{% static 'salons/img/default-salon.jpg' %}" alt="{{ salon.salon_name }}">
+            <img src="{% static 'salons/img/default-salon.jpg' %}" alt="{{ salon.name }}">
         {% endif %}
     </div>
     <div class="salon-info">
-        <h2>{{ salon.salon_name }}</h2>
+        <h2>{{ salon.name }}</h2>
         <p class="address">{{ salon.address }}</p>
         <p class="description">{{ salon.shortDescription_hy }}</p>
     </div>

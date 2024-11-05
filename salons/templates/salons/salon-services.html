@@ -1,0 +1,63 @@
+<!-- templates/salons/salon-services.html -->
+{% load static %}
+
+<link rel="stylesheet" href="{% static 'salons/css/services.css' %}">
+
+<div>
+    <div class="service-selection">
+        <div class="service-categories">
+            <!-- Кнопка "Все услуги" всегда отображается -->
+            <button class="category-button selected all-services-button" data-category-id="all">Все услуги</button>
+            {% if service_categories %}
+                <!-- Если есть категории, отображаем их кнопки -->
+                {% for category in service_categories %}
+                    <button class="category-button" data-category-id="{{ category.id }}">{{ category.name }}</button>
+                {% endfor %}
+            {% endif %}
+            {% if service_categories and services_without_category %}
+                <!-- Отображаем кнопку "Без категории", только если есть услуги с категориями и без -->
+                <button class="category-button" data-category-id="no-category">Без категории</button>
+            {% endif %}
+        </div>
+
+        <div class="services-container">
+            {% if service_categories %}
+                <!-- Отображаем услуги по категориям -->
+                {% for category in service_categories %}
+                    <div class="category-section" data-category-id="{{ category.id }}">
+                        <div class="category-services services-grid">
+                            {% for service in category.services.all %}
+                                {% include 'salons/service-card.html' %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            {% if services_without_category %}
+                <!-- Отображаем услуги без категории -->
+                <div class="category-section" data-category-id="no-category">
+                    <div class="category-services services-grid">
+                        {% for service in services_without_category %}
+                            {% include 'salons/service-card.html' %}
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+
+            {% if not services %}
+                <!-- Если нет услуг -->
+                <p>Нет доступных услуг.</p>
+            {% endif %}
+        </div>
+
+        <!-- Контейнер для пагинации -->
+        <div class="pagination-container">
+            <button class="pagination-button" data-page="1">1</button>
+            <!-- Кнопки страниц будут добавлены динамически через JavaScript -->
+        </div>
+    </div>
+</div>
+
+<!-- Подключаем скрипт -->
+<script src="{% static 'salons/js/services.js' %}"></script>

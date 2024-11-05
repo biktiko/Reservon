@@ -1,5 +1,4 @@
 from django.shortcuts import render, redirect
-from salons.models import salons
 
 # def main(request):
 #     salons_list = salons.objects.all()  # Получаем все объекты из таблицы salons

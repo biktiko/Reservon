@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
     'main',
     'salons'
 ]
@@ -153,3 +154,40 @@ STATICFILES_DIRS = [
 # Медиа-файлы (загруженные пользователями)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,  # Сохраняем существующие логгеры
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'file_booking': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'booking.log'),
+            'formatter': 'verbose',
+            'encoding': 'utf-8',
+            'errors': 'replace',  # Заменяет символы, которые не могут быть закодированы
+        },
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+    },
+    'loggers': {
+        'booking': {
+            'handlers': ['file_booking', 'console'],
+            'level': 'DEBUG',
+            'propagate': False,  # Не передавать логи выше
+        },
+    },
+}
