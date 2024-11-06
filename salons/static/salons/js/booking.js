@@ -9,6 +9,34 @@ document.addEventListener('DOMContentLoaded', function() {
     const selectedDateInput = document.getElementById('selected-date'); // Скрытое поле для даты
     const selectedTimeInput = document.getElementById('selected-time'); // Скрытое поле для времени
     const selectedBarberInput = document.getElementById('selected-barber'); // Скрытое поле для barber_id
+    const barberSelectionContainer = document.querySelector('.barber-selection');
+
+    if (barberSelectionContainer) {
+        console.log(barberSelectionContainer)
+        barberSelectionContainer.addEventListener('change', function(e) {
+            console.log('test')
+
+            if (e.target.name === 'barber') {
+                selectedBarberId = e.target.value;
+                selectedBarberInput.value = selectedBarberId;
+
+                // Обновляем доступные минуты при выборе барбера
+                const selectedDay = daySelect.querySelector('.selected');
+                const selectedHour = hourSelect.querySelector('.selected');
+                if (selectedDay && selectedHour) {
+                    const date = selectedDay.dataset.date;
+                    const hour = parseInt(selectedHour.innerText.split(':')[0]);
+                    fetchAvailableMinutes(salonId, selectedBarberId, date, hour);
+                }
+
+                // Обновляем состояние кнопки бронирования
+                updateBookingButtonState();
+            }
+        });
+    } else {
+        console.error('Element with class "barber-selection" not found.');
+    }
+
 
     // Получение данных из Django через data-атрибуты
     const salonDataElement = document.getElementById('salon-data');
@@ -59,7 +87,6 @@ document.addEventListener('DOMContentLoaded', function() {
     function addService(serviceId) {
         if (!selectedServices.includes(serviceId)) {
             selectedServices.push(serviceId);
-            console.log(`Service added: ${serviceId}`);
             updateSelectedServices();
             // Обновляем UI
             markServiceAsSelected(serviceId, true);
@@ -68,7 +95,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function removeService(serviceId) {
         selectedServices = selectedServices.filter(id => id !== serviceId);
-        console.log(`Service removed: ${serviceId}`);
         updateSelectedServices();
         // Обновляем UI
         markServiceAsSelected(serviceId, false);
@@ -84,7 +110,6 @@ document.addEventListener('DOMContentLoaded', function() {
             input.name = 'services';
             input.value = serviceId;
             selectedServicesContainer.appendChild(input);
-            console.log(`Hidden input added for service: ${serviceId}`);
         });
     }
 
@@ -136,7 +161,6 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             totalServiceDuration = salonDefaultDuration;
         }
-        console.log(`Общая длительность обслуживания: ${totalServiceDuration} минут`);
     
         // Обновляем доступные минуты для выбранного часа, не сбрасывая выбор
         const selectedDay = daySelect.querySelector('.selected');
@@ -180,7 +204,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Обновляем скрытое поле даты
         if (selectedDateInput) selectedDateInput.value = dayOption.dataset.date;
-        console.log(`Выбрана дата: ${selectedDateInput.value}`);
 
         // Вызов функции обновления состояния кнопки
         updateBookingButtonState();
@@ -222,7 +245,6 @@ document.addEventListener('DOMContentLoaded', function() {
         // Очищаем 'selectedTimeInput' при выборе часа
         if (selectedTimeInput) {
             selectedTimeInput.value = ''; // Оставляем пустым до выбора минуты
-            console.log(`Выбран час: ${hour}:00, минута не выбрана`);
         }
 
         // Вызов функции обновления состояния кнопки
@@ -290,7 +312,6 @@ document.addEventListener('DOMContentLoaded', function() {
             // Обновление скрытых полей формы
             if (selectedDateInput) selectedDateInput.value = date;
             if (selectedTimeInput) selectedTimeInput.value = `${hour}:${minute.toString().padStart(2, '0')}`;
-            console.log(`Выбрано время: ${selectedTimeInput.value}`);
         }
 
         // Вызов функции обновления состояния кнопки
@@ -320,13 +341,11 @@ document.addEventListener('DOMContentLoaded', function() {
     function canSubmitForm() {
         const date = selectedDateInput.value;
         const time = selectedTimeInput.value;
-        console.log(`canSubmitForm called. Date: ${date}, Time: ${time}`);
         return date !== '' && time !== '';
     }
 
     // Обработчик события submit на форме
     bookingForm.addEventListener('submit', function(event) {
-        console.log('Форма отправляется');
         if (!canSubmitForm()) {
             event.preventDefault();
             alert('Пожалуйста, выберите дату и время для бронирования.');
@@ -338,18 +357,58 @@ document.addEventListener('DOMContentLoaded', function() {
         const date = selectedDateInput.value;
         const time = selectedTimeInput.value;
         const barber = selectedBarberInput.value;
-        console.log(`updateBookingButtonState called. Date: ${date}, Time: ${time}, Barber: ${barber}`);
 
         if (canSubmitForm()) {
             bookingButton.disabled = false;
             bookingButton.classList.remove('disabled');
-            bookingMessage.style.display = 'none';
-            console.log('Кнопка "Забронировать" активирована.');
+
+            // Проверяем, нужно ли показывать рекомендации
+            if (hasServices || hasBarbers) {
+                let missing = [];
+                if (hasServices && selectedServices.length === 0) {
+                    missing.push('услуги');
+                }
+                if (hasBarbers && barber === 'any') {
+                    missing.push('мастера');
+                }
+
+                if (missing.length > 0) {
+                    let message = '';
+                    let messageType = 'info'; // Тип сообщения - рекомендация
+
+                    if (missing.length === 2) {
+                        message = 'Вы так же можете выбрать желанные услуги и мастера.';
+                    } else if (missing.length === 1) {
+                        if (missing[0] === 'услуги') {
+                            message = 'Вы так же можете выбрать желанные услуги.';
+                        } else if (missing[0] === 'мастера') {
+                            message = 'Вы так же можете выбрать желанного мастера.';
+                        }
+                    }
+
+                    bookingMessage.innerText = message;
+                    bookingMessage.classList.remove('error');
+                    bookingMessage.classList.add(messageType);
+                    bookingMessage.style.display = 'block';
+                } else {
+                    // Все необходимые опции выбраны
+                    bookingMessage.style.display = 'none';
+                    bookingMessage.classList.remove('error', 'info');
+                }
+            } else {
+                // Нет услуг и барберов, скрываем сообщение
+                bookingMessage.style.display = 'none';
+                bookingMessage.classList.remove('error', 'info');
+            }
+
         } else {
             bookingButton.disabled = true;
             bookingButton.classList.add('disabled');
+
             // Определяем причину отключения
             let message = '';
+            let messageType = 'error'; // Тип сообщения - ошибка
+
             if (date === '' && time === '') {
                 message = 'Пожалуйста, выберите дату и время.';
             } else if (date === '') {
@@ -358,15 +417,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 message = 'Пожалуйста, выберите время.';
             }
 
-            // Дополнительная проверка: если услуги и барберы доступны, но не выбраны
-            if (date !== '' && (hasServices || hasBarbers) && (selectedServices.length === 0 || barber === 'any')) {
-                message = 'Вы так же можете выбрать желанные услуги или барбера.';
-            }
-
-            console.log(`Setting booking message: ${message}`);
             bookingMessage.innerText = message;
+            bookingMessage.classList.remove('info');
+            bookingMessage.classList.add(messageType);
             bookingMessage.style.display = 'block';
-            console.log('Кнопка "Забронировать" отключена.');
         }
     }
 
@@ -395,7 +449,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 total += duration;
             }
         });
-        console.log(`Суммарная длительность услуг: ${total} минут`);
         return total;
     }
 });

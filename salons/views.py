@@ -1,7 +1,7 @@
 # salons/views.py
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
-from .models import Salon, Appointment, Barber, Service, ServiceCategory
+from .models import Salon, Appointment, Barber, Service, ServiceCategory, SalonImage
 from django.http import JsonResponse
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -27,6 +27,13 @@ def salon_detail(request, id):
 
     # Получаем категории, связанные с услугами этого салона
     service_categories = ServiceCategory.objects.filter(services__in=services).distinct()
+
+    image_urls = []
+    if salon.logo:
+        image_urls.append(salon.logo.url)
+    # Добавляем URL всех дополнительных изображений
+    image_urls += [image.image.url for image in salon.images.all()]
+
 
     context = {
         'salon': salon,
@@ -67,75 +74,94 @@ def get_available_minutes(request):
     salon_close = datetime.strptime(salon_hours['close'], '%H:%M').time()
 
     # Проверка, что выбранный час находится в рабочем времени
-    selected_hour_time = datetime.strptime(f"{hour}:00", '%H:%M').time()
+    selected_hour_time = time(hour, 0)
     if not (salon_open <= selected_hour_time < salon_close):
         return JsonResponse({'available_minutes': []})
 
-    # Определение времени начала интервала
+    # Определение времени начала и конца интервала
     start_datetime = datetime.combine(date, selected_hour_time)
-    closing_datetime = datetime.combine(date, salon_close)
-
-    # Рассчитываем end_time для запроса
-    end_datetime = start_datetime + timedelta(minutes=total_service_duration)
-    end_time = end_datetime.time()
-
-    if end_datetime > closing_datetime:
-        # Если end_time выходит за пределы рабочего времени
-        return JsonResponse({'available_minutes': []})
+    end_datetime = datetime.combine(date, salon_close)
 
     available_minutes = set()
 
     if barber_id != 'any':
         # Если выбран конкретный барбер
+        try:
+            barber = Barber.objects.get(id=barber_id, salon=salon)
+        except Barber.DoesNotExist:
+            return JsonResponse({'available_minutes': []})
+
         overlapping_appointments = Appointment.objects.filter(
             salon=salon,
-            barber_id=barber_id,
+            barber=barber,
             date=date,
-            start_time__lt=end_time,
-            end_time__gt=start_datetime
+            start_time__lt=(datetime.combine(date, selected_hour_time) + timedelta(minutes=total_service_duration)).time(),
+            end_time__gt=selected_hour_time
         )
+
         busy_intervals = [
             (datetime.combine(date, appt.start_time), datetime.combine(date, appt.end_time))
             for appt in overlapping_appointments
         ]
 
-        current = start_datetime
-        while current + timedelta(minutes=total_service_duration) <= closing_datetime:
-            proposed_start = current
+        # Проходим по каждому 5-минутному интервалу
+        for minute in range(0, 60, 5):
+            proposed_start = start_datetime + timedelta(minutes=minute)
             proposed_end = proposed_start + timedelta(minutes=total_service_duration)
 
-            overlap = any(
-                proposed_start < busy_end and proposed_end > busy_start
-                for busy_start, busy_end in busy_intervals
-            )
+            # Проверяем, не выходит ли время за пределы рабочего времени
+            if proposed_end.time() > salon_close:
+                continue
+
+            # Проверка перекрытий
+            overlap = False
+            for busy_start, busy_end in busy_intervals:
+                if proposed_start < busy_end and proposed_end > busy_start:
+                    overlap = True
+                    logger.debug(f"Minute {minute}: Overlaps with appointment {busy_start.time()} - {busy_end.time()}")
+                    break
 
             if not overlap:
-                available_minutes.add(current.minute)
-
-            current += timedelta(minutes=5)
+                available_minutes.add(minute)
+                logger.debug(f"Minute {minute}: Available for barber {barber_id}")
 
     else:
         # Если выбран "любой барбер"
         barbers = Barber.objects.filter(salon=salon)
+        if not barbers.exists():
+            return JsonResponse({'available_minutes': []})
+
         for minute in range(0, 60, 5):
-            proposed_start = datetime.combine(date, selected_hour_time) + timedelta(minutes=minute)
+            proposed_start = start_datetime + timedelta(minutes=minute)
             proposed_end = proposed_start + timedelta(minutes=total_service_duration)
 
             if proposed_end.time() > salon_close:
-                continue  # Пропустить, если выходит за пределы рабочего времени
+                continue
 
-            # Проверяем, есть ли хотя бы один барбер, свободный в данном временном слоте
-            is_available = barbers.exclude(
-                appointments__date=date,
-                appointments__start_time__lt=proposed_end.time(),
-                appointments__end_time__gt=proposed_start.time()
-            ).exists()
+            # Проверяем, есть ли хотя бы один барбер, свободный в этом интервале
+            is_available = False
+            for barber in barbers:
+                overlapping = Appointment.objects.filter(
+                    salon=salon,
+                    barber=barber,
+                    date=date,
+                    start_time__lt=proposed_end.time(),
+                    end_time__gt=proposed_start.time()
+                ).exists()
+                if not overlapping:
+                    is_available = True
+                    logger.debug(f"Minute {minute}: Available for barber {barber.id}")
+                    break
+                else:
+                    logger.debug(f"Minute {minute}: Barber {barber.id} is busy")
 
             if is_available:
                 available_minutes.add(minute)
+                logger.debug(f"Minute {minute}: Available")
 
     # Сортируем и возвращаем доступные минуты
     available_minutes = sorted(list(available_minutes))
+    logger.debug(f"Available minutes for date {date_str} and hour {hour_str}: {available_minutes}")
     return JsonResponse({'available_minutes': available_minutes})
 
 @transaction.atomic

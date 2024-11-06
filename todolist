@@ -1,0 +1,98 @@
+
+Release Tasks
+
+Main
+
+Исправить код
+    if (barberSelectionContainer) {
+        console.log(barberSelectionContainer)
+        barberSelectionContainer.addEventListener('change', function(e) {
+            console.log('test')
+
+            if (e.target.name === 'barber') {
+                selectedBarberId = e.target.value;
+                selectedBarberInput.value = selectedBarberId;
+
+                // Обновляем доступные минуты при выборе барбера
+                const selectedDay = daySelect.querySelector('.selected');
+                const selectedHour = hourSelect.querySelector('.selected');
+                if (selectedDay && selectedHour) {
+                    const date = selectedDay.dataset.date;
+                    const hour = parseInt(selectedHour.innerText.split(':')[0]);
+                    fetchAvailableMinutes(salonId, selectedBarberId, date, hour);
+                }
+
+                // Обновляем состояние кнопки бронирования
+                updateBookingButtonState();
+            }
+        });
+    } else {
+        console.error('Element with class "barber-selection" not found.');
+    }
+
+! min and max prices for services
+! админка барбера
+номер телефона салона показывать
+! добавить обязательную регистрацию для клиентов
+
+
+
+Additional
+не показывать список барберов если у салона нет ни одного барбера *
+translates for services
+пройтись по проблемам от консоли
+уведомление барберу при новый регистрации
+! возможность отмены записы 
+опцию для салона выбора сервисов обязательно или не обязательно
+upgrade salon card design in salon list
+написать что услуга или барбер не выбраны - БАГ (код написан но не показывается) 
+поиск салона по имени
+возможность листать фотографии салона *1
+при выборе любого барбера и меню бронирование должно произойти на рандомного барбера вместо первого доступного
+не показывать часы сегодняншнего дня которые уже прошли
+! не показывать занятые минуты
+
+Далнейшие
+1 Добавить переводы для всех текстов *
+2 поиск свободного времени по всем салоном
+навигатор до точки салона
+возможность изменить дату резерва
+при возможности не сбрашивать выбранный час и выбранную минуту если клиент меняет день
+сделать выбор минут более очевидным
+? отдельно показывать активные услуги
+ближажайший салон
+в этот день магазин закрыт - просто не показывать этот день
+
+Сделано
+список сервисов без категории не активен БАГ *
+Улучшить дизайн выбора услуг *
+Улучшить дизайн открывающийсего меню выбора барберов под категории *
+think about description and services autotranslate 
+Coordinates: is empty
+! проверить несколько фото для одного салона
+! сохранить ВРЕМЯ от и до обслуживания
+
+
+
+*1
+
+<div class="salon-info">
+        <!-- Фотографии с навигацией -->
+        <div class="gallery" id="gallery">
+            <div class="main-image-container">
+                <!-- <button class="arrow left-arrow" onclick="prevImage()" {% if salon.images.count <= 1 %}style="display: none;"{% endif %}>
+                    &#9664;
+                </button> -->
+                <div class="main-image">
+                    <img id="mainImage" src="{{ salon.logo.url }}" alt="{{ salon.name }}">
+                </div>
+                <!-- <button class="arrow right-arrow" onclick="nextImage()" {% if salon.images.count <= 1 %}style="display: none;"{% endif %}>
+                    &#9654;
+                </button> -->
+            </div>
+            <div class="thumbnail-images">
+                {% for image in salon.images.all|slice:"0:4" %}
+                    <img src="{{ image.image.url }}" alt="Additional image" onclick="setMainImage('{{ image.image.url|escapejs }}')">
+                {% endfor %}
+            </div>
+        </div>

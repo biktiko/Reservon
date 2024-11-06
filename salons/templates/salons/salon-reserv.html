@@ -1,0 +1,37 @@
+<!-- templates/salons/salon-reserv.html -->
+{% load static %}
+
+<!-- Блок для отображения сообщений -->
+{% if messages %}
+    <ul class="messages">
+        {% for message in messages %}
+            <li class="{{ message.tags }}">{{ message }}</li>
+        {% endfor %}
+    </ul>
+{% endif %}
+
+<form method="POST" action="{% url 'book_appointment' salon.id %}" id="booking-form">
+    {% csrf_token %}
+
+    <!-- Скрытые поля -->
+    <input type="hidden" name="date" id="selected-date" value="">
+    <input type="hidden" name="time" id="selected-time" value="">
+    <input type="hidden" name="barber_id" id="selected-barber" value="any">    
+    <div id="salon-data" 
+            data-salon-id="{{ salon.id }}" 
+            data-reserv-days="{{ salon.reservDays }}"
+            data-has-services="{{ salon.has_services|yesno:'true,false' }}"
+            data-has-barbers="{{ salon.has_barbers|yesno:'true,false' }}">
+    </div>
+    <div id="opening-hours" style="display: none;">
+        {{ salon.opening_hours|json_script:"opening-hours" }}
+    </div>
+    <div id="service-duration" data-duration="{{ salon.default_duration }}"></div>
+    <div class="selected-services"></div>
+
+    <!-- Блок для сообщения об отключении кнопки -->
+    <div id="booking-message" class="booking-message" style="display: none;"></div>
+
+    <!-- Кнопка бронирования -->
+    <button type="submit" class="booking-button disabled">Забронировать</button>
+</form>    
