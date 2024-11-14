@@ -1,0 +1,23 @@
+<!-- templates/base.html -->
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Ваш Сайт{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <!-- Подключение скриптов -->
+    <!-- <script src="{% static 'main/js/main.js' %}"></script>
+    <script src="{% static 'authentication/js/modal.js' %}"></script> -->
+
+</head>
+<body>
+    {% include 'header.html' %}
+    {% block content %}{% endblock %}
+
+    <!-- Модальное окно -->
+    <div id="auth-modal" class="modal">
+        <div id="modal-content"></div>
+    </div>
+</body>
+</html>

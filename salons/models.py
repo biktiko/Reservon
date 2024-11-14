@@ -1,5 +1,7 @@
+# C:\Reservon\Reservon\salons\models.py
 from django.db import models
 from django.contrib.auth.models import User
+from datetime import timedelta
 
 class Salon(models.Model):
     STATUS_CHOICES = [
@@ -99,23 +101,29 @@ class Appointment(models.Model):
     salon = models.ForeignKey(Salon, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     barber = models.ForeignKey(Barber, on_delete=models.SET_NULL, null=True, blank=True, related_name='appointments')
-    date = models.DateField()
-    start_time = models.TimeField()
-    end_time = models.TimeField()
     services = models.ManyToManyField(Service, related_name='appointments')  # Связь с услугами
+    start_datetime = models.DateTimeField()  # Сделать поле обязательным
+    end_datetime = models.DateTimeField(null=True, blank=True)    # Осталось как есть
+
+    def save(self, *args, **kwargs):
+        if not self.end_datetime and self.start_datetime:
+            # Установите end_datetime как start_datetime плюс 20 минут
+            self.end_datetime = self.start_datetime + timedelta(minutes=20)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         barber_name = self.barber.name if self.barber else "Любой мастер"
-        return f"{self.salon.name} - {self.date} {self.start_time} - {self.end_time} - {barber_name}"
+        return f"{self.salon.name} - {barber_name} - {self.start_datetime} - {self.end_datetime}"
 
     def get_total_duration(self):
         total_duration = sum(service.duration.total_seconds() for service in self.services.all())
         total_duration += self.salon.default_duration * 60  # Добавляем default_duration салона (в секундах)
         return total_duration / 60  # Возвращаем длительность в минутах
-    
+
     class Meta:
         indexes = [
-            models.Index(fields=['salon', 'date', 'start_time', 'end_time']),
+            models.Index(fields=['salon', 'start_datetime', 'end_datetime']),
         ]
         verbose_name = 'Appointment'
         verbose_name_plural = 'Appointments'
+

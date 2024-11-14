@@ -1,3 +1,4 @@
+<!-- C:\Reservon\Reservon\main\templates\main\header.html -->
 {% load i18n %}
 {% get_current_language as LANGUAGE_CODE %}
 {% get_available_languages as LANGUAGES %}
@@ -19,10 +20,23 @@
       <li><a href="/about/"><i class="fas fa-info-circle"></i> {% trans "About" %}</a></li>
       <li><a href="/contact/"><i class="fas fa-envelope"></i> {% trans "Contact" %}</a></li>
     </ul>
-    <!-- Добавляем auth-buttons внутрь навигации -->
+    <!-- Обновляем блок auth-buttons -->
     <div class="auth-buttons">
-      <a href="/login/" class="btn login-btn">{% trans "Login" %}</a>
-      <a href="/register/" class="btn register-btn">{% trans "Register" %}</a>
+      {% if user.is_authenticated %}
+        <!-- Пользователь залогинен -->
+        {% if user.first_name %}
+          <span class="user-name">{% trans "Hello" %}, {{ user.first_name }}</span>
+        {% endif %}
+        <!-- Заменяем ссылку выхода на форму -->
+        <form action="{% url 'authentication:logout' %}" method="post" class="logout-form">
+          {% csrf_token %}
+          <button type="submit" class="btn logout-btn">{% trans "Logout" %}</button>
+        </form>
+      {% else %}
+        <!-- Пользователь не залогинен -->
+        <a href="#" class="btn login-btn" onclick="openAuthModal('login')"><i class="fa-solid fa-user"></i>{% trans "Login" %}</a>
+
+      {% endif %}
       <form action="{% url 'set_language' %}" method="post" class="language-switcher">
         {% csrf_token %}
         <input type="hidden" name="next" value="{{ request.path }}">

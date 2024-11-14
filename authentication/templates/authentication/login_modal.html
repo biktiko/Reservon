@@ -1,0 +1,16 @@
+<!-- authentication/templates/authentication/login_modal.html -->
+{% load static %}
+
+<h2>Вход в систему</h2>
+{% if from_booking %}
+    <p>Для продолжения бронирования, пожалуйста, войдите в систему.</p>
+{% endif %}
+<form id="login-form">
+    {% csrf_token %}
+    <p>
+        <label for="id_phone_number">Номер телефона:</label>
+        <input type="tel" name="phone_number" id="id_phone_number" placeholder="+374" required>
+    </p>
+    <button type="button" id="submit-login-btn">Далее</button>
+</form>
+<div id="login-response"></div>

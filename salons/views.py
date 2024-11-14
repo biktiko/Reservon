@@ -4,12 +4,14 @@ from django.urls import reverse
 from .models import Salon, Appointment, Barber, Service, ServiceCategory, SalonImage
 from django.http import JsonResponse
 from rest_framework.decorators import api_view
-from rest_framework.response import Response
-from datetime import datetime, timedelta, time
+from datetime import datetime, timedelta, time, timezone as dt_timezone
+from django.utils import timezone
+from django.db.models import Q
 from django.contrib import messages
 from django.db import transaction
 from django.contrib.auth.decorators import login_required
 import logging
+import pytz
 
 # logger = logging.getLogger(__name__)
 logger = logging.getLogger('booking')
@@ -58,110 +60,101 @@ def get_available_minutes(request):
     barber_id = request.GET.get('barber_id', 'any')
     date_str = request.GET.get('date')
     hour_str = request.GET.get('hour')
-    total_service_duration = int(request.GET.get('total_service_duration', 20))  # в минутах
+    total_service_duration = request.GET.get('total_service_duration', '20')
+
+    # Валидация и преобразование параметров
+    try:
+        total_service_duration = int(total_service_duration)
+    except ValueError:
+        logger.error(f"Invalid total_service_duration: {total_service_duration}")
+        return JsonResponse({'available_minutes': []}, status=400)
+
+    logger.debug(f"Received request: salon_id={salon_id}, barber_id={barber_id}, date={date_str}, hour={hour_str}, duration={total_service_duration}")
 
     salon = get_object_or_404(Salon, id=salon_id)
-    date = datetime.strptime(date_str, '%Y-%m-%d').date()
-    hour = int(hour_str)
 
-    # Получение рабочих часов салона
-    day_name = date.strftime('%A').lower()
-    salon_hours = salon.opening_hours.get(day_name)
-    if not salon_hours:
-        return JsonResponse({'available_minutes': []})
+    try:
+        date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        hour = int(hour_str)
+    except (ValueError, TypeError) as e:
+        logger.error(f"Invalid date or hour format: {e}")
+        return JsonResponse({'available_minutes': []}, status=400)
 
-    salon_open = datetime.strptime(salon_hours['open'], '%H:%M').time()
-    salon_close = datetime.strptime(salon_hours['close'], '%H:%M').time()
-
-    # Проверка, что выбранный час находится в рабочем времени
-    selected_hour_time = time(hour, 0)
-    if not (salon_open <= selected_hour_time < salon_close):
-        return JsonResponse({'available_minutes': []})
-
-    # Определение времени начала и конца интервала
-    start_datetime = datetime.combine(date, selected_hour_time)
-    end_datetime = datetime.combine(date, salon_close)
+    # Определение начала и конца выбранного часа в UTC
+    start_datetime = timezone.make_aware(datetime.combine(date, time(hour, 0)), pytz.UTC)
+    end_datetime = start_datetime + timedelta(hours=1)
 
     available_minutes = set()
 
-    if barber_id != 'any':
-        # Если выбран конкретный барбер
+    if barber_id.lower() != 'any':
         try:
             barber = Barber.objects.get(id=barber_id, salon=salon)
+            logger.debug(f"Selected barber: {barber.name}")
         except Barber.DoesNotExist:
-            return JsonResponse({'available_minutes': []})
+            logger.debug(f"Barber with id {barber_id} does not exist in salon {salon.name}")
+            return JsonResponse({'available_minutes': []}, status=404)
 
+        # Получение перекрывающихся бронирований для конкретного барбера
         overlapping_appointments = Appointment.objects.filter(
             salon=salon,
             barber=barber,
-            date=date,
-            start_time__lt=(datetime.combine(date, selected_hour_time) + timedelta(minutes=total_service_duration)).time(),
-            end_time__gt=selected_hour_time
+            start_datetime__lt=end_datetime,
+            end_datetime__gt=start_datetime
         )
 
-        busy_intervals = [
-            (datetime.combine(date, appt.start_time), datetime.combine(date, appt.end_time))
-            for appt in overlapping_appointments
-        ]
+        logger.debug(f"Found {overlapping_appointments.count()} overlapping appointments for barber {barber.name}")
 
-        # Проходим по каждому 5-минутному интервалу
+        # Генерация доступных минут
         for minute in range(0, 60, 5):
             proposed_start = start_datetime + timedelta(minutes=minute)
             proposed_end = proposed_start + timedelta(minutes=total_service_duration)
 
-            # Проверяем, не выходит ли время за пределы рабочего времени
-            if proposed_end.time() > salon_close:
-                continue
+            if proposed_end > start_datetime + timedelta(hours=1):
+                continue  # Превышает конец выбранного часа
 
-            # Проверка перекрытий
-            overlap = False
-            for busy_start, busy_end in busy_intervals:
-                if proposed_start < busy_end and proposed_end > busy_start:
-                    overlap = True
-                    logger.debug(f"Minute {minute}: Overlaps with appointment {busy_start.time()} - {busy_end.time()}")
-                    break
-
-            if not overlap:
+            # Проверка на перекрытия
+            if not overlapping_appointments.filter(
+                start_datetime__lt=proposed_end,
+                end_datetime__gt=proposed_start
+            ).exists():
                 available_minutes.add(minute)
-                logger.debug(f"Minute {minute}: Available for barber {barber_id}")
+                logger.debug(f"Minute {minute} is available for barber {barber.name}")
+            else:
+                logger.debug(f"Minute {minute} is NOT available for barber {barber.name}")
 
     else:
         # Если выбран "любой барбер"
         barbers = Barber.objects.filter(salon=salon)
         if not barbers.exists():
+            logger.debug(f"No barbers found in salon {salon.name}")
             return JsonResponse({'available_minutes': []})
 
         for minute in range(0, 60, 5):
             proposed_start = start_datetime + timedelta(minutes=minute)
             proposed_end = proposed_start + timedelta(minutes=total_service_duration)
 
-            if proposed_end.time() > salon_close:
-                continue
+            if proposed_end > start_datetime + timedelta(hours=1):
+                continue  # Превышает конец выбранного часа
 
-            # Проверяем, есть ли хотя бы один барбер, свободный в этом интервале
+            # Проверка, есть ли хотя бы один свободный барбер
             is_available = False
             for barber in barbers:
-                overlapping = Appointment.objects.filter(
+                if not Appointment.objects.filter(
                     salon=salon,
                     barber=barber,
-                    date=date,
-                    start_time__lt=proposed_end.time(),
-                    end_time__gt=proposed_start.time()
-                ).exists()
-                if not overlapping:
+                    start_datetime__lt=proposed_end,
+                    end_datetime__gt=proposed_start
+                ).exists():
                     is_available = True
-                    logger.debug(f"Minute {minute}: Available for barber {barber.id}")
-                    break
-                else:
-                    logger.debug(f"Minute {minute}: Barber {barber.id} is busy")
+                    logger.debug(f"Minute {minute} is available for barber {barber.name}")
+                    break  # Найдён хотя бы один свободный барбер
 
             if is_available:
                 available_minutes.add(minute)
-                logger.debug(f"Minute {minute}: Available")
+                logger.debug(f"Minute {minute} is available (any barber)")
 
-    # Сортируем и возвращаем доступные минуты
     available_minutes = sorted(list(available_minutes))
-    logger.debug(f"Available minutes for date {date_str} and hour {hour_str}: {available_minutes}")
+    logger.debug(f"Available minutes: {available_minutes}")
     return JsonResponse({'available_minutes': available_minutes})
 
 @transaction.atomic
@@ -245,19 +238,20 @@ def book_appointment(request, id):
 
     logger.debug(f"Общая длительность обслуживания: {total_service_duration} минут")
 
-    # Рассчитываем end_time **здесь**, перед выбором барбера
+    # Рассчитываем end_datetime
     start_datetime = datetime.combine(date, start_time)
     end_datetime = start_datetime + timedelta(minutes=total_service_duration)
-    end_time = end_datetime.time()
-    logger.debug(f"Время бронирования: {start_time} - {end_time}")
+    # Преобразуем в timezone-aware datetime
+    start_datetime = timezone.make_aware(start_datetime, timezone.get_current_timezone())
+    end_datetime = timezone.make_aware(end_datetime, timezone.get_current_timezone())
+    logger.debug(f"Время бронирования: {start_datetime} - {end_datetime}")
 
     # Обработка выбранного барбера
     if barber_id == 'any':
         # Используем select_for_update для блокировки выбранных барберов на время транзакции
         available_barber = Barber.objects.select_for_update().filter(salon=salon).exclude(
-            appointments__date=date,
-            appointments__start_time__lt=end_time,
-            appointments__end_time__gt=start_time
+            appointments__start_datetime__lt=end_datetime,
+            appointments__end_datetime__gt=start_datetime
         ).first()
         if available_barber:
             barber = available_barber
@@ -274,13 +268,11 @@ def book_appointment(request, id):
             messages.error(request, "Выбранный барбер не найден.")
             return redirect(reverse('salon_detail', args=[id]))
 
-
     # Проверка перекрывающихся бронирований уже после выбора барбера
     overlapping_appointments = Appointment.objects.filter(
         salon=salon,
-        date=date,
-        start_time__lt=end_time,
-        end_time__gt=start_time
+        start_datetime__lt=end_datetime,
+        end_datetime__gt=start_datetime
     )
 
     if barber:
@@ -304,9 +296,8 @@ def book_appointment(request, id):
             salon=salon,
             user=request.user if request.user.is_authenticated else None,
             barber=barber,
-            date=date,
-            start_time=start_time,
-            end_time=end_time
+            start_datetime=start_datetime,
+            end_datetime=end_datetime
         )
         logger.debug(f"Создано бронирование - {appointment}")
 

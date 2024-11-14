@@ -1,3 +1,4 @@
+# C:\Reservon\Reservon\salons\admin.py
 from django.contrib import admin
 from .models import Salon, Service, Appointment, SalonImage, Barber, ServiceCategory
 
@@ -60,8 +61,8 @@ class ServiceCategoryAdmin(admin.ModelAdmin):
 # Остальные настройки админки остаются без изменений
 @admin.register(Appointment)
 class AppointmentAdmin(admin.ModelAdmin):
-    list_display = ('salon', 'user', 'date', 'start_time', 'end_time')
-    list_filter = ('salon', 'date')
+    list_display = ('salon', 'user', 'barber', 'start_datetime', 'end_datetime')
+    list_filter = ('salon', 'barber')
     search_fields = ('salon__name', 'user__username')
 
 @admin.register(SalonImage)

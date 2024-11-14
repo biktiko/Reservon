@@ -1,8 +1,6 @@
-from django.shortcuts import render, redirect
+# salons/views.py
 
-# def main(request):
-#     salons_list = salons.objects.all()  # Получаем все объекты из таблицы salons
-#     return render(request, 'main/home.html', {'salons': salons_list})
+from django.shortcuts import render, redirect
 
 def main(request):
     return redirect('salons_main')

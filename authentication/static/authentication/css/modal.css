@@ -1,0 +1,432 @@
+:root {
+    --modal-background: #333333;
+    --modal-text-color: #fff;
+    --modal-overlay-color: rgba(0, 0, 0, 0.5);
+    --button-background: #f0a500;
+    --button-hover-background: #e67e22;
+    --input-background: #f9f9f9;
+    --input-border-color: #cccccc;
+    --input-focus-border-color: #f0a500;
+    --error-color: #FF4B4B;
+    --close-button-color: #888888;
+    --close-button-hover-color: #333333;
+}
+
+.modal {
+    display: none; /* Скрыто по умолчанию */
+    position: fixed;
+    z-index: 1001; /* Над хедером и другими элементами */
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden; /* Убираем прокрутку */
+    background: var(--modal-overlay-color); /* Полупрозрачный фон для затемнения */
+    transition: opacity 0.3s ease;
+    opacity: 0;
+    pointer-events: none; /* Отключаем взаимодействие */
+}
+
+.modal.show {
+    display: block;
+    opacity: 1;
+    pointer-events: auto; /* Включаем взаимодействие */
+}
+
+.modal-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.95);
+    background-color: var(--modal-background);
+    padding: 25px;
+    border-radius: 10px;
+    box-shadow: 0 10px 25px #00000033;
+    max-width: 500px;
+    width: 90%;
+    color: var(--modal-text-color);
+    z-index: 1003;
+    box-sizing: border-box;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    opacity: 0;
+}
+
+.modal.show .modal-content {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+}
+
+.close-button {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 24px;
+    color: var(--close-button-color);
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.close-button:hover,
+.close-button:focus {
+    color: var(--close-button-hover-color);
+}
+
+.modal-content h2 {
+    margin-top: 0;
+    font-size: 1.8rem;
+    color: var(--modal-text-color);
+    text-align: center;
+}
+
+.modal-content form {
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-content form p {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.modal-content form p label {
+    width: 150px; /* Фиксированная ширина для всех меток на десктопах */
+    flex-shrink: 0; /* Предотвращает сжатие меток */
+    text-align: right; /* Выравнивание текста меток по правому краю */
+    margin-right: 10px; /* Отступ справа от меток */
+    font-size: 1rem;
+    color: #fff;
+}
+
+.modal-content form p input {
+    flex: 1; /* Поля ввода занимают оставшееся пространство */
+    padding: 12px 15px;
+    font-size: 1rem;
+    border: 1px solid var(--input-border-color);
+    border-radius: 5px;
+    background-color: var(--input-background);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.modal-content form p input:focus {
+    border-color: var(--input-focus-border-color);
+    outline: none;
+    box-shadow: 0 0 5px rgba(240, 165, 0, 0.5);
+}
+
+.modal-content form button {
+    padding: 12px;
+    font-size: 1rem;
+    background-color: var(--button-background);
+    color: #ffffff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    width: 100%; /* Кнопка занимает всю ширину формы */
+}
+
+.modal-content form button:hover {
+    background-color: var(--button-hover-background);
+}
+
+#login-response p {
+    color: var(--error-color);
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+/* Дополнительные стили для кнопок в различных формах */
+#submit-set-password-btn,
+#submit-enter-password-btn {
+    width: auto; /* Убираем 100% ширины для этих кнопок */
+    padding: 12px 20px;
+    margin: 0 auto; /* Центрируем кнопки */
+    display: block;
+    background-color: var(--button-background);
+    color: #ffffff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+#submit-set-password-btn:hover,
+#submit-enter-password-btn:hover {
+    background-color: var(--button-hover-background);
+}
+
+#resend-code-btn {
+    background: none;
+    border: none;
+    color: var(--button-background);
+    cursor: pointer;
+    text-decoration: underline;
+    font-size: 0.9rem;
+}
+
+#resend-code-btn:hover {
+    color: var(--button-hover-background);
+}
+
+/* Адаптивные стили */
+@media (max-width: 768px) {
+    .modal-content form p {
+        flex-direction: column;
+        align-items: flex-start;
+        margin-bottom: 15px; /* Уменьшено с 20px */
+    }
+
+    .modal-content form p label {
+        width: 100%; /* Метки занимают всю ширину */
+        text-align: left; /* Выравнивание текста меток по левому краю */
+        margin-right: 0; /* Убираем отступ справа */
+        margin-bottom: 5px; /* Добавляем небольшой отступ снизу */
+        font-size: 1rem;
+    }
+
+    .modal-content form p input {
+        width: 100%; /* Поля ввода занимают всю ширину */
+    }
+
+    .modal-content form button {
+        padding: 12px;
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .modal-content {
+        padding: 20px;
+    }
+
+    .modal-content h2 {
+        font-size: 1.5rem;
+    }
+
+    .modal-content form p label {
+        font-size: 0.9rem;
+    }
+
+    .modal-content form p input {
+        font-size: 0.9rem;
+        padding: 10px 12px;
+    }
+
+    .modal-content form button {
+        font-size: 0.9rem;
+        padding: 10px;
+    }
+
+    .close-button {
+        top: 10px;
+        right: 15px;
+        font-size: 20px;
+    }
+
+    /* Уменьшаем фиксированную ширину меток для мобильных устройств */
+    @media (max-width: 768px) {
+        .modal-content form p label {
+            width: 100%;
+            text-align: left;
+            margin-right: 0;
+            margin-bottom: 5px;
+        }
+
+        .modal-content form p {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .modal-content form p input {
+            width: 100%;
+        }
+    }
+}
+
+/* Стили для ввода кода подтверждения */
+.code-inputs {
+    display: flex;
+    justify-content: center;
+    gap: 10px; /* Расстояние между полями */
+    margin-bottom: 20px;
+}
+
+.code-input {
+    width: 50px;
+    height: 50px;
+    text-align: center;
+    font-size: 1.5rem;
+    border: 2px solid var(--input-border-color);
+    border-radius: 5px;
+    background-color: var(--input-background);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.code-input:focus {
+    border-color: var(--input-focus-border-color);
+    outline: none;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+}
+
+/* Мобильные стили для ввода кода подтверждения */
+@media (max-width: 768px) {
+    .code-inputs {
+        gap: 8px; /* Уменьшенное расстояние между полями */
+        margin-bottom: 15px; /* Уменьшенный отступ снизу */
+    }
+
+    .code-input {
+        width: 40px;
+        height: 40px;
+        font-size: 1.2rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .code-inputs {
+        gap: 6px; /* Ещё меньшее расстояние между полями */
+        margin-bottom: 10px; /* Ещё меньше отступ снизу */
+    }
+
+    .code-input {
+        width: 35px;
+        height: 35px;
+        font-size: 1rem;
+    }
+}
+
+/* Стили только для формы enter-password-form */
+#enter-password-form {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Центрирование содержимого формы */
+}
+
+#enter-password-form .form-group {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+    width: 100%;
+    max-width: 400px;
+}
+
+#enter-password-form .form-group label {
+    width: 120px; /* Уменьшенная ширина метки */
+    text-align: right; /* Выравнивание текста меток по правому краю */
+    margin-right: 10px; /* Отступ справа от меток */
+    font-size: 1rem;
+    color: #fff;
+}
+
+#enter-password-form .form-group input {
+    flex: 1;
+    max-width: 220px; /* Ограничение ширины инпута */
+    padding: 10px 12px;
+    font-size: 1rem;
+    border: 1px solid var(--input-border-color);
+    border-radius: 5px;
+    background-color: var(--input-background);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+#enter-password-form .form-group input:focus {
+    border-color: var(--input-focus-border-color);
+    outline: none;
+    box-shadow: 0 0 5px rgba(240, 165, 0, 0.5);
+}
+
+#enter-password-form button {
+    padding: 10px 20px;
+    font-size: 1rem;
+    background-color: var(--button-background);
+    color: #ffffff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    width: 100%;
+    max-width: 300px;
+    margin-bottom: 10px;
+}
+
+#enter-password-form button:hover {
+    background-color: var(--button-hover-background);
+}
+
+#enter-password-form .forgot-password {
+    width: 100%;
+    max-width: 300px;
+    text-align: right; /* Выравнивание ссылки по правому краю */
+}
+
+#enter-password-form .forgot-password a#forgot-password-link {
+    color: var(--link-color);
+    text-decoration: underline;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+#enter-password-form .forgot-password a#forgot-password-link:hover {
+    color: var(--link-hover-color);
+}
+
+#enter-password-form #enter-password-response p {
+    color: var(--error-color);
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+/* Адаптивные стили только для enter-password-form */
+@media (min-width: 769px) {
+    /* Центрирование формы на больших экранах */
+    #enter-password-form {
+        align-items: center;
+    }
+}
+
+@media (max-width: 768px) {
+    #enter-password-form .form-group {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    #enter-password-form .form-group label {
+        width: 100%;
+        text-align: left;
+        margin-right: 0;
+        margin-bottom: 5px;
+    }
+
+    #enter-password-form .form-group input {
+        max-width: 100%; /* Поле ввода занимает всю ширину */
+    }
+
+    #enter-password-form button {
+        max-width: 100%;
+    }
+
+    #enter-password-form .forgot-password {
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    #enter-password-form .form-group input {
+        padding: 8px 10px;
+        font-size: 0.9rem;
+    }
+
+    #enter-password-form button {
+        padding: 8px 16px;
+        font-size: 0.9rem;
+    }
+
+    .close-button {
+        top: 10px;
+        right: 15px;
+        font-size: 20px;
+    }
+}

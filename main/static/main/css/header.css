@@ -1,5 +1,4 @@
-/* Стили для header */
-
+/* Основные стили для header */
 header {
   background: linear-gradient(90deg, #000, #333);
   color: #fff;
@@ -30,13 +29,13 @@ header {
   text-decoration: none;
 }
 
+/* Навигация */
 .navigation {
   display: flex;
   align-items: center;
   justify-content: space-between; /* Распределение пространства */
   gap: 20px; /* Расстояние между списком и auth-buttons */
 }
-
 
 .navigation ul {
   list-style: none;
@@ -66,10 +65,10 @@ header {
   color: #f0a500;
 }
 
+/* Блок авторизации */
 .auth-buttons {
   display: flex;
   align-items: center;
-
 }
 
 .auth-buttons .btn {
@@ -104,6 +103,7 @@ header:hover {
 
 /* Стили для мобильных устройств */
 @media (max-width: 768px) {
+  
   .header-container {
     flex-direction: row;
     justify-content: space-between;
@@ -145,12 +145,6 @@ header:hover {
     flex-direction: column;
     align-items: center;
     margin-top: 10px;
-  }
-
-  .navigation .auth-buttons .btn,
-  .navigation .auth-buttons .language-switcher {
-    margin: 5px 0;
-    width: 80%;
   }
 }
 
@@ -216,4 +210,45 @@ header:hover {
 
 .language-switcher option {
   color: #000;
+}
+
+/* Стили для имени пользователя */
+.auth-buttons .user-name {
+  color: #fff;
+  margin-right: 15px;
+  font-size: 1rem;
+}
+
+/* Стили для кнопки Logout */
+.auth-buttons .logout-btn {
+  background-color: transparent;
+  color: #fff;
+  border: 1px solid #fff;
+  margin-left: 15px;
+  padding: 8px 15px;
+  border-radius: 5px;
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: background 0.3s;
+}
+
+.auth-buttons .logout-btn:hover {
+  background-color: #fff;
+  color: #000;
+}
+
+@media (max-width: 768px) {
+  .navigation .auth-buttons {
+    flex-direction: column;
+    align-items: center;
+    margin-top: 10px;
+  }
+  
+  .navigation .auth-buttons .btn,
+  .navigation .auth-buttons .language-switcher,
+  .navigation .auth-buttons .user-name {
+    margin: 5px 0;
+    width: 28%;
+    text-align: center;
+  }
 }

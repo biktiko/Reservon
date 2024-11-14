@@ -1,0 +1,17 @@
+<!-- authentication/templates/authentication/verify_code.html -->
+
+<h2>Введите код подтверждения</h2>
+<form id="verify-code-form">
+    <input type="hidden" id="id_phone_number" value="{{ phone_number }}">
+    <div class="code-inputs">
+        <input type="text" id="code-1" maxlength="1" class="code-input" autofocus>
+        <input type="text" id="code-2" maxlength="1" class="code-input">
+        <input type="text" id="code-3" maxlength="1" class="code-input">
+        <input type="text" id="code-4" maxlength="1" class="code-input">
+        <!-- <input type="text" id="code-5" maxlength="1" class="code-input">
+        <input type="text" id="code-6" maxlength="1" class="code-input"> -->
+    </div>
+    <button type="button" id="submit-verify-btn">Подтвердить</button>
+</form>
+<div id="verify-response"></div>
+<p>Не получили код? <button type="button" id="resend-code-btn">Отправить заново</button></p>

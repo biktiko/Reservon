@@ -33,5 +33,5 @@
     <div id="booking-message" class="booking-message" style="display: none;"></div>
 
     <!-- Кнопка бронирования -->
-    <button type="submit" class="booking-button disabled">Забронировать</button>
+    <button type="submit" class="booking-button disabled" data-is-authenticated="{{ user.is_authenticated|yesno:'true,false' }}">Забронировать</button>
 </form>    
