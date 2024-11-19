@@ -1,0 +1,13 @@
+<!-- main/templates/main/search.html -->
+{% load static %}
+
+<link rel="stylesheet" href="{% static 'main/css/search.css' %}">
+
+<!-- Форма поиска -->
+<div class="search-container">
+    <form method="GET" action="{% url 'salons:salons_main' %}" id="search-form">
+        <input type="text" name="q" placeholder="Search..." value="{{ request.GET.q }}" id="search-input">
+    </form>
+</div>
+
+<script src="{% static 'main/js/search.js' %}"></script>

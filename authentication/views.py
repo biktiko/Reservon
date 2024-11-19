@@ -33,12 +33,11 @@ def load_modal(request):
         try:
             if action in ['login', 'login_from_booking']:
                 if action == 'login_from_booking':
-                    context['from_booking'] = True  # Передаём информацию в шаблон
-                    request.session['from_booking'] = True  # Сохраняем информацию в сессии
-                    # Предполагаем, что salon_id передаётся с клиента
+                    context['from_booking'] = True
+                    request.session['from_booking'] = True
                     salon_id = data.get('salon_id', None)
                     if salon_id:
-                        request.session['salon_id'] = salon_id  # Сохраняем salon_id в сессии
+                        request.session['salon_id'] = salon_id
                 html = render_to_string('authentication/login_modal.html', context, request=request)
                 return JsonResponse({'html': html})
             elif action == 'register':
@@ -52,6 +51,7 @@ def load_modal(request):
             return JsonResponse({'error': str(e)}, status=500)
     else:
         return JsonResponse({'error': 'Invalid request method.'}, status=400)
+
 
 
 @csrf_exempt

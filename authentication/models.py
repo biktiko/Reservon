@@ -1,6 +1,8 @@
 # C:\Reservon\Reservon\authentication\models.py
 from django.db import models
 from django.contrib.auth.models import User
+from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin as DefaultUserAdmin
 
 class Profile(models.Model):
     STATUS_CHOICES = [
@@ -33,3 +35,35 @@ class Profile(models.Model):
 #         return f"{self.phone_number} - {self.code}"
 
         
+# Форма для модели Profile (если требуется)
+class ProfileInline(admin.StackedInline):
+    model = Profile
+    can_delete = False
+    verbose_name_plural = 'Профиль'
+    fk_name = 'user'
+
+# Кастомный UserAdmin с дополнительными колонками
+class CustomUserAdmin(DefaultUserAdmin):
+    inlines = (ProfileInline,)
+    list_display = DefaultUserAdmin.list_display + ('has_password', 'profile_status')
+    list_filter = DefaultUserAdmin.list_filter + ('profile__status',)
+    search_fields = DefaultUserAdmin.search_fields + ('profile__phone_number',)
+
+    def has_password(self, obj):
+        return obj.has_usable_password()
+    has_password.boolean = True
+    has_password.short_description = 'Has Password'
+
+    def profile_status(self, obj):
+        try:
+            return obj.profile.status
+        except Profile.DoesNotExist:
+            return 'No Profile'
+    profile_status.short_description = 'Profile Status'
+    profile_status.admin_order_field = 'profile__status'
+
+# Отмена регистрации стандартного UserAdmin
+admin.site.unregister(User)
+
+# Регистрация кастомного UserAdmin
+admin.site.register(User, CustomUserAdmin)

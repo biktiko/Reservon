@@ -24,14 +24,7 @@
     <div class="auth-buttons">
       {% if user.is_authenticated %}
         <!-- Пользователь залогинен -->
-        {% if user.first_name %}
-          <span class="user-name">{% trans "Hello" %}, {{ user.first_name }}</span>
-        {% endif %}
-        <!-- Заменяем ссылку выхода на форму -->
-        <form action="{% url 'authentication:logout' %}" method="post" class="logout-form">
-          {% csrf_token %}
-          <button type="submit" class="btn logout-btn">{% trans "Logout" %}</button>
-        </form>
+          <a href="/account/"><span class="user-name">{% trans "My account" %}</span></a>
       {% else %}
         <!-- Пользователь не залогинен -->
         <a href="#" class="btn login-btn" onclick="openAuthModal('login')"><i class="fa-solid fa-user"></i>{% trans "Login" %}</a>

@@ -3,7 +3,11 @@
 {% load duration_extras %}
 {% load static %}
 
-<div class="service-card" data-price="{{ service.price }}" data-duration="{{ service.duration|duration_minutes }}" data-service-id="{{ service.id }}">
+<div class="service-card" 
+     data-price="{{ service.price }}" 
+     data-duration="{{ service.duration|duration_minutes }}" 
+     data-service-id="{{ service.id }}"
+     data-category-id="{{ category_id }}">
     {% if service.image %}
         <img src="{{ service.image.url }}" alt="{{ service.name }}" class="service-image">
     {% endif %}

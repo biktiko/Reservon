@@ -1,0 +1,173 @@
+
+.service-selection{
+    margin-bottom: 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.service-categories {
+    display: flex;
+    margin-bottom: 15px;
+}
+
+.services-container {
+    /* Устанавливаем grid layout */
+    display: grid;
+    /* grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); Карточки будут занимать минимум 150px и автоматически заполнять ряд */
+    /* gap: 10px; */
+}
+
+.category-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    padding: 10px 0;
+}
+
+.category-header h3 {
+    margin: 0;
+    font-size: 1.5em;
+    color: #333;
+}
+
+.category-button {
+    margin-right: 8px;
+    padding: 10px 20px;
+    background-color: #333;
+    color: #ccc;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s, color 0.3s;
+}
+
+.category-button:hover {
+    background-color: #444;
+}
+
+.category-button.selected {
+    background-color: #28a745;
+    color: #fff;
+}
+
+.all-services-button {
+    background-color: #f0a500;
+    color: #fff;
+    font-weight: bold;
+    border: 2px solid #f0a500;
+}
+
+.all-services-button:hover {
+    background-color: #fff;
+    color: #f0a500;
+    border: 2px solid #f0a500;
+}
+
+.category-button.selected.all-services-button {
+    background-color: #f0a500;
+    color: #fff;
+}
+
+.service-card {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border-radius: 8px;
+    background-color: #333;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: background 0.3s;
+    transition: opacity 0.3s ease-in-out;
+    opacity: 1;
+}
+
+.service-card.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.service-image {
+    width: 50px;
+    height: 50px;
+    margin-right: 15px;
+}
+
+.service-card:hover {
+    background-color: #444;
+    transform: scale(1.02);
+}
+
+.service-card.selected {
+    background-color: #28a745;
+    color: #fff;
+}
+
+.service-card.selected .service-name,
+.service-card.selected .service-details {
+    color: #fff;
+}
+
+.service-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.service-name {
+    font-size: 1em;
+    color: #f0a500;
+    margin: 0;
+}
+
+.service-details {
+    font-size: 0.85em;
+    color: #ccc;
+    margin-top: 5px;
+}
+
+.hidden {
+    display: none;
+}
+
+/* Стили для пагинации */
+.pagination-container {
+    display: flex;
+    justify-content: center;
+    /* margin-top: 20px; */
+    gap: 10px;
+    margin-bottom: 10px;
+
+}
+
+.pagination-container.hidden {
+    display: none;
+}
+
+.pagination-button {
+    width: 40px;
+    height: 40px;
+    background-color: #333;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+.pagination-button:hover {
+    background-color: #444;
+    transform: scale(1.05);
+}
+
+.pagination-button.active {
+    background-color: #f0a500;
+    color: #fff;
+    transform: scale(1.1);
+}
+
+
+.service-checkbox {
+    display: none;
+}
+
+

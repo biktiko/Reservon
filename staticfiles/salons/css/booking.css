@@ -1,0 +1,55 @@
+/* Стили для сообщения об отключении кнопки */
+.booking-message {
+    font-size: 0.9em;
+    text-align: center;
+    margin-top: 10px;
+    padding: 8px;
+    border-radius: 4px;
+    opacity: 0.9;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Красное сообщение для ошибок */
+.booking-message.error {
+    color: #ff6b6b; /* Красный цвет текста */
+    background-color: #ffe6e6; /* Светло-красный фон */
+    border: 1px solid #ff4d4d;
+}
+
+/* Нейтральное сообщение для рекомендаций */
+.booking-message.info {
+    color: #555555; /* Темно-серый цвет текста */
+    background-color: #f0f0f0; /* Светло-серый фон */
+    border: 1px solid #cccccc;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 0.9; }
+}
+
+/* Стили для отключённой кнопки */
+.booking-button.disabled {
+    opacity: 0.6; /* Делает кнопку полупрозрачной */
+    cursor: not-allowed; /* Изменяет курсор при наведении */
+    background-color: #aaa; /* Меняет цвет фона */
+    transition: opacity 0.3s, background-color 0.3s; /* Плавные переходы */
+    color: #eee; /* Изменение цвета текста для лучшей читаемости */
+}
+
+.booking-button {
+    width: 100%;
+    padding: 15px;
+    background: #f39c12;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.2em;
+    cursor: pointer;
+    transition: background 0.3s;
+    margin-top: 20px;
+}
+
+.booking-button:hover {
+    background: #e67e22;
+}

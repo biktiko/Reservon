@@ -10,28 +10,37 @@
     </ul>
 {% endif %}
 
-<form method="POST" action="{% url 'book_appointment' salon.id %}" id="booking-form">
+<form method="POST" action="{% url 'salons:book_appointment' salon.id %}" id="booking-form">
     {% csrf_token %}
 
-    <!-- Скрытые поля -->
+    <!-- Скрытые поля для даты и времени -->
     <input type="hidden" name="date" id="selected-date" value="">
     <input type="hidden" name="time" id="selected-time" value="">
-    <input type="hidden" name="barber_id" id="selected-barber" value="any">    
-    <div id="salon-data" 
-            data-salon-id="{{ salon.id }}" 
-            data-reserv-days="{{ salon.reservDays }}"
-            data-has-services="{{ salon.has_services|yesno:'true,false' }}"
-            data-has-barbers="{{ salon.has_barbers|yesno:'true,false' }}">
+
+    <!-- Контейнер для передачи выбранных услуг и барберов -->
+    <div class="selected-services-barbers">
+        <!-- Эти поля будут заполнены через JavaScript -->
     </div>
+
+    <!-- Дополнительные данные о салоне -->
+    <div id="salon-data" 
+        data-salon-id="{{ salon.id }}" 
+        data-reserv-days="{{ salon.reservDays }}"
+        data-has-services="{{ salon.has_services|yesno:'true,false' }}"
+        data-has-barbers="{{ salon.has_barbers|yesno:'true,false' }}">
+    </div>
+
+    <!-- Рабочие часы салона -->
     <div id="opening-hours" style="display: none;">
         {{ salon.opening_hours|json_script:"opening-hours" }}
     </div>
-    <div id="service-duration" data-duration="{{ salon.default_duration }}"></div>
-    <div class="selected-services"></div>
 
-    <!-- Блок для сообщения об отключении кнопки -->
+    <!-- Длительность услуги по умолчанию -->
+    <div id="service-duration" data-duration="{{ salon.default_duration }}"></div>
+
+    <!-- Блок для сообщений -->
     <div id="booking-message" class="booking-message" style="display: none;"></div>
 
     <!-- Кнопка бронирования -->
     <button type="submit" class="booking-button disabled" data-is-authenticated="{{ user.is_authenticated|yesno:'true,false' }}">Забронировать</button>
-</form>    
+</form>

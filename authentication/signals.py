@@ -22,7 +22,7 @@ def create_or_update_user_profile(sender, instance, created, **kwargs):
         logger.debug(f"Created profile for user: {instance.username} with phone_number: {phone_number}")
     else:
         try:
-            profile = instance.profile
+            profile = instance.main_profile
             phone_number = instance.username
             if phone_number:
                 profile.phone_number = phone_number

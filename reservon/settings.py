@@ -30,17 +30,25 @@ ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[])
 # Application definition
 
 INSTALLED_APPS = [
+    'suit',
+    'colorfield',
+    'grappelli',
+    'admin_interface',
+    'import_export',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_json_widget',
     'rest_framework',
     'authentication',
     'main',
     'salons',
 ]
+
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -72,6 +80,17 @@ TEMPLATES = [
     },
 ]
 
+# JSON Editor Settings (если используете)
+JSON_EDITOR_JS = [
+    'https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/9.5.6/jsoneditor.min.js',
+]
+
+JSON_EDITOR_CSS = [
+    'https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/9.5.6/jsoneditor.min.css',
+]
+
+GRAPPELLI_ADMIN_TITLE = "Reservon Admin"
+
 WSGI_APPLICATION = 'reservon.wsgi.application'
 
 # Database
@@ -83,11 +102,11 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 
 LOGOUT_REDIRECT_URL = '/'
-
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -132,11 +151,14 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     BASE_DIR / "main/static/",
     BASE_DIR / "salons/static/",
+    BASE_DIR / "authentication/static/",
 ]
 
 # Media files (Uploaded by users)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Twilio Settings
 TWILIO_ACCOUNT_SID = env('TWILIO_ACCOUNT_SID')
@@ -177,10 +199,20 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': False,  # Prevents logs from propagating to the root logger
         },
-         'authentication': {  # Добавляем этот логгер
+        'authentication': {  # Добавляем этот логгер
             'handlers': ['file_booking', 'console'],
             'level': 'DEBUG',
             'propagate': False,
         },
     },
 }
+
+# Настройки django-admin-interface
+ADMIN_INTERFACE = {
+    'HEADER': 'Reservon Admin',
+    'TITLE': 'Reservon Administration',
+    'SHOW_THEMES': True,  # Включает возможность смены тем
+}
+
+# Default primary key field type
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

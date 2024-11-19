@@ -1,10 +1,15 @@
 {% load i18n %}
+{% load static %}
 
-<section class="intro-section">
+<section class="intro-section" id="intro-section">
     <div class="intro-content">
-      <h2>Добро пожаловать на Reservon</h2>
-      <p>Reservon — это ваш лучший помощник для бронирования и управления визитами в салоны красоты. Мы предоставляем удобные инструменты для поиска и бронирования в лучших заведениях Армении.</p>
-      <a href="/about/" class="btn learn-more">Узнать больше</a>
+        <!-- Иконка закрытия -->
+        <span class="close-icon" id="close-intro">&times;</span>
+        
+        <p>{% trans "Reservon — это ваш лучший помощник для онлайн бронирования в салонах красоты." %}</p>
+
+        <a href="/about/" class="btn learn-more">Узнать больше</a>
     </div>
-  </section>
-  
+</section>
+
+<script src="{% static 'main/js/section.js' %}"></script>

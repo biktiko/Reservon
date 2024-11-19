@@ -88,42 +88,41 @@ class Barber(models.Model):
     availability = models.JSONField("Barber's Working Hours", default=dict)
     avatar = models.ImageField(upload_to='salons/barbers', blank=True, null=True)
     description = models.TextField(blank=True, null=True)
+    categories = models.ManyToManyField(ServiceCategory, related_name='barbers')  # Add this line
 
     def __str__(self):
         return f"{self.name} ({self.salon.name})"
-    
+
     def get_avatar_url(self):
         if self.avatar and self.avatar.url:
             return self.avatar.url
         return '/static/salons/img/default-avatar.png'
 
+
 class Appointment(models.Model):
     salon = models.ForeignKey(Salon, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
-    barber = models.ForeignKey(Barber, on_delete=models.SET_NULL, null=True, blank=True, related_name='appointments')
-    services = models.ManyToManyField(Service, related_name='appointments')  # Связь с услугами
-    start_datetime = models.DateTimeField()  # Сделать поле обязательным
-    end_datetime = models.DateTimeField(null=True, blank=True)    # Осталось как есть
-
-    def save(self, *args, **kwargs):
-        if not self.end_datetime and self.start_datetime:
-            # Установите end_datetime как start_datetime плюс 20 минут
-            self.end_datetime = self.start_datetime + timedelta(minutes=20)
-        super().save(*args, **kwargs)
-
+    start_datetime = models.DateTimeField()
+    end_datetime = models.DateTimeField(null=True, blank=True)
+    
     def __str__(self):
-        barber_name = self.barber.name if self.barber else "Любой мастер"
-        return f"{self.salon.name} - {barber_name} - {self.start_datetime} - {self.end_datetime}"
+        return f"{self.salon.name} - {self.start_datetime} - {self.end_datetime}"
 
     def get_total_duration(self):
-        total_duration = sum(service.duration.total_seconds() for service in self.services.all())
-        total_duration += self.salon.default_duration * 60  # Добавляем default_duration салона (в секундах)
-        return total_duration / 60  # Возвращаем длительность в минутах
+        total_duration = sum(item.get_total_duration() for item in self.barber_services.all())
+        return total_duration
 
-    class Meta:
-        indexes = [
-            models.Index(fields=['salon', 'start_datetime', 'end_datetime']),
-        ]
-        verbose_name = 'Appointment'
-        verbose_name_plural = 'Appointments'
+class AppointmentBarberService(models.Model):
+    appointment = models.ForeignKey(Appointment, on_delete=models.CASCADE, related_name='barber_services')
+    barber = models.ForeignKey(Barber, on_delete=models.SET_NULL, null=True, blank=True)
+    services = models.ManyToManyField(Service)
+    start_datetime = models.DateTimeField()
+    end_datetime = models.DateTimeField()
+
+    def get_total_duration(self):
+        return (self.end_datetime - self.start_datetime).total_seconds() / 60  # Возвращает в минутах
+
+    def __str__(self):
+        return f"{self.appointment} - {self.barber.name if self.barber else 'Любой мастер'}"
+
 

@@ -1,0 +1,101 @@
+/* Стили для раздела выбора барбера */
+
+.barber-selection p {
+    font-size: 1em;
+    color: #ccc;
+    margin-bottom: 10px;
+}
+
+.active-barber-card {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border-radius: 8px;
+    background-color: #333;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.active-barber-card:hover {
+    background-color: #444;
+}
+
+.barber-list {
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height 0.5s ease-out;
+}
+
+.barber-list.open {
+    max-height: 500px; /* Достаточное значение для всех карточек */
+    transition: max-height 0.5s ease-in;
+}
+
+.barber-card {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border-radius: 8px;
+    background-color: #333;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.barber-card:hover {
+    background-color: #444;
+    transform: scale(1.02);
+
+}
+
+.barber-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    margin-right: 15px;
+}
+
+.barber-info h4 {
+    margin: 5px 0 2px;
+    font-size: 1em;
+    color: #f0a500;
+}
+
+.barber-info p {
+    margin: 0;
+    font-size: 0.85em;
+    color: #ccc;
+}
+
+.barber-name {
+    margin: 5px 0 2px;
+    font-size: 1em;
+    color: #f0a500;
+}
+
+.barber-description {
+    margin: 0;
+    font-size: 0.85em;
+    color: #ccc;
+}
+
+@keyframes switchBarber {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.switch-animation {
+    animation: switchBarber 0.5s forwards;
+}
+
+.toggle-icon {
+    font-size: 1.5em;
+    color: #777;
+    transition: transform 0.3s;
+}

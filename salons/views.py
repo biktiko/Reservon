@@ -1,7 +1,8 @@
 # salons/views.py
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
-from .models import Salon, Appointment, Barber, Service, ServiceCategory, SalonImage
+from .models import Salon, Appointment, Barber, Service, ServiceCategory
+from django.core.serializers.json import DjangoJSONEncoder
 from django.http import JsonResponse
 from rest_framework.decorators import api_view
 from datetime import datetime, timedelta, time, timezone as dt_timezone
@@ -9,42 +10,77 @@ from django.utils import timezone
 from django.db.models import Q
 from django.contrib import messages
 from django.db import transaction
-from django.contrib.auth.decorators import login_required
 import logging
 import pytz
+import json
 
 # logger = logging.getLogger(__name__)
 logger = logging.getLogger('booking')
 
+
 def main(request):
-    # salons_list = salons.objects.all()  # Получаем все объекты из таблицы salons    active_salons = Salons.objects.filter(status='active')
-    active_salons = Salon.objects.filter(status='active')
-    return render(request, 'salons/salons.html', {"salons": active_salons})
+    query = request.GET.get('q')
+    if query:
+        salons = Salon.objects.filter(
+            Q(name__icontains=query) | Q(address__icontains=query)
+        )
+    else:
+        salons = Salon.objects.filter(status='active')
+    return render(request, 'salons/salons.html', {'salons': salons})
 
 def salon_detail(request, id):
     salon = get_object_or_404(Salon, id=id)
-    services = Service.objects.filter(salon=salon, status='active')
-    services_with_category = services.filter(category__isnull=False)
-    services_without_category = services.filter(category__isnull=True)
+    service_categories = ServiceCategory.objects.filter(
+        services__salon=salon, 
+        services__status='active'
+    ).distinct()
 
-    # Получаем категории, связанные с услугами этого салона
-    service_categories = ServiceCategory.objects.filter(services__in=services).distinct()
+    # Собираем барберов по категориям
+    barbers_by_category = {}
+    for category in service_categories:
+        barbers = Barber.objects.filter(categories=category, salon=salon)
+        barbers_list = []
+        for barber in barbers:
+            barbers_list.append({
+                'id': barber.id,
+                'name': barber.name,
+                'avatar': barber.get_avatar_url(),
+                'description': barber.description or ''
+            })
+        barbers_by_category[f'category_{category.id}'] = barbers_list
 
-    image_urls = []
-    if salon.logo:
-        image_urls.append(salon.logo.url)
-    # Добавляем URL всех дополнительных изображений
-    image_urls += [image.image.url for image in salon.images.all()]
+    # Собираем услуги по категориям
+    services_by_category = {}
+    for category in service_categories:
+        services = Service.objects.filter(
+            category=category, 
+            salon=salon, 
+            status='active'
+        )
+        services_list = []
+        for service in services:
+            services_list.append({
+                'id': service.id,
+                'name': service.name,
+                'price': service.price,  # DecimalField, будет обработан DjangoJSONEncoder
+                'duration': int(service.duration.total_seconds() / 60),  # Преобразование timedelta в минуты
+                # Добавьте другие необходимые поля
+            })
+        services_by_category[f'category_{category.id}'] = services_list
 
+    # Сериализуем в JSON с использованием DjangoJSONEncoder
+    barbers_by_category_json = json.dumps(barbers_by_category, cls=DjangoJSONEncoder)
+    services_by_category_json = json.dumps(services_by_category, cls=DjangoJSONEncoder)
 
     context = {
         'salon': salon,
-        'services': services,
         'service_categories': service_categories,
-        'services_with_category': services_with_category,
-        'services_without_category': services_without_category,
+        'barbers_by_category_json': barbers_by_category_json,
+        'services_by_category_json': services_by_category_json,
     }
+
     return render(request, 'salons/salon-detail.html', context)
+
     
 def get_barber_availability(request, barber_id):
     try:
@@ -157,6 +193,8 @@ def get_available_minutes(request):
     logger.debug(f"Available minutes: {available_minutes}")
     return JsonResponse({'available_minutes': available_minutes})
 
+from django.http import JsonResponse
+
 @transaction.atomic
 def book_appointment(request, id):
     logger.debug("Начало обработки запроса на бронирование")
@@ -166,15 +204,14 @@ def book_appointment(request, id):
         messages.error(request, "Некорректный метод запроса.")
         return redirect(reverse('salon_detail', args=[id]))
 
+    salon = get_object_or_404(Salon, id=id)
     date_str = request.POST.get("date")
     time_str = request.POST.get("time")
-    barber_id = request.POST.get("barber_id", "any")
     selected_services = request.POST.getlist("services")
+    # Барбер для каждой услуги
+    barbers_for_services = {key.replace('barber_for_service_', ''): value for key, value in request.POST.items() if key.startswith('barber_for_service_')}
 
-    logger.debug(f"Получены данные бронирования - date: {date_str}, time: {time_str}, barber_id: {barber_id}, services: {selected_services}")
-
-    salon = get_object_or_404(Salon, id=id)
-    logger.debug(f"Найден салон - {salon}")
+    logger.debug(f"Получены данные бронирования - date: {date_str}, time: {time_str}, services: {selected_services}, barbers: {barbers_for_services}")
 
     # Валидация даты
     try:
@@ -183,7 +220,10 @@ def book_appointment(request, id):
     except (ValueError, TypeError) as e:
         logger.error(f"Ошибка форматирования даты: {e}")
         messages.error(request, "Некорректный формат даты.")
-        return redirect(reverse('salon_detail', args=[id]))
+        if request.headers.get('Accept') == 'application/json':
+            return JsonResponse({'error': 'Некорректный формат даты.'}, status=400)
+        else:
+            return redirect(reverse('salon_detail', args=[id]))
 
     # Валидация времени
     try:
@@ -192,7 +232,10 @@ def book_appointment(request, id):
     except (ValueError, TypeError) as e:
         logger.error(f"Ошибка форматирования времени: {e}")
         messages.error(request, "Некорректный формат времени.")
-        return redirect(reverse('salon_detail', args=[id]))
+        if request.headers.get('Accept') == 'application/json':
+            return JsonResponse({'error': 'Некорректный формат времени.'}, status=400)
+        else:
+            return redirect(reverse('salon_detail', args=[id]))
 
     # Проверка рабочего времени салона
     day_name = date.strftime('%A').lower()
@@ -202,7 +245,10 @@ def book_appointment(request, id):
     if not salon_hours:
         logger.info(f"Салон закрыт на выбранный день: {day_name}")
         messages.error(request, "Салон закрыт в выбранный день.")
-        return redirect(reverse('salon_detail', args=[id]))
+        if request.headers.get('Accept') == 'application/json':
+            return JsonResponse({'error': 'Салон закрыт в выбранный день.'}, status=400)
+        else:
+            return redirect(reverse('salon_detail', args=[id]))
 
     try:
         salon_open = datetime.strptime(salon_hours['open'], '%H:%M').time()
@@ -211,30 +257,32 @@ def book_appointment(request, id):
     except (ValueError, KeyError) as e:
         logger.error(f"Ошибка получения рабочих часов: {e}")
         messages.error(request, "Некорректные рабочие часы салона.")
-        return redirect(reverse('salon_detail', args=[id]))
+        if request.headers.get('Accept') == 'application/json':
+            return JsonResponse({'error': 'Некорректные рабочие часы салона.'}, status=400)
+        else:
+            return redirect(reverse('salon_detail', args=[id]))
 
     if not (salon_open <= start_time < salon_close):
         logger.info(f"Выбранное время {start_time} вне рабочего графика салона.")
         messages.error(request, "Выбранное время вне рабочего графика салона.")
-        return redirect(reverse('salon_detail', args=[id]))
+        if request.headers.get('Accept') == 'application/json':
+            return JsonResponse({'error': 'Выбранное время вне рабочего графика салона.'}, status=400)
+        else:
+            return redirect(reverse('salon_detail', args=[id]))
 
     # Рассчитываем общую длительность обслуживания
-    if selected_services:
-        total_service_duration = 5  # Запас в 5 минут
-        total_services_duration = 0
-        for service_id in selected_services:
-            try:
-                service = Service.objects.get(id=service_id, salon=salon)
-                duration_minutes = service.duration.total_seconds() / 60
-                total_services_duration += duration_minutes
-                logger.debug(f"Добавлена услуга - {service.name}, длительность: {duration_minutes} минут")
-            except Service.DoesNotExist:
-                logger.warning(f"Услуга с ID {service_id} не найдена в салоне {salon}")
-                messages.warning(request, f"Услуга с ID {service_id} не найдена и не была добавлена.")
-        total_service_duration += total_services_duration
-    else:
-        total_service_duration = salon.default_duration  # Используем дефолтное время
-        logger.debug(f"Базовая длительность обслуживания: {total_service_duration} минут")
+    total_service_duration = 5  # Запас в 5 минут
+    total_services_duration = 0
+    for service_id in selected_services:
+        try:
+            service = Service.objects.get(id=service_id, salon=salon)
+            duration_minutes = service.duration.total_seconds() / 60
+            total_services_duration += duration_minutes
+            logger.debug(f"Добавлена услуга - {service.name}, длительность: {duration_minutes} минут")
+        except Service.DoesNotExist:
+            logger.warning(f"Услуга с ID {service_id} не найдена в салоне {salon}")
+            messages.warning(request, f"Услуга с ID {service_id} не найдена и не была добавлена.")
+    total_service_duration += total_services_duration
 
     logger.debug(f"Общая длительность обслуживания: {total_service_duration} минут")
 
@@ -246,76 +294,95 @@ def book_appointment(request, id):
     end_datetime = timezone.make_aware(end_datetime, timezone.get_current_timezone())
     logger.debug(f"Время бронирования: {start_datetime} - {end_datetime}")
 
-    # Обработка выбранного барбера
-    if barber_id == 'any':
-        # Используем select_for_update для блокировки выбранных барберов на время транзакции
-        available_barber = Barber.objects.select_for_update().filter(salon=salon).exclude(
-            appointments__start_datetime__lt=end_datetime,
-            appointments__end_datetime__gt=start_datetime
-        ).first()
-        if available_barber:
-            barber = available_barber
-            logger.debug(f"Выбран любой мастер: {barber}")
+    # Обработка выбранных барберов для каждой услуги
+    appointments_to_create = []
+    for service_id in selected_services:
+        barber_id = barbers_for_services.get(service_id, 'any')
+        if barber_id == 'any':
+            # Выбор любого доступного барбера для услуги
+            available_barber = Barber.objects.select_for_update().filter(salon=salon, categories__services__id=service_id).exclude(
+                appointments__start_datetime__lt=end_datetime,
+                appointments__end_datetime__gt=start_datetime
+            ).first()
+            if available_barber:
+                barber = available_barber
+                logger.debug(f"Выбранный любой мастер: {barber}")
+            else:
+                messages.error(request, "Нет доступных барберов на выбранное время для одной из услуг.")
+                if request.headers.get('Accept') == 'application/json':
+                    return JsonResponse({'error': 'Нет доступных барберов на выбранное время для одной из услуг.'}, status=400)
+                else:
+                    return redirect(reverse('salon_detail', args=[id]))
         else:
-            messages.error(request, "Нет доступных барберов на выбранное время.")
-            return redirect(reverse('salon_detail', args=[id]))
-    else:
-        try:
-            barber = Barber.objects.select_for_update().get(id=barber_id, salon=salon)
-            logger.debug(f"Выбран барбер - {barber}")
-        except Barber.DoesNotExist:
-            logger.warning(f"Барбер с ID {barber_id} не найден в салоне {salon}")
-            messages.error(request, "Выбранный барбер не найден.")
-            return redirect(reverse('salon_detail', args=[id]))
+            try:
+                barber = Barber.objects.select_for_update().get(id=barber_id, salon=salon)
+                logger.debug(f"Выбран барбер - {barber}")
+            except Barber.DoesNotExist:
+                logger.warning(f"Барбер с ID {barber_id} не найден в салоне {salon}")
+                messages.error(request, "Выбранный барбер не найден.")
+                if request.headers.get('Accept') == 'application/json':
+                    return JsonResponse({'error': 'Выбранный барбер не найден.'}, status=400)
+                else:
+                    return redirect(reverse('salon_detail', args=[id]))
 
-    # Проверка перекрывающихся бронирований уже после выбора барбера
-    overlapping_appointments = Appointment.objects.filter(
-        salon=salon,
-        start_datetime__lt=end_datetime,
-        end_datetime__gt=start_datetime
-    )
+        # Проверка перекрывающихся бронирований
+        overlapping_appointments = Appointment.objects.filter(
+            salon=salon,
+            barber=barber,
+            start_datetime__lt=end_datetime,
+            end_datetime__gt=start_datetime
+        )
 
-    if barber:
-        overlapping_appointments = overlapping_appointments.filter(barber=barber)
-        logger.debug(f"Фильтр по барберу: {barber}")
-    else:
-        overlapping_appointments = overlapping_appointments.filter(barber__isnull=True)
-        logger.debug("Фильтр по любому барберу")
+        overlapping_count = overlapping_appointments.count()
+        logger.debug(f"Найдено перекрывающихся бронирований: {overlapping_count}")
 
-    overlapping_count = overlapping_appointments.count()
-    logger.debug(f"Найдено перекрывающихся бронирований: {overlapping_count}")
+        if overlapping_appointments.exists():
+            logger.info(f"Выбранный барбер {barber.name} недоступен для услуги с ID {service_id}.")
+            messages.error(request, f"Барбер {barber.name} недоступен для одной из выбранных услуг.")
+            if request.headers.get('Accept') == 'application/json':
+                return JsonResponse({'error': f"Барбер {barber.name} недоступен для одной из выбранных услуг."}, status=400)
+            else:
+                return redirect(reverse('salon_detail', args=[id]))
 
-    if overlapping_appointments.exists():
-        logger.info("Выбранный временной слот уже занят.")
-        messages.error(request, "Выбранный временной слот уже занят.")
-        return redirect(reverse('salon_detail', args=[id]))
-
-    # Создание записи о бронировании
-    try:
-        appointment = Appointment.objects.create(
+        # Создаем запись о бронировании для услуги
+        appointment = Appointment(
             salon=salon,
             user=request.user if request.user.is_authenticated else None,
             barber=barber,
             start_datetime=start_datetime,
             end_datetime=end_datetime
         )
-        logger.debug(f"Создано бронирование - {appointment}")
+        appointments_to_create.append((appointment, service_id))
 
-        # Добавляем выбранные услуги к записи
-        for service_id in selected_services:
-            try:
-                service = Service.objects.get(id=service_id, salon=salon)
-                appointment.services.add(service)
-                logger.debug(f"Услуга добавлена к бронированию - {service.name}")
-            except Service.DoesNotExist:
-                logger.warning(f"Услуга с ID {service_id} не найдена при добавлении к бронированию")
+    # Создание всех бронирований в одном транзакционном блоке
+    try:
+        for appointment, service_id in appointments_to_create:
+            appointment.save()
+            service = Service.objects.get(id=service_id, salon=salon)
+            appointment.services.add(service)
+            logger.debug(f"Создано бронирование - {appointment} для услуги {service.name}")
 
         messages.success(request, "Бронирование успешно создано!")
-        logger.info(f"Бронирование успешно создано для пользователя - {appointment.user}")
+        logger.info(f"Бронирование успешно создано для пользователя - {request.user if request.user.is_authenticated else 'Анонимный пользователь'}")
     except Exception as e:
         logger.error(f"Ошибка при создании бронирования: {e}")
         messages.error(request, f"Ошибка при создании бронирования: {e}")
-        return redirect(reverse('salon_detail', args=[id]))
+        if request.headers.get('Accept') == 'application/json':
+            return JsonResponse({'error': f"Ошибка при создании бронирования: {str(e)}"}, status=500)
+        else:
+            return redirect(reverse('salon_detail', args=[id]))
 
-    logger.debug("Завершение обработки запроса на бронирование")
-    return redirect(reverse('salon_detail', args=[id]))
+    # Если запрос ожидает JSON, возвращаем JsonResponse с деталями бронирования
+    if request.headers.get('Accept') == 'application/json':
+        booking_details = []
+        for appointment, service_id in appointments_to_create:
+            service = Service.objects.get(id=service_id, salon=salon)
+            booking_details.append({
+                'service_name': service.name,
+                'date': appointment.start_datetime.strftime('%Y-%m-%d'),
+                'time': appointment.start_datetime.strftime('%H:%M'),
+                'barber_name': appointment.barber.name if appointment.barber else 'Любой мастер'
+            })
+        return JsonResponse({'success': True, 'booking_details': booking_details})
+    else:
+        return redirect(reverse('salon_detail', args=[id]))

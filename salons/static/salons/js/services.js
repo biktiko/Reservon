@@ -1,46 +1,78 @@
-// C:\Reservon\Reservon\salons\static\salons\js\services.js
 document.addEventListener('DOMContentLoaded', function() {
     const categoryButtons = document.querySelectorAll('.category-button');
     const categorySections = document.querySelectorAll('.category-section');
-    const paginationContainer = document.querySelector('.pagination-container');
-    const servicesPerPage = 4; // Максимум 4 услуги на страницу
-    let currentPage = 1;
-    let totalPages = 1;
-    let allServices = [];
-    let selectedServices = []; // Массив выбранных услуг
+
+    let selectedServices = {}; // Ключ: categoryId, Значение: массив выбранных услуг
+    let selectedBarbers = {}; // Ключ: categoryId, Значение: выбранный барбер
 
     // Элементы для отображения общей цены и продолжительности
     const totalPriceElement = document.getElementById('total-price');
     const totalDurationElement = document.getElementById('total-duration');
 
-    // Функция для сбора всех услуг текущей выбранной категории
+    // Переменные для пагинации
+    const paginationContainer = document.querySelector('.pagination-container');
+    const servicesPerPage = 4;
+    let currentPage = 1;
+    let totalPages = 1;
+    let allServices = [];
+
+    // Контейнер для скрытых полей бронирования
+    const servicesBarbersContainer = document.querySelector('.selected-services-barbers');
+
+    // Инициализация при загрузке страницы
+    initializeCategorySelection();
+
+    // Обработчики событий для кнопок категорий
+    function initializeCategorySelection() {
+        // Устанавливаем первую категорию как выбранную
+        if (categoryButtons.length > 0) {
+            categoryButtons[0].classList.add('selected');
+            const firstCategoryId = categoryButtons[0].getAttribute('data-category-id');
+            showCategory(firstCategoryId);
+            initializePagination(firstCategoryId);
+        }
+
+        categoryButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                // Удаляем класс 'selected' со всех кнопок
+                categoryButtons.forEach(btn => btn.classList.remove('selected'));
+                // Добавляем класс 'selected' на текущую кнопку
+                this.classList.add('selected');
+
+                const categoryId = this.getAttribute('data-category-id');
+                showCategory(categoryId);
+                initializePagination(categoryId);
+                // При смене категории сбрасываем выбранного барбера (по желанию)
+                // Например:
+                // selectedBarbers[categoryId] = 'any';
+                // updateBarberSelectionUI('any', categoryId);
+            });
+        });
+    }
+
+    function showCategory(categoryId) {
+        // Показываем/скрываем секции категорий
+        categorySections.forEach(section => {
+            if (section.getAttribute('data-category-id') === categoryId) {
+                section.classList.remove('hidden');
+            } else {
+                section.classList.add('hidden');
+            }
+        });
+    }
+
     function gatherServices(categoryId) {
         let servicesArray = [];
-        if (categoryId === 'all') {
-            categorySections.forEach(section => {
-                const services = section.querySelectorAll('.service-card');
-                services.forEach(service => {
-                    servicesArray.push(service);
-                });
-            });
-        } else if (categoryId === 'no-category') {
-            const services = document.querySelectorAll('.category-section[data-category-id="no-category"] .service-card');
+        const selectedSection = document.querySelector(`.category-section[data-category-id="${categoryId}"]`);
+        if (selectedSection) {
+            const services = selectedSection.querySelectorAll('.service-card');
             services.forEach(service => {
                 servicesArray.push(service);
             });
-        } else {
-            const selectedSection = document.querySelector(`.category-section[data-category-id="${categoryId}"]`);
-            if (selectedSection) {
-                const services = selectedSection.querySelectorAll('.service-card');
-                services.forEach(service => {
-                    servicesArray.push(service);
-                });
-            }
         }
         return servicesArray;
     }
 
-    // Функция для отображения услуг по странице
     function displayServices(page) {
         const start = (page - 1) * servicesPerPage;
         const end = start + servicesPerPage;
@@ -58,16 +90,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Обновляем активный стиль для пагинации
         const buttons = paginationContainer.querySelectorAll('.pagination-button');
-        buttons.forEach(button => {
-            button.classList.remove('active');
-        });
+        buttons.forEach(button => button.classList.remove('active'));
         const activeButton = paginationContainer.querySelector(`.pagination-button[data-page="${page}"]`);
         if (activeButton) {
             activeButton.classList.add('active');
         }
     }
 
-    // Функция для создания пагинационных кнопок
     function createPaginationButtons(total) {
         paginationContainer.innerHTML = ''; // Очищаем существующие кнопки
 
@@ -94,7 +123,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Инициализация пагинации для категории "Все услуги"
     function initializePagination(categoryId) {
         allServices = gatherServices(categoryId);
         totalPages = Math.ceil(allServices.length / servicesPerPage);
@@ -103,78 +131,35 @@ document.addEventListener('DOMContentLoaded', function() {
         displayServices(currentPage);
     }
 
-    // Инициализация при загрузке страницы
-    initializePagination('all');
-
-    // Обработчики событий для кнопок категорий
-    categoryButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            // Удаляем класс 'selected' со всех кнопок
-            categoryButtons.forEach(btn => btn.classList.remove('selected'));
-            // Добавляем класс 'selected' на текущую кнопку
-            this.classList.add('selected');
-
-            const categoryId = this.getAttribute('data-category-id');
-
-            // Показываем/скрываем секции категорий
-            categorySections.forEach(section => {
-                if (categoryId === 'all') {
-                    section.classList.remove('hidden');
-                } else if (categoryId === 'no-category') {
-                    if (section.getAttribute('data-category-id') === 'no-category') {
-                        section.classList.remove('hidden');
-                    } else {
-                        section.classList.add('hidden');
-                    }
-                } else {
-                    if (section.getAttribute('data-category-id') === categoryId) {
-                        section.classList.remove('hidden');
-                    } else {
-                        section.classList.add('hidden');
-                    }
-                }
-            });
-
-            // Инициализируем пагинацию для выбранной категории
-            initializePagination(categoryId);
-
-            // Сбрасываем выбранные услуги при переключении категории
-            resetSelectedServices();
-        });
-    });
-
-    // Функция для сброса выбранных услуг
-    function resetSelectedServices() {
-        selectedServices = [];
-        // Убираем класс 'selected' со всех услуг
-        allServices.forEach(service => {
-            service.classList.remove('selected');
-        });
-        updateTotal();
-    }
-
     // Обработка выбора услуг с помощью делегирования событий
     const servicesContainer = document.querySelector('.services-container');
     servicesContainer.addEventListener('click', function(event) {
-        
         let target = event.target;
         const serviceCard = target.closest('.service-card');
         if (serviceCard) {
             const serviceId = serviceCard.getAttribute('data-service-id');
+            const categoryId = serviceCard.getAttribute('data-category-id'); // Теперь присутствует
             const price = parseFloat(serviceCard.getAttribute('data-price'));
             const duration = parseInt(serviceCard.getAttribute('data-duration'));
 
-            if (serviceCard.classList.contains('selected')) {
+            if (!selectedServices[categoryId]) {
+                selectedServices[categoryId] = [];
+            }
+
+            const existingServiceIndex = selectedServices[categoryId].findIndex(service => service.id === serviceId);
+
+            if (existingServiceIndex > -1) {
                 // Если уже выбран, снимаем выделение
                 serviceCard.classList.remove('selected');
-                selectedServices = selectedServices.filter(service => service.id !== serviceId);
+                selectedServices[categoryId].splice(existingServiceIndex, 1);
             } else {
                 // Добавляем выделение
                 serviceCard.classList.add('selected');
-                selectedServices.push({ id: serviceId, price, duration });
+                selectedServices[categoryId].push({ id: serviceId, price, duration });
             }
 
             updateTotal();
+            updateBookingForm();
         }
     });
 
@@ -183,12 +168,40 @@ document.addEventListener('DOMContentLoaded', function() {
         let totalPrice = 0;
         let totalDuration = 0;
 
-        selectedServices.forEach(service => {
-            totalPrice += service.price;
-            totalDuration += service.duration;
-        });
+        for (let categoryId in selectedServices) {
+            selectedServices[categoryId].forEach(service => {
+                totalPrice += service.price;
+                totalDuration += service.duration;
+            });
+        }
 
         totalPriceElement.innerText = Math.round(totalPrice) + ' драм';
-        totalDurationElement.innerText = Math.round(totalDuration / 60) + ' минут';
+        totalDurationElement.innerText = Math.round(totalDuration) + ' минут';
+    }
+
+    // Функция для обновления скрытых полей бронирования
+    function updateBookingForm() {
+        servicesBarbersContainer.innerHTML = ''; // Очищаем контейнер
+
+        for (let categoryId in selectedServices) {
+            const services = selectedServices[categoryId];
+            const barberId = selectedBarbers[categoryId] || 'any';
+
+            services.forEach(service => {
+                // Добавляем скрытое поле для услуги
+                const serviceInput = document.createElement('input');
+                serviceInput.type = 'hidden';
+                serviceInput.name = 'services';
+                serviceInput.value = service.id;
+                servicesBarbersContainer.appendChild(serviceInput);
+
+                // Добавляем скрытое поле для барбера, связанного с услугой
+                const barberInput = document.createElement('input');
+                barberInput.type = 'hidden';
+                barberInput.name = `barber_for_service_${service.id}`;
+                barberInput.value = barberId;
+                servicesBarbersContainer.appendChild(barberInput);
+            });
+        }
     }
 });

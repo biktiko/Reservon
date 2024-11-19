@@ -1,18 +1,20 @@
 {% load static %}
 
-
-
-<a href="{% url 'salon_detail' salon.id %}" class="salon-card">
-    <div class="salon-image">
-        {% if salon.logo %}
-            <img src="{{ salon.logo.url }}" alt="{{ salon.name }}">
-        {% else %}
-            <img src="{% static 'salons/img/default-salon.jpg' %}" alt="{{ salon.name }}">
-        {% endif %}
+<a href="{% url 'salons:salon_detail' salon.id %}" class="salon-card">
+    <div class="salon-top">
+        <div class="salon-image">
+            {% if salon.logo %}
+                <img src="{{ salon.logo.url }}" alt="{{ salon.name }}">
+            {% else %}
+                <img src="{% static 'salons/img/default-salon.jpg' %}" alt="{{ salon.name }}">
+            {% endif %}
+        </div>
+        <div class="salon-info">
+            <h2>{{ salon.name }}</h2>
+            <p class="address">{{ salon.address }}</p>
+        </div>
     </div>
-    <div class="salon-info">
-        <h2>{{ salon.name }}</h2>
-        <p class="address">{{ salon.address }}</p>
+    <div class="salon-description">
         <p class="description">{{ salon.shortDescription_hy }}</p>
     </div>
 </a>

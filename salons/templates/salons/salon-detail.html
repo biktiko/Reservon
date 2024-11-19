@@ -2,8 +2,12 @@
 {% extends 'base.html' %}
 {% load static %}
 {% load duration_extras %}
-
+{% load custom_tags %}:
 {% block content %}
+{% load i18n %}
+{% get_current_language as LANGUAGE_CODE %}
+{% get_available_languages as LANGUAGES %}
+{% get_language_info_list for LANGUAGES as languages %}
 
 <link rel="stylesheet" href="{% static 'salons/css/salon_detail.css' %}">
 <link rel="stylesheet" href="{% static 'salons/css/barber-selection.css' %}">
@@ -19,6 +23,7 @@
     window.reservDays = "{{ salon.reservDays }}";
 </script>
 
+{% include 'salons/book-confirm.html' %}
 
 <div class="salon-detail">
     <div class="salon-container">
@@ -54,16 +59,18 @@
             </div>
 
             <!-- Правая часть -->
-            <div class="right-section">
-                
-                {% include 'salons/salon-services.html' %}
-                
-                {% include 'salons/barbers.html' %}
 
+            <!-- Правая часть -->
+            <div class="right-section">
+                <!-- Включение выбора услуг -->
+
+                {% include 'salons/salon-services.html' with service_categories=service_categories barbers_by_category=barbers_by_category barbers_by_category_json=barbers_by_category_json %}
+             
+                {% include 'salons/barbers.html' with category=category barbers_by_category=barbers_by_category %}
 
                 <!-- Выбор даты и времени -->
                 <div class="date-time-selection">
-                    <h3>Выберите дату и время</h3>
+                    <h3>{% trans "Выберите дату и время" %}</h3>
                     <!-- Ряд с выбором дней -->
                     <div class="date-row" id="day-select"></div>
                     <!-- Ряд с выбором часов -->
@@ -71,28 +78,33 @@
                     <!-- Ряд с выбором минут -->
                     <div class="minute-row" id="minute-select"></div>
                     <!-- Текст, показывающий выбранное время -->
-                    <p id="summary-text">Дата, час и минута не выбраны</p>
+                    <p id="summary-text">{% trans "Время не выбрано" %}</p>
                 </div>
 
                 <!-- Итоговая цена и длительность -->
                 <div class="total-summary">
                     <h3>Итоговая информация</h3>
-                    <p>Итоговая цена: <span id="total-price">{{salon.default_price}}</span> драм</p>
-                    <p>Общее время: <span id="total-duration">{{salon.default_duration}}</span> минут</p>
+                    <p>Итоговая цена: <span id="total-price">{{ salon.default_price }}</span>{% trans "драм" %}</p>
+                    <p>Общее время: <span id="total-duration">{{ salon.default_duration }}</span>{% trans "минут" %}</p>
                 </div>
 
+                <!-- Форма бронирования -->
                 {% include 'salons/salon-reserv.html' %}
-
-            </div> 
-
+            </div>
         </div>
-
     </div>
     <div id="map" class="map-container"></div>
 
+     <!-- Элемент для хранения данных барберов в JSON -->
+     <script id="barbers-by-category" type="application/json">
+        {{ barbers_by_category_json|safe }}
+    </script>
+    
     <!-- Подключаем JavaScript файлы -->
-    <script src="{% static 'salons/js/barber.js' %}"></script>
-    <script src="{% static 'salons/js/booking.js' %}"></script>
+    <script src="/static/salons/js/services.js"></script>
+    <script src="/static/salons/js/barber.js"></script>
+    <script src="/static/salons/js/booking.js"></script>
+
     <!-- <script src="{% static 'salons/js/gallery.js' %}"></script> -->
 
 {% endblock %}

@@ -1,0 +1,46 @@
+/* Стили для контейнера поиска */
+.search-container {
+    width: 80%;
+    margin: 20px auto 10px auto; /* Уменьшаем нижний отступ */
+    text-align: center;
+}
+
+/* Стили для формы поиска */
+.search-container form {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Стили для поля ввода */
+.search-container input[type="text"] {
+    width: 70%;
+    padding: 12px 15px 12px 40px; /* Добавляем отступ для иконки */
+    font-size: 1rem;
+    border: 1px solid #333;
+    border-radius: 5px;
+    background-color: #1a1a1a;
+    color: #fff;
+    outline: none;
+    transition: border-color 0.3s ease;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%23888' viewBox='0 0 24 24'%3E%3Cpath d='M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.92.92l.27.28v.79l5 5L20.5 19l-5-5zm-6 0A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: 10px center;
+    background-size: 20px 20px;
+}
+
+.search-container input[type="text"]::placeholder {
+    color: #888;
+}
+
+/* Адаптивные стили для мобильных устройств */
+@media (max-width: 600px) {
+    .search-container input[type="text"] {
+        width: 60%;
+        font-size: 0.9rem;
+    }
+
+    .search-container button {
+        font-size: 0.9rem;
+    }
+}
