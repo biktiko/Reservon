@@ -104,7 +104,12 @@ class Appointment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     start_datetime = models.DateTimeField()
     end_datetime = models.DateTimeField(null=True, blank=True)
-    
+    barbers = models.ManyToManyField(
+        Barber,
+        through='AppointmentBarberService',
+        related_name='appointments'
+    )
+
     def __str__(self):
         return f"{self.salon.name} - {self.start_datetime} - {self.end_datetime}"
 
@@ -112,9 +117,10 @@ class Appointment(models.Model):
         total_duration = sum(item.get_total_duration() for item in self.barber_services.all())
         return total_duration
 
+
 class AppointmentBarberService(models.Model):
     appointment = models.ForeignKey(Appointment, on_delete=models.CASCADE, related_name='barber_services')
-    barber = models.ForeignKey(Barber, on_delete=models.SET_NULL, null=True, blank=True)
+    barber = models.ForeignKey(Barber, on_delete=models.SET_NULL, null=True, blank=True, related_name='appointmentbarberservice')
     services = models.ManyToManyField(Service)
     start_datetime = models.DateTimeField()
     end_datetime = models.DateTimeField()
@@ -124,5 +130,6 @@ class AppointmentBarberService(models.Model):
 
     def __str__(self):
         return f"{self.appointment} - {self.barber.name if self.barber else 'Любой мастер'}"
+
 
 
