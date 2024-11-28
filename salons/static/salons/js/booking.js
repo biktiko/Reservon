@@ -687,13 +687,27 @@ const serviceCard = document.querySelector(`.service-card[data-service-id="${ser
                 if (firstInput) {
                     firstInput.focus();
                 }
-                showBookingConfirmationModal();
             } else if (data.error) {
                 console.error('Error loading modal content:', data.error);
             }
         })
         .catch(error => console.error('Error fetching modal content:', error));
     }
+
+    document.addEventListener('loginFromBookingSuccess', function() {
+        console.log('loginFromBookingSuccess')
+        // Получаем данные из localStorage
+        const formDataString = localStorage.getItem('bookingFormData');
+        if (formDataString) {
+            const formData = JSON.parse(formDataString);
+            // Показываем модальное окно подтверждения бронирования
+            showBookingConfirmationModal(formData);
+        } else {
+            console.error('No booking data found in localStorage.');
+        }
+    });
+    
+    
 
       // Сбор данных о категориях
       const categoriesData = {};
@@ -832,7 +846,7 @@ const serviceCard = document.querySelector(`.service-card[data-service-id="${ser
     function submitBookingData(formData) {
         const salonDataElement = document.getElementById('salon-data');
         const salonId = parseInt(salonDataElement.dataset.salonId);
-
+    
         fetch(`/salons/${salonId}/book/`, {
             method: 'POST',
             headers: {
@@ -850,16 +864,19 @@ const serviceCard = document.querySelector(`.service-card[data-service-id="${ser
         .then(data => {
             const modal = document.getElementById('booking-confirmation-modal');
             if (data.success) {
-                // Бронирование успешно
+                // Booking was successful
                 showBookingSuccessMessage(modal);
+                // **Clear booking data from localStorage**
+                localStorage.removeItem('bookingFormData');
             } else if (data.error) {
-                alert(`Ошибка при бронировании: ${data.error})`);
+                alert(`Ошибка при бронировании: ${data.error}`);
             }
         })
         .catch(error => {
             console.error('Ошибка при бронировании:', error);
         });
     }
+    
 
     function showBookingSuccessMessage(modal) {
         const modalBody = modal.querySelector('.modal-body.booking-modal-body');

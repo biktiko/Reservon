@@ -485,9 +485,9 @@ function submitSetPassword() {
         if (data.success) {
             if (data.redirect_to_booking) {
                 closeModal();
-                // Функция для перенаправления на бронирование
-                // window.location.href = /salons/${data.salon_id}/book/;
-                completeBooking(data.salon_id);
+                const event = new Event('loginFromBookingSuccess');
+                document.dispatchEvent(event);
+
             } else {
                 closeModal();
                 window.location.href = '/';
@@ -537,8 +537,9 @@ function submitEnterPassword() {
         if (data.success) {
             if (data.redirect_to_booking) {
                 closeModal();
-                // window.location.href = /salons/${data.salon_id}/book/;
-                completeBooking(data.salon_id);
+                // Отправляем событие об успешном логине для продолжения бронирования
+                const event = new Event('loginFromBookingSuccess');
+                document.dispatchEvent(event);
             } else {
                 closeModal();
                 window.location.href = '/';
@@ -557,6 +558,7 @@ function submitEnterPassword() {
         submitButton.innerText = 'Войти';
     });
 }
+
 /**
  * Валидирует формат номера телефона.
  * @param {string} phone_number - Номер телефона для валидации.
@@ -622,94 +624,4 @@ function openSetPasswordModal() {
     modal.classList.add('show');
     modal.style.display = 'block';
 
-}
-
-function completeBooking(salonId) {
-    console.log('complete test')
-    // Получаем данные формы бронирования из localStorage
-    const formData = JSON.parse(localStorage.getItem('bookingFormData'));
-    if (!formData) {
-        console.error('No booking form data found in localStorage. Redirecting to salon page.');
-        window.location.href = '/salons/${salonId}/';  // Перенаправление на страницу салона, если данных нет
-        return;
-    }
-
-    // Создаем объект для отправки POST-запроса
-    const bodyData = new URLSearchParams();
-    bodyData.append("date", formData.date);
-    bodyData.append("time", formData.time);
-    bodyData.append("barber_id", formData.barber);
-    formData.services.forEach(service => bodyData.append("services", service));
-    console.log(formData)
-    // Отправляем POST-запрос для завершения бронирования
-    fetch('/salons/${salonId}/book/', {
-        method: 'POST',
-        headers: {
-            'X-CSRFToken': getCookie('csrftoken'),
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Accept': 'application/json'
-        },
-        body: bodyData.toString()
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Получаем информацию о бронировании из ответа сервера
-            const bookingDetails = data.booking_details;
-            // Отображаем модальное окно с подтверждением
-            showBookingConfirmation(bookingDetails);
-            localStorage.removeItem('bookingFormData'); // Удаляем сохранённые данные бронирования
-        } else {
-            // Отображаем сообщение об ошибке
-            alert('Ошибка при создании бронирования: ${data.error}');
-            window.location.href = '/salons/${salonId}/';  // Перенаправление на страницу салона, если ошибка
-        }
-    })
-    .catch(error => {
-        console.error('Error completing booking:', error);
-        alert('Ошибка при создании бронирования. Пожалуйста, попробуйте снова.');
-        window.location.href = '/salons/${salonId}/';  // Перенаправление на страницу салона, если ошибка
-    });
-}
-
-// Добавьте функцию showBookingConfirmation в modal.js
-// Функция для отображения модального окна подтверждения бронирования
-function showBookingConfirmation(bookingDetails) {
-    const modal = document.getElementById('booking-confirmation-modal');
-    const modalBody = modal.querySelector('.modal-body');
-
-    // Заполняем модальное окно информацией о бронировании
-    modalBody.innerHTML = 
-        `<h2>Бронирование подтверждено!</h2>
-        <p>Дата: ${bookingDetails.date}</p>
-        <p>Время: ${bookingDetails.time}</p>
-        <p>Барбер: ${bookingDetails.barber_name}</p>`
-    ;
-
-    // Обработчик для кнопки закрытия
-    const closeButton = modal.querySelector('.close-button');
-    closeButton.addEventListener('click', function(event) {
-        event.preventDefault();
-        closeBookingConfirmationModal();
-    });
-
-    // Отображаем модальное окно
-    modal.classList.add('show');
-    modal.style.display = 'block';
-}
-
-function closeBookingConfirmationModal() {
-    const modal = document.getElementById('booking-confirmation-modal');
-    modal.classList.remove('show');
-    modal.style.display = 'none';
-    // Здесь вы можете перенаправить пользователя или обновить страницу
-    // window.location.href = /salons/${salonId}/;
-}
-
-function closeBookingConfirmationModal() {
-    const modal = document.getElementById('booking-confirmation-modal');
-    modal.classList.remove('show');
-    modal.style.display = 'none';
-    // Здесь можно перенаправить пользователя или обновить страницу
-    // window.location.href = /salons/${salonId}/;
 }
