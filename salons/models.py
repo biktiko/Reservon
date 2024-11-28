@@ -49,6 +49,7 @@ class Salon(models.Model):
 
 class ServiceCategory(models.Model):
     name = models.CharField(max_length=100, unique=True)  # Название категории
+    default_duration = models.IntegerField('Default duration (minutes)', default=15)
 
     def __str__(self):
         return self.name
@@ -124,6 +125,7 @@ class AppointmentBarberService(models.Model):
     services = models.ManyToManyField(Service)
     start_datetime = models.DateTimeField()
     end_datetime = models.DateTimeField()
+
 
     def get_total_duration(self):
         return (self.end_datetime - self.start_datetime).total_seconds() / 60  # Возвращает в минутах

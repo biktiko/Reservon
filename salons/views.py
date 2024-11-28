@@ -259,6 +259,7 @@ def book_appointment(request, id):
     if request.headers.get('Content-Type') == 'application/json':
         try:
             data = json.loads(request.body)
+            logger.debug(data)
         except json.JSONDecodeError as e:
             logger.error(f"Ошибка декодирования JSON: {e}")
             return JsonResponse({'error': 'Некорректный формат данных.'}, status=400)

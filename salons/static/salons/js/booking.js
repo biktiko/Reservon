@@ -1,60 +1,107 @@
+
 document.addEventListener('DOMContentLoaded', function() {
+
+    const salonDataElement = document.getElementById('salon-data');
+
+    const salonId = parseInt(salonDataElement.dataset.salonId);
+
+    const workingHoursElement = document.getElementById('opening-hours');
+
+    const serviceDurationElement = document.getElementById('service-duration');
+
+    const salonDefaultDuration = parseInt(serviceDurationElement.dataset.duration); // В минутах
+    
+    let totalServiceDuration = salonDefaultDuration; // Начальное значение
+
     const daySelect = document.getElementById('day-select');
     const hourSelect = document.getElementById('hour-select');
     const minuteSelect = document.getElementById('minute-select');
     const summaryText = document.getElementById('summary-text');
-
+    
     const selectedDateInput = document.getElementById('selected-date'); // Скрытое поле для даты
     const selectedTimeInput = document.getElementById('selected-time'); // Скрытое поле для времени
-
+    
+    const reservDays = parseInt(salonDataElement.dataset.reservDays);
+    
+    // Сбор данных о барберах
+    const barbersData = {};
+    const barberCards = document.querySelectorAll('.barber-card');
+    
     const barberSelectionContainer = document.querySelector('.barber-selection');
     const servicesBarbersContainer = document.querySelector('.selected-services-barbers');
+
+    function getCategoryNameById(categoryId) {
+        const categoriesCards = Array.from(document.querySelectorAll('.category-button'));
+        const card = categoriesCards.find(card => 
+            parseInt(card.getAttribute('data-category-id')) == categoryId
+        );
+      
+        return card.textContent.trim();
+    }
+
+    function getServiceNameById(serviceId) {
+        const serviceCards = Array.from(document.querySelectorAll('.service-card'));
+        const card = serviceCards.find(card => 
+            parseInt(card.getAttribute('data-service-id')) == serviceId
+        );
+        
+        const serviceNameElement = card.querySelector('.service-name');
+        return serviceNameElement ? serviceNameElement.textContent.trim() : null;
+    }
+
+    function getBarberNameById(barberId) {
+        const barberCards = Array.from(document.querySelectorAll('.barber-card'));
+
+        const card = barberCards.find(card => 
+            parseInt(card.getAttribute('data-barber-id')) == barberId
+        );
+        
+        try{
+            const cardName = card.querySelector('.barber-name');
+            return cardName.textContent.trim();
+        }
+        catch{
+            console.log(barberCards)
+            return null
+
+        }
+      
+    }
+    
+
+
+    barberCards.forEach(card => {
+        const barberId = card.dataset.barberId;
+        // Пропускаем опцию "Любой мастер"
+        if (barberId === 'any') return;
+
+        const barberName = card.querySelector('.barber-name').innerText.trim();
+        const description = card.querySelector('.barber-description').innerText.trim();
+
+        barbersData[barberId] = {
+            name: barberName,
+            description: description
+        };
+    });
 
     // Инициализация выбранных услуг и мастеров
     let selectedServices = [];
     let selectedServicesByCategory = {};
     let selectedBarbersByCategory = {};
 
-    // Получение данных из Django через data-атрибуты
-    const salonDataElement = document.getElementById('salon-data');
-    if (!salonDataElement) {
-        console.error('Element with ID "salon-data" not found.');
-        return;
-    }
-
-    const salonId = parseInt(salonDataElement.dataset.salonId);
-    const reservDays = parseInt(salonDataElement.dataset.reservDays);
     const hasServices = salonDataElement.dataset.hasServices === 'true';
     const hasBarbers = salonDataElement.dataset.hasBarbers === 'true';
 
-    const workingHoursElement = document.getElementById('opening-hours');
-    if (!workingHoursElement) {
-        console.error('Element with ID "opening-hours" not found.');
-        return;
-    }
     let workingHours;
     try {
         workingHours = JSON.parse(workingHoursElement.textContent);
-        console.log('Working hours:', workingHours); // Отладочное сообщение
     } catch (error) {
         console.error('Ошибка при парсинге JSON для "opening-hours":', error);
         return;
     }
 
-    const serviceDurationElement = document.getElementById('service-duration');
-    if (!serviceDurationElement) {
-        console.error('Element with ID "service-duration" not found.');
-        return;
-    }
-    const salonDefaultDuration = parseInt(serviceDurationElement.dataset.duration); // В минутах
-    let totalServiceDuration = salonDefaultDuration; // Начальное значение
-
     // Объявление bookingMessage до использования в функциях
     const bookingMessage = document.getElementById('booking-message');
-    if (!bookingMessage) {
-        console.error('Element with ID "booking-message" not found.');
-        return;
-    }
 
     // Функция для добавления услуги
     function addService(serviceId) {
@@ -114,7 +161,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Пометка услуги как выбранной или невыбранной
     function markServiceAsSelected(serviceId, isSelected) {
-        const serviceCard = document.querySelector(`.service-card[data-service-id="${serviceId}"]`);
+const serviceCard = document.querySelector(`.service-card[data-service-id="${serviceId}"]`);
         if (serviceCard) {
             if (isSelected) {
                 serviceCard.classList.add('selected');
@@ -154,8 +201,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.dispatchEvent(event);
             }
         });
-    } else {
-        console.error('Element with class "services-container" not found.');
     }
 
     // Обработка события обновления услуг
@@ -179,8 +224,8 @@ document.addEventListener('DOMContentLoaded', function() {
         // Обновляем итоговую информацию
         const totalPriceElem = document.getElementById('total-price');
         const totalDurationElem = document.getElementById('total-duration');
-        if (totalPriceElem) totalPriceElem.innerText = Math.round(totalPrice) + ' драм';
-        if (totalDurationElem) totalDurationElem.innerText = Math.round(totalDuration) + ' минут';
+        if (totalPriceElem) totalPriceElem.innerText = Math.round(totalPrice);
+        if (totalDurationElem) totalDurationElem.innerText = Math.round(totalDuration);
 
         // Обновляем состояние кнопки
         updateBookingButtonState();
@@ -265,33 +310,40 @@ document.addEventListener('DOMContentLoaded', function() {
         minuteSelect.innerHTML = '<div>Загрузка...</div>';
         summaryText.innerText = 'Загрузка доступных минут...';
 
-        // Собираем данные о выбранных барберах и услугах
+         // Собираем данные о выбранных барберах и услугах
         const bookingDetails = [];
-        for (const [categoryId, services] of Object.entries(selectedServicesByCategory)) {
+        const categories = new Set([...Object.keys(selectedServicesByCategory), ...Object.keys(selectedBarbersByCategory)]);
+
+        categories.forEach(categoryId => {
             const barberId = selectedBarbersByCategory[categoryId] || 'any'; // Выбранный мастер для категории
-            const duration = services.reduce((total, serviceId) => total + getServiceDuration(serviceId), 0);
+            const services = selectedServicesByCategory[categoryId] || [];
+            let duration = 0;
 
-            bookingDetails.push({
-                categoryId: categoryId,
-                services: services.map(serviceId => ({
-                    serviceId: serviceId,
-                    duration: getServiceDuration(serviceId)
-                })),
-                barberId: barberId,
-                duration: duration
-            });
-        }
+            if (services.length > 0) {
+                duration = services.reduce((total, serviceId) => total + getServiceDuration(serviceId), 0);
+            }
 
-        const totalServiceDuration = calculateTotalDuration() || salonDefaultDuration; // Используем длительность по умолчанию, если нет выбранных услуг
+            // Если услуги не выбраны, но выбран барбер, используем default_duration категории
+            if (duration === 0 && barberId !== 'any') {
+                duration = getCategoryDefaultDuration(categoryId);
+            }
 
-        // Логирование отправляемых данных
-        console.log('Отправляемые данные:', {
-            salon_id: salonId,
-            date: date,
-            hour: hour,
-            booking_details: bookingDetails,
-            total_service_duration: totalServiceDuration
+            // Добавляем категорию в bookingDetails, если выбраны услуги или выбран барбер
+            if (services.length > 0 || barberId !== 'any') {
+                bookingDetails.push({
+                    categoryId: categoryId,
+                    services: services.map(serviceId => ({
+                        serviceId: serviceId,
+                        duration: getServiceDuration(serviceId)
+                    })),
+                    barberId: barberId,
+                    duration: duration
+                });
+            }
         });
+
+        // Обновляем totalServiceDuration
+        totalServiceDuration = bookingDetails.reduce((total, detail) => total + detail.duration, 0);
 
         const url = `/salons/get_available_minutes/`;
         fetch(url, {
@@ -330,8 +382,16 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    function getCategoryDefaultDuration(categoryId) {
+        const categoryElement = document.querySelector(`.category[data-category-id="${categoryId}"]`);
+        if (categoryElement) {
+            return parseInt(categoryElement.dataset.defaultDuration, 10) || salonDefaultDuration;
+        }
+        return salonDefaultDuration;
+    }
+    
+
     function populateAvailableMinutes(availableMinutes, date, hour) {
-        console.log('populateAvailableMinutes called with:', availableMinutes, date, hour);
         minuteSelect.innerHTML = '';
         summaryText.innerText = 'Дата и час выбраны, выберите минуту';
 
@@ -342,7 +402,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         availableMinutes.forEach(minute => {
-            console.log(`Processing minute: ${minute}`);
             // Проверяем, что minute является числом
             if (typeof minute !== 'number' || isNaN(minute) || minute < 0 || minute > 59) {
                 console.error(`Invalid minute value received: ${minute}`);
@@ -412,19 +471,15 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     const bookingButton = bookingForm.querySelector('.booking-button');
-
-    if (!bookingButton) {
-        console.error('Element with class "booking-button" not found inside booking-form.');
-        return;
-    }
-
     // Обработчик клика на кнопку бронирования
     bookingButton.addEventListener('click', function(event) {
         // Проверяем, заполнены ли необходимые поля
         if (!canSubmitForm()) {
+
             event.preventDefault();
             // Сохраняем данные формы в localStorage
             saveBookingFormData();
+
             alert('Пожалуйста, выберите дату и время для бронирования.');
         } else {
             event.preventDefault(); // Предотвращаем стандартную отправку формы
@@ -442,19 +497,33 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    function submitBookingForm() {
+    function collectBookingFormData() {
         const formData = {
             salon_id: salonId,
             date: selectedDateInput.value,
             time: selectedTimeInput.value,
-            booking_details: []
+            booking_details: [],
+            total_service_duration: 0
         };
-
-        if (Object.keys(selectedServicesByCategory).length > 0) {
-            for (const [categoryId, services] of Object.entries(selectedServicesByCategory)) {
-                const barberId = selectedBarbersByCategory[categoryId] || 'any';
-                const duration = services.reduce((total, serviceId) => total + getServiceDuration(serviceId), 0);
-
+    
+        const categories = new Set([...Object.keys(selectedServicesByCategory), ...Object.keys(selectedBarbersByCategory)]);
+    
+        categories.forEach(categoryId => {
+            const barberId = selectedBarbersByCategory[categoryId] || 'any';
+            const services = selectedServicesByCategory[categoryId] || [];
+            let duration = 0;
+    
+            if (services.length > 0) {
+                duration = services.reduce((total, serviceId) => total + getServiceDuration(serviceId), 0);
+            }
+    
+            // Если услуги не выбраны, но выбран барбер, используем default_duration категории
+            if (duration === 0 && barberId !== 'any') {
+                duration = getCategoryDefaultDuration(categoryId);
+            }
+    
+            // Добавляем категорию в booking_details, если выбраны услуги или выбран барбер
+            if (services.length > 0 || barberId !== 'any') {
                 formData.booking_details.push({
                     categoryId: categoryId,
                     services: services.map(serviceId => ({
@@ -464,51 +533,32 @@ document.addEventListener('DOMContentLoaded', function() {
                     barberId: barberId,
                     duration: duration
                 });
+    
+                formData.total_service_duration += duration;
             }
-            formData.total_service_duration = calculateTotalDuration() + 5; // Добавляем 5 минут
-        } else {
-            // Нет выбранных услуг, используем длительность по умолчанию
+        });
+    
+        // Если booking_details пустой, используем default_duration салона
+        if (formData.booking_details.length === 0) {
             formData.total_service_duration = salonDefaultDuration;
         }
+    
+        return formData;
+    }
+    
 
-        fetch(`/salons/${salonId}/book/`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCookie('csrftoken')
-            },
-            body: JSON.stringify(formData)
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data.success) {
-                // Бронирование успешно
-                showBookingConfirmation(data);
-            } else if (data.error) {
-                alert(`Ошибка при бронировании: ${data.error}`);
-            }
-        })
-        .catch(error => {
-            console.error('Ошибка при бронировании:', error);
-        });
+    function submitBookingForm() {
+
+        const formData = collectBookingFormData();
+        // console.log(formData);
+        
+        showBookingConfirmationModal(formData);
     }
 
     // Функция для сохранения данных формы бронирования
     function saveBookingFormData() {
-        const formData = {
-            date: selectedDateInput.value || '',
-            time: selectedTimeInput.value || '',
-            barbers: selectedBarbersByCategory,
-            services: selectedServices
-            // Можно добавить другие необходимые поля
-        };
+        const formData = collectBookingFormData();
         localStorage.setItem('bookingFormData', JSON.stringify(formData));
-        console.log('Booking form data saved to localStorage:', formData);
     }
 
     // Функция проверки возможности отправки формы
@@ -521,9 +571,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Обновлённая функция updateBookingButtonState
     function updateBookingButtonState() {
-        const date = selectedDateInput.value;
-        const time = selectedTimeInput.value;
-
         if (canSubmitForm()) {
             bookingButton.disabled = false;
             bookingButton.classList.remove('disabled');
@@ -531,26 +578,15 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             bookingButton.disabled = true;
             bookingButton.classList.add('disabled');
-
-            // Определяем причину отключения
-            let message = '';
-            let messageType = 'error'; // Тип сообщения - ошибка
-
-            if (date === '' && time === '') {
-                message = 'Пожалуйста, выберите дату и время.';
-            } else if (date === '') {
-                message = 'Пожалуйста, выберите дату.';
-            } else if (time === '') {
-                message = 'Пожалуйста, выберите время.';
-            }
-
+    
+            let message = 'Пожалуйста, выберите дату и время.';
             bookingMessage.innerText = message;
             bookingMessage.classList.remove('info');
-            bookingMessage.classList.add(messageType);
+            bookingMessage.classList.add('error');
             bookingMessage.style.display = 'block';
         }
     }
-
+    
     // Инициализация состояния кнопки бронирования
     updateBookingButtonState();
 
@@ -577,12 +613,22 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function calculateTotalDuration() {
         let total = 0;
+    
+        // Учесть услуги
         selectedServices.forEach(serviceId => {
             total += getServiceDuration(serviceId);
         });
+    
+        // Учесть категории без услуг, но с выбранным барбером
+        Object.keys(selectedBarbersByCategory).forEach(categoryId => {
+            if (!selectedServicesByCategory[categoryId] || selectedServicesByCategory[categoryId].length === 0) {
+                total += getCategoryDefaultDuration(categoryId);
+            }
+        });
+    
         return total;
     }
-
+    
     // Обновление формы бронирования
     function updateBookingForm() {
         servicesBarbersContainer.innerHTML = ''; // Очищаем контейнер
@@ -608,11 +654,237 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Функция для отображения модального окна подтверждения бронирования
-    function showBookingConfirmation(data) {
-        // Реализуйте отображение модального окна с деталями бронирования
-        alert('Бронирование успешно создано!');
+    function openAuthModal(action, salonId="") {
+        var modal = document.getElementById('auth-modal');
+        var modalBody = document.getElementById('modal-body');
+    
+        let bodyData = { 'action': action };
+    
+        if (action === 'login_from_booking') {
+            bodyData.salon_id = salonId;
+        }
+    
+        fetch(`/auth/load_modal/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify(bodyData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.html) {
+                modalBody.innerHTML = data.html;
+                modal.classList.add('show');
+                modal.style.display = 'block';
+                // Переназначаем обработчики событий
+                attachModalEventListeners();
+                // Инициализируем автофокусировку для полей ввода кода
+                initializeCodeInputFocus();
+                // Устанавливаем фокус на первый интерактивный элемент
+                var firstInput = modal.querySelector('input, button, select, textarea, a[href]');
+                if (firstInput) {
+                    firstInput.focus();
+                }
+                showBookingConfirmationModal();
+            } else if (data.error) {
+                console.error('Error loading modal content:', data.error);
+            }
+        })
+        .catch(error => console.error('Error fetching modal content:', error));
     }
+
+      // Сбор данных о категориях
+      const categoriesData = {};
+      const categoryButtons = document.querySelectorAll('.category-button');
+  
+      categoryButtons.forEach(button => {
+          const categoryId = button.dataset.categoryId;
+          const categoryName = button.innerText.trim();
+  
+          categoriesData[categoryId] = {
+              name: categoryName,
+              defaultDuration: getCategoryDefaultDuration(categoryId)
+          };
+      });
+  
+      // Сбор данных об услугах
+      const servicesData = {};
+      const serviceCards = document.querySelectorAll('.service-card');
+  
+      serviceCards.forEach(card => {
+          const serviceId = card.dataset.serviceId;
+          const serviceName = card.querySelector('.service-name').innerText.trim();
+          const duration = parseInt(card.dataset.duration, 10) || 0;
+          const price = parseFloat(card.dataset.price.replace(',', '.')) || 0;
+          const categoryId = card.dataset.categoryId;
+  
+          servicesData[serviceId] = {
+              name: serviceName,
+              duration: duration,
+              price: price,
+              categoryId: categoryId
+          };
+      });
+
+    function showBookingConfirmationModal(formData) {
+        const modal = document.getElementById('booking-confirmation-modal');
+
+        const closeButton = modal.querySelector('.close-button');
+        const confirmButton = modal.querySelector('.confirm-button');
+        const cancelButton = modal.querySelector('.cancel-button');
+
+        // Функция для вычисления endTime
+        function calculateEndTime(formData) {
+            let [hours, minutes] = formData.time.split(":").map(Number);
+            minutes += formData.total_service_duration;
+
+            hours += Math.floor(minutes / 60);
+            minutes = minutes % 60;
+
+            let formattedHours = String(hours).padStart(2, "0");
+            let formattedMinutes = String(minutes).padStart(2, "0");
+
+            return `${formattedHours}:${formattedMinutes}`;
+        }
+
+        formData.endTime = calculateEndTime(formData);
+    
+        // Генерируем детали бронирования
+        generateBookingDetailsHTML(formData)
+
+    
+        // Показать модальное окно
+        modal.classList.add('show');
+    
+        // Обработчики событий для кнопок
+        closeButton.onclick = () => {
+            hideBookingConfirmationModal();
+        };
+    
+        confirmButton.onclick = () => {
+            submitBookingData(formData);
+        };
+    
+        cancelButton.onclick = () => {
+            hideBookingConfirmationModal();
+        };
+    
+        // Обработчик закрытия по клику вне модального окна
+        window.onclick = (event) => {
+            if (event.target === modal) {
+                hideBookingConfirmationModal();
+            }
+        };
+    }
+    
+    function hideBookingConfirmationModal() {
+        const modal = document.getElementById('booking-confirmation-modal');
+        modal.classList.remove('show');
+    }
+
+    
+     // Функция для генерации HTML деталей бронирования
+     function generateBookingDetailsHTML(data) {
+        const modal = document.getElementById('booking-confirmation-modal');
+        const bookingDetailsContainer = modal.querySelector('.booking-details');
+
+        const bookingDateTime = modal.querySelector('.booking-date-time')
+        bookingDateTime.innerHTML = `<p class="booking-date-time"><strong>Дата:</strong> ${data.date} <br> <strong>Время:</strong> ${data.time} - ${data.endTime} </p>`;
+        
+        // Очищаем контейнер
+        bookingDetailsContainer.innerHTML = '';
+
+        if (data.booking_details && data.booking_details.length > 0) {
+            data.booking_details.forEach((detail) => {
+                const categoryName = getCategoryNameById(detail.categoryId);
+                const barberName = detail.barberId !== 'any' ? getBarberNameById(detail.barberId) : 'Любой мастер';
+
+                // Создаем HTML для списка услуг
+                let servicesHTML = '';
+                if (detail.services && detail.services.length > 0) {
+                    servicesHTML += '<p><strong>Услуги</strong></p>';
+                    servicesHTML += '<div class="services-badges">';
+                    detail.services.forEach((service) => {
+                        const serviceName = getServiceNameById(service.serviceId);
+                        servicesHTML += `<span class="service-badge">${serviceName}</span>`;
+                    });
+                    servicesHTML += '</div>';
+                } else {
+                    servicesHTML += '<p><em>Услуги не выбраны</em></p>';
+                }
+
+                // Добавляем секцию категории в контейнер
+                bookingDetailsContainer.innerHTML += 
+                    `<div class="category-section">
+                        <h4>${categoryName}</h4>
+                        <p><strong>Мастер:</strong> ${barberName}</p>
+                        ${servicesHTML}
+                    </div>`
+                ;
+            });
+        } else {
+            bookingDetailsContainer.innerHTML = '<p><strong>Услуги и мастера не выбраны.</strong></p>';
+        }
+    }
+
+    function submitBookingData(formData) {
+        const salonDataElement = document.getElementById('salon-data');
+        const salonId = parseInt(salonDataElement.dataset.salonId);
+
+        fetch(`/salons/${salonId}/book/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            const modal = document.getElementById('booking-confirmation-modal');
+            if (data.success) {
+                // Бронирование успешно
+                showBookingSuccessMessage(modal);
+            } else if (data.error) {
+                alert(`Ошибка при бронировании: ${data.error})`);
+            }
+        })
+        .catch(error => {
+            console.error('Ошибка при бронировании:', error);
+        });
+    }
+
+    function showBookingSuccessMessage(modal) {
+        const modalBody = modal.querySelector('.modal-body.booking-modal-body');
+
+        // Очищаем содержимое модального окна
+        console.log(modalBody)
+        modalBody.innerHTML = 
+            `<h2 id="modal-title">Бронирование подтверждено</h2>
+            <p class="booking-success-message">Ваше бронирование успешно подтверждено!</p>
+            <div class="close-confirmation-container">
+                <button class="close-confirmation-button">Закрыть</button>
+            </div>`
+        ;
+
+        // Скрываем футер кнопок
+        const modalFooter = modal.querySelector('.modal-footer.booking-modal-footer');
+        modalFooter.style.display = 'none';
+
+        // Добавляем обработчик события для новой кнопки "Закрыть"
+        const closeConfirmationButton = modalBody.querySelector('.close-confirmation-button');
+        closeConfirmationButton.onclick = () => {
+            hideBookingConfirmationModal();
+        };
+    }
+
 
     // Функция для получения CSRF токена из куки
     function getCookie(name) {
@@ -630,10 +902,5 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         return cookieValue;
     }
-
-    // Функция для открытия модального окна авторизации
-    function openAuthModal(action, salonId) {
-        // Реализуйте логику открытия модального окна авторизации
-        console.log(`Открываем модальное окно для ${action} в салоне ${salonId}`);
-    }
+    
 });

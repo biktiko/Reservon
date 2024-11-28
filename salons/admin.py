@@ -87,7 +87,7 @@ class ServiceCategoryServiceInline(admin.TabularInline):
 
 @admin.register(ServiceCategory)
 class ServiceCategoryAdmin(admin.ModelAdmin):
-    list_display = ('name',)
+    list_display = ('name', 'default_duration')
     search_fields = ('name',)
     inlines = [ServiceCategoryServiceInline]
 

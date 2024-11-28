@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (barbers && barbers.length > 0) {
             // Получаем выбранного барбера для текущей категории
             const selectedBarberId = selectedBarbers[currentCategoryId] || 'any';
-    
+            console.log(selectedBarberId)
             // Добавляем опцию "Любой мастер", если она не является выбранной
             if (selectedBarberId !== 'any') {
                 const anyBarberCard = createBarberCard('any', 'Любой мастер', '/static/salons/img/default-avatar.png', 'Описание или слоган');

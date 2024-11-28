@@ -27,6 +27,7 @@ def normalize_phone_number(phone_number):
 def load_modal(request):
     if request.method == 'POST':
         data = json.loads(request.body)
+        print(data)
         action = data.get('action')
         context = {}
 
@@ -138,7 +139,6 @@ def login_view(request):
     else:
         return JsonResponse({'error': 'Invalid request method.'}, status=400)
 
-
 def verify_code(request):
     if request.method == 'POST':
         data = json.loads(request.body)
@@ -229,7 +229,6 @@ def set_password(request):
     else:
         return JsonResponse({'error': 'Invalid request method.'}, status=400)
 
-
 def enter_password(request):
     if request.method == 'POST':
         data = json.loads(request.body)
@@ -261,7 +260,6 @@ def enter_password(request):
             return JsonResponse({'error': 'Неверный пароль.'}, status=400)
     else:
         return JsonResponse({'error': 'Invalid request method.'}, status=400)
-
 
 @csrf_exempt
 def resend_verification_code(request):
