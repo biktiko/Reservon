@@ -2,7 +2,6 @@
 
 from django.contrib import admin
 from django import forms
-from django_json_widget.widgets import JSONEditorWidget
 from .models import (
     Salon,
     Service,
@@ -12,9 +11,9 @@ from .models import (
     Appointment,
     AppointmentBarberService,
 )
-
 from import_export import resources
 from import_export.admin import ImportExportModelAdmin
+from django.contrib.auth.models import User
 
 # --- Настройка админки для AppointmentBarberService ---
 
@@ -93,18 +92,18 @@ class ServiceCategoryAdmin(admin.ModelAdmin):
 
 # --- Настройка админки для Barber ---
 
-# Форма для модели Barber с JSONEditorWidget
+# Форма для модели Barber с использованием стандартного виджета Textarea
 class BarberAdminForm(forms.ModelForm):
     class Meta:
         model = Barber
         fields = '__all__'
         widgets = {
-            'availability': JSONEditorWidget(),
+            'availability': forms.Textarea(attrs={'rows': 3, 'cols': 40}),  # Используем стандартный виджет
         }
 
 @admin.register(Barber)
 class BarberAdmin(ImportExportModelAdmin):
-    form = BarberAdminForm  # Используем форму с JSONEditorWidget
+    form = BarberAdminForm  # Используем форму с стандартным виджетом
     list_display = ('name', 'salon', 'get_categories')
     list_filter = ('salon', 'categories')
     search_fields = ('name', 'salon__name')
@@ -118,20 +117,24 @@ class BarberAdmin(ImportExportModelAdmin):
 
 # --- Настройка админки для Salon ---
 
-# Форма для модели Salon с JSONEditorWidget
+# Форма для модели Salon с использованием стандартного виджета Textarea
 class SalonAdminForm(forms.ModelForm):
     class Meta:
         model = Salon
         fields = '__all__'
         widgets = {
-            'opening_hours': JSONEditorWidget(),  # Поле opening_hours
+            'opening_hours': forms.Textarea(attrs={'rows': 5, 'cols': 60}),  # Используем стандартный виджет
         }
 
-# Inline для Barber внутри Salon
+    def __init__(self, *args, **kwargs):
+        super(SalonAdminForm, self).__init__(*args, **kwargs)
+        # Опционально: Ограничьте доступных администраторов, например, только активные пользователи
+        # self.fields['admins'].queryset = User.objects.filter(is_active=True)
+
 class BarberInline(admin.StackedInline):
     model = Barber
     extra = 1
-    form = BarberAdminForm  # Используем форму с JSONEditorWidget
+    form = BarberAdminForm  # Используем форму с стандартным виджетом
     fields = ('name', 'avatar', 'description', 'availability', 'categories')
     filter_horizontal = ('categories',)
     autocomplete_fields = ['categories']
@@ -142,10 +145,11 @@ class SalonAdmin(ImportExportModelAdmin):
     list_display = ('name', 'status', 'default_price', 'default_duration', 'reservDays', 'coordinates')
     list_filter = ('status',)
     search_fields = ('name', 'address')
-    inlines = [ServiceInline, SalonImageInline, BarberInline]
+    inlines = [ServiceInline, SalonImageInline, BarberInline]  # Убрали AppointmentBarberServiceInline
+    autocomplete_fields = ['admins']  # Добавляем 'admins' в autocomplete_fields
     fieldsets = (
         (None, {
-            'fields': ('name', 'logo', 'address', 'coordinates', 'opening_hours', 'reservDays', 'status')
+            'fields': ('name', 'logo', 'address', 'coordinates', 'opening_hours', 'reservDays', 'status', 'admins')
         }),
         ('Описание', {
             'fields': (
@@ -157,6 +161,13 @@ class SalonAdmin(ImportExportModelAdmin):
             'fields': ('default_duration', 'default_price')
         }),
     )
+
+    def formfield_for_manytomany(self, db_field, request, **kwargs):
+        if db_field.name == 'admins':
+            # Если хотите ограничить выбор пользователей, например, только активные сотрудники, раскомментируйте следующую строку:
+            # kwargs['queryset'] = User.objects.filter(is_staff=True, is_active=True)
+            pass
+        return super().formfield_for_manytomany(db_field, request, **kwargs)
 
 # --- Настройка админки для SalonImage ---
 

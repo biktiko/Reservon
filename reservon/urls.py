@@ -8,9 +8,11 @@ urlpatterns = [
     path('grappelli/', include('grappelli.urls')),
     path('admin/', admin.site.urls),
     path('', include('main.urls')),
-    path('salons/', include(('salons.urls', 'salons'), namespace='salons')),
-    path('i18n/', include('django.conf.urls.i18n')), 
     path('auth/', include(('authentication.urls', 'authentication'), namespace='authentication')),
+    path('salons/', include(('salons.urls', 'salons'), namespace='salons')),
+    path('account/', include('account.urls')),
+    path('i18n/', include('django.conf.urls.i18n')), 
+
 
 
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

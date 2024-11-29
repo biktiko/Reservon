@@ -30,10 +30,9 @@ ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[])
 # Application definition
 
 INSTALLED_APPS = [
-    'suit',
-    'colorfield',
+    # 'suit',
     'grappelli',
-    'admin_interface',
+    'colorfield',
     'import_export',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -46,6 +45,7 @@ INSTALLED_APPS = [
     'authentication',
     'main',
     'salons',
+    'account',
 ]
 
 
@@ -132,6 +132,8 @@ USE_TZ = True
 TIME_ZONE = 'UTC'  # It's recommended to use UTC
 
 LANGUAGE_CODE = 'en'
+
+# AUTH_USER_MODEL = 'authentication.CustomUser'
 
 LANGUAGES = [
     ('en', _('English')),
