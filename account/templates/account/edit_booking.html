@@ -1,0 +1,57 @@
+<!-- account/templates/account/edit_booking.html -->
+
+{% extends "account/account_base.html" %}
+
+{% block page_content %}
+<div class="edit-booking">
+    <h1>Редактировать бронирование</h1>
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        {{ formset.management_form }}
+
+        {% for form in formset %}
+            <div class="barber-service-form">
+                {{ form.as_p }}
+            </div>
+        {% endfor %}
+
+        <button type="submit" class="submit-button">Сохранить изменения</button>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.edit-booking {
+    background-color: rgb(70, 70, 70);
+    color: white;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 20px;
+}
+
+.edit-booking h1 {
+    color: rgb(240, 165, 0);
+    margin-bottom: 20px;
+}
+
+.barber-service-form {
+    margin-bottom: 20px;
+}
+
+.submit-button {
+    padding: 10px 20px;
+    background-color: rgb(240, 165, 0);
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+.submit-button:hover {
+    background-color: rgb(220, 145, 0);
+}
+</style>
+{% endblock %}

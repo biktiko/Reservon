@@ -145,6 +145,12 @@ LOCALE_PATHS = [
     os.path.join(BASE_DIR, 'locale'),
 ]
 
+DATE_FORMAT = _('j E')
+TIME_FORMAT = _('H:i')
+
+SHORT_DATE_FORMAT = DATE_FORMAT
+SHORT_TIME_FORMAT = TIME_FORMAT
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 

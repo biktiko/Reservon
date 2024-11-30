@@ -1,0 +1,199 @@
+/* Стили для manage_bookings.html */
+
+/* Контейнер для бронирований */
+.bookings-container {
+    padding: 20px;
+}
+
+.bookings-container h1 {
+    color: rgb(240, 165, 0);
+    margin-bottom: 20px;
+}
+
+/* Форма фильтров */
+.filter-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 20px;
+    background-color: rgb(51, 51, 51);
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.filter-form label {
+    margin-right: 10px;
+    color: white;
+}
+
+.filter-form select {
+    margin-right: 20px;
+    padding: 5px;
+}
+
+.filter-form button {
+    padding: 5px 10px;
+    background-color: rgb(240, 165, 0);
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 3px;
+}
+
+.filter-form button:hover {
+    background-color: rgb(220, 145, 0);
+}
+
+/* Список бронирований */
+.bookings-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+/* ... existing styles ... */
+
+/* Booking card styling */
+.booking-card {
+    background-color: rgb(51, 51, 51);
+    color: white;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    width: 100%;
+    box-sizing: border-box;
+    position: relative;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+}
+
+.booking-time {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: rgb(240, 165, 0);
+}
+
+/* Стили информации о бронировании */
+.booking-info p {
+    display: flex;
+    align-items: center;
+    margin: 5px 0;
+}
+
+.booking-info i {
+    color: rgb(240, 165, 0);
+    margin-right: 10px;
+    font-size: 1.2em;
+}
+
+.booking-info span {
+    font-size: 1em;
+    color: white;
+}
+
+/* Стили действий с бронированием */
+.booking-actions {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+}
+
+.booking-actions {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    display: flex;
+}
+
+.booking-actions a:hover {
+    color: rgb(240, 165, 0);
+}
+
+/* Иконки действий */
+.booking-actions a.edit-button i {
+    color: rgb(0, 200, 0);
+}
+
+.booking-actions a.delete-button i {
+    color: rgb(200, 0, 0);
+}
+
+.booking-actions a.details-button i {
+    color: rgb(240, 165, 0);
+}
+
+/* Hover-эффект для карточек бронирования */
+.booking-card:hover {
+    background-color: rgb(60, 60, 60);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+    cursor: pointer;
+}
+
+.action-button {
+    color: white;
+    margin-left: 10px;
+    font-size: 1em;
+    padding: 5px;
+}
+
+.action-button:hover {
+    color: rgb(240, 165, 0);
+}
+
+.action-button i {
+    font-size: 1.2em;
+}
+
+/* Пагинация */
+.pagination {
+    margin-top: 20px;
+}
+
+.pagination ul {
+    list-style-type: none;
+    display: flex;
+    flex-wrap: wrap;
+    padding: 0;
+}
+
+.pagination ul li {
+    margin-right: 10px;
+}
+
+.pagination ul li a {
+    color: white;
+    text-decoration: none;
+    padding: 5px 10px;
+    background-color: rgb(51, 51, 51);
+    border-radius: 3px;
+}
+
+.pagination ul li a:hover {
+    background-color: rgb(70, 70, 70);
+}
+
+/* Адаптивность формы фильтров */
+@media screen and (max-width: 768px) {
+    .filter-form {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .filter-form label,
+    .filter-form select,
+    .filter-form button {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+
+    .filter-form label {
+        margin-right: 0;
+    }
+
+    .filter-form select {
+        margin-right: 0;
+    }
+
+    .filter-form button {
+        align-self: stretch;
+    }
+}

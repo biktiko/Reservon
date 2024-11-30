@@ -1,0 +1,98 @@
+<!-- account/templates/account/account_base.html -->
+
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<div class="dashboard-container">
+
+
+    <!-- Левое боковое меню -->
+    <nav class="sidebar">
+        <ul>
+            <li class="{% if active_sidebar == 'account' %}active{% endif %}">
+                <a href="#"><i class="fas fa-user"></i> Мой аккаунт</a>
+            </li>
+            <li class="{% if active_sidebar == 'my_bookings' %}active{% endif %}">
+                <a href="#"><i class="fas fa-calendar-alt"></i> Мои бронирования</a>
+            </li>
+            <li class="{% if active_sidebar == 'salons' %}active{% endif %}">
+                <a href="{% url 'account_dashboard' %}"><i class="fas fa-store"></i> Мои салоны</a>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- Основная область контента -->
+    <div class="main-content">
+
+        <!-- Верхнее меню -->
+        <div class="top-menu">
+            <ul>
+                <li class="{% if active_menu == 'salon' %}active{% endif %}">
+                    <a href="{% url 'account_dashboard' %}">Салон</a>
+                </li>
+                <li class="{% if active_menu == 'bookings' %}active{% endif %}">
+                    <a href="{% url 'manage_bookings' %}">Бронирования</a>
+                </li>
+                {% if salons|length > 1 %}
+                    <li><a href="#" id="change-salon-button">Сменить салон</a></li>
+                {% endif %}
+            </ul>
+        </div>
+
+        <!-- Контент страницы -->
+        <div class="page-content">
+            {% block page_content %}{% endblock %}
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для выбора салона -->
+{% if salons|length > 1 %}
+<div id="salon-modal" class="modal">
+    <div class="modal-content">
+        <span class="close-button">&times;</span>
+        <h2>Выберите салон</h2>
+        <ul>
+            {% for salon in salons %}
+                <li><a href="?salon_id={{ salon.id }}">{{ salon.name }}</a></li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'account/css/dashboard.css' %}">
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+<script>
+    // Скрипт для открытия и закрытия модального окна
+    document.addEventListener('DOMContentLoaded', function() {
+        var modal = document.getElementById('salon-modal');
+        var btn = document.getElementById('change-salon-button');
+        var span = document.getElementsByClassName('close-button')[0];
+
+        if(btn) {
+            btn.onclick = function() {
+                modal.style.display = 'block';
+            }
+        }
+
+        if(span) {
+            span.onclick = function() {
+                modal.style.display = 'none';
+            }
+        }
+
+        window.onclick = function(event) {
+            if(event.target == modal) {
+                modal.style.display = 'none';
+            }
+        }
+    });
+</script>
+{% endblock %}

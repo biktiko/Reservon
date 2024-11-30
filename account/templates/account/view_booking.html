@@ -1,0 +1,57 @@
+{% extends "account/account_base.html" %}
+
+{% block page_content %}
+<div class="booking-details">
+    <h1>Детали бронирования</h1>
+    <p><strong>Время:</strong> {{ appointment.start_datetime|date:"d.m.Y H:i" }} - {{ appointment.end_datetime|date:"d.m.Y H:i" }}</p>
+    <p><strong>Клиент:</strong> {{ appointment.user.get_full_name }}</p>
+    <p><strong>Мастер(а):</strong>
+        {% for barber_service in appointment.barber_services.all %}
+            {{ barber_service.barber.name }}{% if not forloop.last %}, {% endif %}
+        {% endfor %}
+    </p>
+    <p><strong>Услуги:</strong>
+        {% for barber_service in appointment.barber_services.all %}
+            {% for service in barber_service.services.all %}
+                {{ service.name }}{% if not forloop.last %}, {% endif %}
+            {% endfor %}
+        {% endfor %}
+    </p>
+    <a href="{% url 'manage_bookings' %}" class="back-button">Назад к списку</a>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.booking-details {
+    background-color: rgb(70, 70, 70);
+    color: white;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 20px;
+}
+
+.booking-details h1 {
+    color: rgb(240, 165, 0);
+    margin-bottom: 20px;
+}
+
+.booking-details p {
+    margin: 10px 0;
+}
+
+.back-button {
+    display: inline-block;
+    margin-top: 20px;
+    padding: 10px 20px;
+    background-color: rgb(240, 165, 0);
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+}
+
+.back-button:hover {
+    background-color: rgb(220, 145, 0);
+}
+</style>
+{% endblock %}

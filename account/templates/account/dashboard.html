@@ -1,0 +1,53 @@
+<!-- account/templates/account/dashboard.html -->
+
+{% extends "account/account_base.html" %}
+
+{% block page_content %}
+<div class="salon-content">
+    {% if selected_salon %}
+        <div class="salon-details">
+            <h1>{{ selected_salon.name }}</h1>
+            <p><strong>Описание:</strong> {{ selected_salon.description_ru }}</p>
+            <p><strong>Адрес:</strong> {{ selected_salon.address }}</p>
+            <!-- Отображение времени работы -->
+            <p><strong>Время работы:</strong></p>
+            <ul>
+                {% for day, hours in selected_salon.opening_hours.items %}
+                    <li>{{ day|capfirst }}: {{ hours.open }} - {{ hours.close }}</li>
+                {% endfor %}
+            </ul>
+            <p><strong>Статус:</strong> {{ selected_salon.get_status_display }}</p>
+
+            <!-- Отображение мастеров -->
+            <h2>Мастера</h2>
+            <ul>
+                {% for barber in selected_salon.barbers.all %}
+                    <li>{{ barber.name }}</li>
+                {% empty %}
+                    <li>Нет мастеров.</li>
+                {% endfor %}
+            </ul>
+
+            <!-- Отображение услуг по категориям -->
+            <h2>Услуги</h2>
+            {% if categories_with_services %}
+                {% for category_name, services in categories_with_services %}
+                    <h3>{{ category_name }}</h3>
+                    <ul>
+                        {% for service in services %}
+                            <li>{{ service.name }} - {{ service.price }} {{ currency_symbol }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endfor %}
+            {% else %}
+                <p>Нет услуг.</p>
+            {% endif %}
+
+            <!-- Кнопка редактирования -->
+            <a href="#" class="edit-button"><i class="fas fa-edit"></i> Редактировать информацию</a>
+        </div>
+    {% else %}
+        <p>У вас нет салонов.</p>
+    {% endif %}
+</div>
+{% endblock %}

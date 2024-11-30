@@ -1,0 +1,102 @@
+/* account/static/account/css/account.css */
+
+/* Верхнее меню */
+.top-menu {
+    background-color: rgb(51, 51, 51); /* Темный фон */
+    padding: 10px;
+    border-bottom: 1px solid #ccc;
+}
+
+.top-menu ul {
+    list-style-type: none;
+    display: flex;
+    margin: 0;
+    padding: 0;
+}
+
+.top-menu ul li {
+    margin-right: 20px;
+}
+
+.top-menu ul li a {
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.top-menu ul li.active a,
+.top-menu ul li a:hover {
+    color: rgb(240, 165, 0);
+}
+
+.top-menu ul li a {
+    padding: 5px 10px;
+}
+
+.top-menu ul li.active a {
+    color: rgb(240, 165, 0);
+    border-bottom: 2px solid rgb(240, 165, 0);
+}
+
+
+.top-menu ul li a i {
+    margin-right: 5px;
+}
+
+
+/* Левое боковое меню */
+.sidebar {
+    flex: 0 0 200px;
+    width: 200px;
+    background-color: rgb(51, 51, 51);
+    color: white;
+    padding-top: 20px;
+}
+
+.sidebar ul {
+    list-style-type: none;
+    padding-left: 0;
+}
+
+.sidebar ul li {
+    padding: 15px 20px;
+}
+
+.sidebar ul li a {
+    color: white;
+    text-decoration: none;
+}
+
+.sidebar ul li.active,
+.sidebar ul li:hover {
+    background-color: rgb(70, 70, 70);
+}
+
+.sidebar ul li.active a,
+.sidebar ul li:hover a {
+    color: rgb(240, 165, 0);
+}
+
+.sidebar ul li a i {
+    margin-right: 10px;
+}
+
+.main-content {
+    flex-grow: 1;
+    background-color: rgb(70, 70, 70); /* Темный фон */
+    padding: 20px;
+}
+
+/* Адаптивность */
+@media screen and (max-width: 768px) {
+
+
+    .top-menu ul {
+        flex-direction: column;
+    }
+
+    .top-menu ul li {
+        margin-right: 0;
+        margin-bottom: 10px;
+    }
+}

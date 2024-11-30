@@ -1,0 +1,109 @@
+<!-- account/templates/account/manage_bookings.html -->
+
+{% extends "account/account_base.html" %}
+{% load custom_filters %}
+
+{% block page_content %}
+<div class="bookings-container">
+
+    <!-- Фильтры -->
+    <form method="get" class="filter-form">
+        <label for="barber">Мастер:</label>
+        <select name="barber" id="barber">
+            <option value="">Все</option>
+            {% for barber in barbers %}
+                <option value="{{ barber.id }}" {% if barber.id|stringformat:"s" == request.GET.barber %}selected{% endif %}>{{ barber.name }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="status">Статус:</label>
+        <select name="status" id="status">
+            <option value="" {% if request.GET.status == '' %}selected{% endif %}>Все</option>
+            <option value="upcoming" {% if request.GET.status == 'upcoming' or request.GET.status == None %}selected{% endif %}>Предстоящие</option>
+            <option value="past" {% if request.GET.status == 'past' %}selected{% endif %}>Прошедшие</option>
+        </select>
+
+        <button type="submit">Применить</button>
+    </form>
+
+    <!-- Список бронирований -->
+    {% for appointment in appointments %}
+        {% if appointment.id %} 
+    <div class="booking-card">
+        <div class="booking-info">
+           <!-- Внутри .booking-info -->
+           <span class="booking-time">{{ appointment.start_datetime|format_date_localized }}, {{ appointment.start_datetime|time:"H:i" }} - {{ appointment.end_datetime|time:"H:i" }}</span>
+           {% for barber_service in appointment.barber_services.all %}
+                    {{ barber_service.barber.name }}{% if not forloop.last %}, {% endif %}
+                {% endfor %}
+            </p>
+
+            <!-- Начнется через -->
+            {% with time_diff=appointment.start_datetime|timeuntil:now %}
+            {% if appointment.start_datetime > now %}
+                <p>
+                    <i class="fas fa-hourglass-start"></i>
+                    <span class="booking-countdown">Начнется через {{ time_diff }}</span>
+                </p>
+            {% else %}
+                <p>
+                    <i class="fas fa-hourglass-end"></i>
+                    <span class="booking-countdown">Уже началось</span>
+                </p>
+            {% endif %}
+        {% endwith %}
+
+
+        {% if appointment.barber_services.exists %}
+        {% for barber_service in appointment.barber_services.all %}
+            {% if barber_service.services.exists %}
+                {% for service in barber_service.services.all %}
+                    {% if service.category %}
+                        <p>
+                            <i class="fas fa-tags"></i>
+                            <span class="booking-categories">{{ service.category.name }}</span>
+                        </p>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+    
+        </div>
+        <div class="booking-actions">
+            <a href="{% url 'edit_booking' appointment.id %}" class="action-button" title="Редактировать"><i class="fas fa-edit"></i></a>
+            <a href="{% url 'delete_booking' appointment.id %}" class="action-button" title="Удалить"><i class="fas fa-trash"></i></a>
+            <a href="{% url 'view_booking' appointment.id %}" class="action-button" title="Подробнее"><i class="fas fa-info-circle"></i></a>
+        </div>
+        
+    </div>
+    {% else %}
+        <!-- Опционально: вывести сообщение об ошибке или пропустить этот объект -->
+        <p>Ошибка: бронирование без идентификатора.</p>
+    {% endif %}
+        {% empty %}
+        <p>Бронирований пока нет</p>
+    {% endfor %}
+
+
+    <!-- Пагинация -->
+    <div class="pagination">
+        {% if appointments.has_other_pages %}
+            <ul>
+                {% if appointments.has_previous %}
+                    <li><a href="?page=1{% if request.GET.barber %}&barber={{ request.GET.barber }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">&laquo; Первая</a></li>
+                    <li><a href="?page={{ appointments.previous_page_number }}{% if request.GET.barber %}&barber={{ request.GET.barber }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">Предыдущая</a></li>
+                {% endif %}
+
+                <li>Страница {{ appointments.number }} из {{ appointments.paginator.num_pages }}</li>
+
+                {% if appointments.has_next %}
+                    <li><a href="?page={{ appointments.next_page_number }}{% if request.GET.barber %}&barber={{ request.GET.barber }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">Следующая</a></li>
+                    <li><a href="?page={{ appointments.paginator.num_pages }}{% if request.GET.barber %}&barber={{ request.GET.barber }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">Последняя &raquo;</a></li>
+                {% endif %}
+            </ul>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
