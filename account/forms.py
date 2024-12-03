@@ -1,48 +1,55 @@
 # account/forms.py
 
 from django import forms
+from django.forms import ModelForm
+from django.forms.models import inlineformset_factory
 from salons.models import Appointment, AppointmentBarberService, Barber, Service
-from django.forms import inlineformset_factory, BaseInlineFormSet
-from django.contrib.auth.models import User
+from django.forms.widgets import DateTimeInput, SelectMultiple
 
-class AppointmentForm(forms.ModelForm):
+class CustomDateTimeInput(DateTimeInput):
+    def __init__(self, attrs=None, format=None):
+        final_attrs = {'class': 'datetime-input'}
+        if attrs is not None:
+            final_attrs.update(attrs)
+        super().__init__(attrs=final_attrs, format='%d.%m.%Y %H:%M')
+
+class BarberSelectMultiple(forms.SelectMultiple):
+    def create_option(self, name, value, label, selected, index, subindex=None, attrs=None):
+        option = super().create_option(
+            name, value, label, selected, index, subindex=subindex, attrs=attrs
+        )
+        try:
+            barber = Barber.objects.get(pk=value)
+            option['attrs']['data-avatar-url'] = barber.get_avatar_url()
+        except Barber.DoesNotExist:
+            option['attrs']['data-avatar-url'] = '/static/salons/img/default-avatar.png'
+        return option
+
+class AppointmentForm(ModelForm):
     class Meta:
         model = Appointment
-        fields = ['user', 'start_datetime', 'end_datetime']
+        fields = ['start_datetime']  # Удалено поле 'barbers'
         widgets = {
-            'start_datetime': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
-            'end_datetime': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+            'start_datetime': CustomDateTimeInput(attrs={'id': 'id_start_datetime'}),
+            # 'barbers' удалено
         }
 
-    def __init__(self, *args, **kwargs):
-        salon = kwargs.pop('salon', None)
-        super().__init__(*args, **kwargs)
-        if salon:
-            self.fields['user'].queryset = User.objects.filter(is_active=True)
-            # Если нужно ограничить выбор пользователей, вы можете это сделать здесь
-
-class AppointmentBarberServiceForm(forms.ModelForm):
+class AppointmentBarberServiceForm(ModelForm):
     class Meta:
         model = AppointmentBarberService
         fields = ['barber', 'services', 'start_datetime', 'end_datetime']
         widgets = {
-            'start_datetime': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
-            'end_datetime': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+            'services': forms.SelectMultiple(attrs={'class': 'services-select'}),
+            'barber': forms.Select(attrs={'class': 'barber-select'}),
+            'start_datetime': CustomDateTimeInput(),
+            'end_datetime': CustomDateTimeInput(),
         }
-        
-class BaseAppointmentBarberServiceFormSet(BaseInlineFormSet):
-    def __init__(self, *args, **kwargs):
-        self.salon = kwargs.pop('salon', None)
-        super().__init__(*args, **kwargs)
-        for form in self.forms:
-            form.fields['barber'].queryset = Barber.objects.filter(salon=self.salon)
-            form.fields['services'].queryset = Service.objects.filter(salon=self.salon)
 
 AppointmentBarberServiceFormSet = inlineformset_factory(
     Appointment,
     AppointmentBarberService,
     form=AppointmentBarberServiceForm,
-    formset=BaseAppointmentBarberServiceFormSet,  # Указываем кастомный класс
+    fields=['barber', 'services', 'start_datetime', 'end_datetime'],
     extra=1,
     can_delete=True
 )

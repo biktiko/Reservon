@@ -8,28 +8,34 @@
 
     <!-- Фильтры -->
     <form method="get" class="filter-form">
-        <label for="barber">Мастер:</label>
-        <select name="barber" id="barber">
-            <option value="">Все</option>
-            {% for barber in barbers %}
-                <option value="{{ barber.id }}" {% if barber.id|stringformat:"s" == request.GET.barber %}selected{% endif %}>{{ barber.name }}</option>
-            {% endfor %}
-        </select>
+        <!-- Кнопка меню для мобильных устройств -->
+    
+        <div class="filter-fields">
+            <label for="barber">Мастер:</label>
+            <select name="barber" id="barber"  onchange="this.form.submit()">
+                <option value="">Все</option>
+                {% for barber in barbers %}
+                    <option value="{{ barber.id }}" {% if barber.id|stringformat:"s" == request.GET.barber %}selected{% endif %}>{{ barber.name }}</option>
+                {% endfor %}
+            </select>
 
-        <label for="status">Статус:</label>
-        <select name="status" id="status">
-            <option value="" {% if request.GET.status == '' %}selected{% endif %}>Все</option>
-            <option value="upcoming" {% if request.GET.status == 'upcoming' or request.GET.status == None %}selected{% endif %}>Предстоящие</option>
-            <option value="past" {% if request.GET.status == 'past' %}selected{% endif %}>Прошедшие</option>
-        </select>
+            <label for="status">Статус:</label>
+            <select name="status" id="status"  onchange="this.form.submit()">
+                <option value="" {% if request.GET.status == '' %}selected{% endif %}>Все</option>
+                <option value="upcoming" {% if request.GET.status == 'upcoming' or request.GET.status == None %}selected{% endif %}>Предстоящие</option>
+                <option value="past" {% if request.GET.status == 'past' %}selected{% endif %}>Прошедшие</option>
+            </select>
+        </div>
 
-        <button type="submit">Применить</button>
+        <div class="filter-buttons">
+            <a href="{% url 'add_booking' %}" class="add-booking-button">Добавить бронирование</a>
+        </div>
     </form>
 
     <!-- Список бронирований -->
     {% for appointment in appointments %}
         {% if appointment.id %} 
-    <div class="booking-card">
+    <div class="booking-card"  onclick="window.location.href=`{% url 'edit_booking' appointment.id %}`">
         <div class="booking-info">
            <!-- Внутри .booking-info -->
            <span class="booking-time">{{ appointment.start_datetime|format_date_localized }}, {{ appointment.start_datetime|time:"H:i" }} - {{ appointment.end_datetime|time:"H:i" }}</span>
@@ -73,7 +79,6 @@
         <div class="booking-actions">
             <a href="{% url 'edit_booking' appointment.id %}" class="action-button" title="Редактировать"><i class="fas fa-edit"></i></a>
             <a href="{% url 'delete_booking' appointment.id %}" class="action-button" title="Удалить"><i class="fas fa-trash"></i></a>
-            <a href="{% url 'view_booking' appointment.id %}" class="action-button" title="Подробнее"><i class="fas fa-info-circle"></i></a>
         </div>
         
     </div>
@@ -107,3 +112,13 @@
 </div>
 {% endblock %}
 
+{% block extra_js %}
+<script>
+    function toggleSidebar() {
+        var sidebar = document.querySelector('.sidebar');
+        var overlay = document.querySelector('.overlay');
+        sidebar.classList.toggle('active');
+        overlay.classList.toggle('active');
+    }
+</script>
+{% endblock %}

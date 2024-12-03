@@ -1,13 +1,14 @@
 # account/views.py
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
-from salons.models import Salon, Appointment, Barber
+from salons.models import Salon, Appointment, Barber, Service
 from django.db.models import Q
 from django.core.paginator import Paginator
 from .forms import AppointmentForm, AppointmentBarberServiceFormSet
 from django.utils import timezone
 from django.contrib import messages
 from collections import defaultdict
+from django.db import transaction
 
 
 @login_required
@@ -20,18 +21,22 @@ def add_booking(request):
         return redirect('account_dashboard')
 
     if request.method == 'POST':
-        salon_id = request.POST.get('salon')
-        salon = get_object_or_404(Salon, id=salon_id, admins=user)
-        form = AppointmentForm(request.POST, salon=salon)
-        formset = AppointmentBarberServiceFormSet(request.POST, salon=salon)
+        form = AppointmentForm(request.POST, instance=appointment)
+        formset = AppointmentBarberServiceFormSet(request.POST, instance=appointment)
         if form.is_valid() and formset.is_valid():
-            appointment = form.save(commit=False)
-            appointment.salon = salon
-            appointment.save()
-            formset.instance = appointment
-            formset.save()
-            messages.success(request, 'Бронирование успешно создано.')
-            return redirect('manage_bookings')
+            with transaction.atomic():
+                appointment = form.save()
+                barber_services = formset.save(commit=False)
+                # Удаляем помеченные на удаление объекты
+                for obj in formset.deleted_objects:
+                    obj.delete()
+                # Сохраняем новые и изменённые объекты
+                for bs in barber_services:
+                    bs.appointment = appointment
+                    bs.save()
+                formset.save_m2m()
+                messages.success(request, 'Бронирование успешно обновлено.')
+                return redirect('manage_bookings')
     else:
         salon = salons.first()  # Выбираем первый салон по умолчанию
         form = AppointmentForm(salon=salon)
@@ -47,25 +52,92 @@ def add_booking(request):
 @login_required
 def edit_booking(request, booking_id):
     user = request.user
-    appointment = get_object_or_404(Appointment, id=booking_id, salon__in=user.administered_salons.all())
-    salon = appointment.salon  # Получаем салон из бронирования
+    appointment = get_object_or_404(
+        Appointment.objects.select_related('user__main_profile').prefetch_related('barbers'),
+        id=booking_id,
+        salon__in=user.administered_salons.all()
+    )
+    salon = appointment.salon
+
+    # Получаем имя клиента
+    if appointment.user:
+        customer_name = appointment.user.get_full_name() or 'Гость'
+    else:
+        customer_name = 'Гость'
+
+    # Получаем телефон клиента
+    if appointment.user and hasattr(appointment.user, 'main_profile'):
+        customer_phone = appointment.user.main_profile.phone_number or 'Не указан'
+    else:
+        customer_phone = 'Не указан'
 
     if request.method == 'POST':
-        form = AppointmentForm(request.POST, instance=appointment, salon=salon)
-        formset = AppointmentBarberServiceFormSet(request.POST, instance=appointment, salon=salon)
+        form = AppointmentForm(request.POST, instance=appointment)
+        formset = AppointmentBarberServiceFormSet(request.POST, instance=appointment)
         if form.is_valid() and formset.is_valid():
-            form.save()
-            formset.save()
-            messages.success(request, 'Бронирование успешно обновлено.')
-            return redirect('manage_bookings')
+            with transaction.atomic():
+                appointment = form.save()
+                formset.instance = appointment  # Устанавливаем связь формсета с appointment
+
+                # Сохраняем формы по отдельности
+                instances = formset.save(commit=False)
+                for obj in formset.deleted_objects:
+                    obj.delete()
+                for instance in instances:
+                    instance.appointment = appointment
+                    instance.save()
+                formset.save_m2m()
+                messages.success(request, 'Бронирование успешно обновлено.')
+                return redirect('manage_bookings')
+        else:
+            messages.error(request, 'Пожалуйста, исправьте ошибки ниже.')
     else:
-        form = AppointmentForm(instance=appointment, salon=salon)
-        formset = AppointmentBarberServiceFormSet(instance=appointment, salon=salon)
+        form = AppointmentForm(instance=appointment)
+        formset = AppointmentBarberServiceFormSet(instance=appointment)
+
+    # Вычисляем длительность и цену для каждой категории
+    category_forms = []
+    total_duration = 0
+    total_price = 0
+    for form_instance in formset.forms:
+        barber_service = form_instance.instance
+        if barber_service.pk:
+            services = barber_service.services.all()
+        else:
+            # Используем начальные данные в GET-запросе или незаполненные формы
+            services = form_instance.initial.get('services', [])
+            # Нужно получить реальные объекты Service
+            services = Service.objects.filter(id__in=services)
+        # Вычисляем длительность и цену категории
+        total_duration_category = sum(service.duration.total_seconds() / 60 for service in services)
+        total_price_category = sum(service.price for service in services)
+        total_duration += total_duration_category
+        total_price += total_price_category
+        categories = set(service.category.name for service in services if service.category)
+        category_name = ', '.join(categories) if categories else 'Без категории'
+        category_forms.append({
+            'form': form_instance,
+            'duration': total_duration_category,
+            'price': total_price_category,
+            'category_name': category_name,
+        })
+
+    # Получаем количество категорий
+    category_count = len(category_forms)
 
     context = {
         'form': form,
         'formset': formset,
         'appointment': appointment,
+        'total_duration': total_duration,
+        'total_price': total_price,
+        'category_count': category_count,
+        'customer_name': customer_name,
+        'customer_phone': customer_phone,
+        'category_forms': category_forms,
+        'active_menu': 'bookings',
+        'active_sidebar': 'salons',
+        'LANGUAGE_CODE': request.LANGUAGE_CODE,
     }
     return render(request, 'account/edit_booking.html', context)
 
@@ -106,21 +178,6 @@ def account_dashboard(request):
         'active_sidebar': 'salons',
     }
     return render(request, 'account/dashboard.html', context)
-
-@login_required
-def delete_booking(request, booking_id):
-    user = request.user
-    appointment = get_object_or_404(Appointment, id=booking_id, salon__in=user.administered_salons.all())
-
-    if request.method == 'POST':
-        appointment.delete()
-        return redirect('manage_bookings')
-
-    context = {
-        'appointment': appointment,
-    }
-    return render(request, 'account/delete_booking.html', context)
-
 # account/views.py
 
 @login_required
@@ -179,13 +236,15 @@ def manage_bookings(request):
     return render(request, 'account/manage_bookings.html', context)
 
 @login_required
-def view_booking(request, booking_id):
+def delete_booking(request, booking_id):
     user = request.user
     appointment = get_object_or_404(Appointment, id=booking_id, salon__in=user.administered_salons.all())
 
+    if request.method == 'POST':
+        appointment.delete()
+        return redirect('manage_bookings')
+
     context = {
         'appointment': appointment,
-        'selected_salon': appointment.salon,
-        'salons': user.administered_salons.all(),
     }
-    return render(request, 'account/view_booking.html', context)
+    return render(request, 'account/delete_booking.html', context)

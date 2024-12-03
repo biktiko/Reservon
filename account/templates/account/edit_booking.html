@@ -1,57 +1,268 @@
 <!-- account/templates/account/edit_booking.html -->
 
 {% extends "account/account_base.html" %}
+{% load custom_filters %}
+{% load static %}
 
 {% block page_content %}
+
 <div class="edit-booking">
-    <h1>Редактировать бронирование</h1>
 
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        {{ formset.management_form }}
+    <!-- Итоговые данные бронирования -->
+    <div class="booking-summary">
+        <div>
+            {% csrf_token %}
 
-        {% for form in formset %}
-            <div class="barber-service-form">
-                {{ form.as_p }}
+            <div class="booking-cards-container-1">
+
+                <!-- Карточка времени бронирования -->
+                <div class="time-card">
+                    <h3><i class="far fa-clock"></i> Время бронирования</h3>
+                    <p class="booking-time">{{ appointment.start_datetime|date:'d.m.Y H:i' }} - {{ appointment.end_datetime|date:'H:i' }}</p>
+                </div>
+                
+               <!-- Карточка информации о клиенте -->
+                <div class="client-info-card">
+                    <h3><i class="fas fa-user"></i> Информация о клиенте</h3>
+                    <div class="client-info">
+                        <p>
+                            <i class="fas fa-user"></i>
+                            <span>{{ customer_name }}</span>
+                        </p>
+                        <p>
+                            <i class="fas fa-phone"></i>
+                            <a href="tel:{{ customer_phone|phone_number_format }}" class="phone-link">{{ customer_phone|format_phone }}</a>
+                        </p>
+                    </div>
+                </div>
             </div>
-        {% endfor %}
+            
+            <div class="booking-cards-container-2">
+        
+                <!-- Карточка задействованных мастеров -->
+                <div class="barbers-card">
+                    <h3><i class="fas fa-users"></i> Задействованные мастера</h3>
+                    <div class="barbers-row">
+                        {% for barber in appointment.barbers.all %}
+                            <div class="barber-item">
+                                <img src="{{ barber.get_avatar_url }}" alt="{{ barber.name }}" class="barber-avatar-summary" />
+                                <span class="barber-name">{{ barber.name }}</span>
+                            </div>
+                        {% empty %}
+                            <p>Нет задействованных мастеров</p>
+                        {% endfor %}
+                    </div>
+                </div>
+        
+                <!-- Карточка общей длительности и цены -->
+                <div class="price-duration-card">
+                    <h3><i class="fas fa-chart-line"></i> Общая информация</h3>
+                    <div class="booking-info">
+                        <p>
+                            <i class="fas fa-clock"></i>
+                            <span>{{ total_duration }} минут</span>
+                        </p>
+                        <p>
+                            <i class="fas fa-money-bill-wave"></i>
+                            <span>{{ total_price }} ₽</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        
+        </div>
+    </div>
 
+    <!-- Форма редактирования бронирования -->
+    <form method="post" id="booking-form">
+        {% csrf_token %}
+        {{ formset.management_form }}
+        
+        <!-- Шаблон пустой формы для динамического добавления новых категорий -->
+        <div id="empty-form" style="display: none;">
+            <div class="barber-service-form">
+                {{ formset.empty_form.id }}
+                <button type="button" class="remove-form-button"><i class="fas fa-trash-alt"></i></button>
+                <h3>Категория: Новая категория</h3>
+                <div class="form-group">
+                    <label>Мастер:</label>
+                    {{ formset.empty_form.barber }}
+                </div>
+                <div class="form-group">
+                    <label>Услуги:</label>
+                    {{ formset.empty_form.services }}
+                </div>
+                <div class="time-group">
+                    <div class="form-group">
+                        <label>Время начала:</label>
+                        {{ formset.empty_form.start_datetime }}
+                    </div>
+                    <div class="form-group">
+                        <label>Время окончания:</label>
+                        {{ formset.empty_form.end_datetime }}
+                    </div>
+                </div>
+                <div class="category-summary">
+                    <p>Длительность: 0 минут</p>
+                    <p>Цена: 0 ₽</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Контейнер для формсет -->
+        <div id="formset-container">
+            {% for category in category_forms %}
+                <div class="barber-service-form">
+                    {{ category.form.id }} <!-- Поле ID формы -->
+                    <button type="button" class="remove-form-button"><i class="fas fa-trash-alt"></i></button>
+                    <h3>Категория: {{ category.category_name }}</h3>
+                    
+                    <div class="form-group{% if category.form.barber.errors %} has-error{% endif %}">
+                        <label>Мастер:</label>
+                        {{ category.form.barber }}
+                        {% if category.form.barber.errors %}
+                            <div class="error-message">
+                                {{ category.form.barber.errors }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group{% if category.form.services.errors %} has-error{% endif %}">
+                        <label>Услуги:</label>
+                        {{ category.form.services }}
+                        {% if category.form.services.errors %}
+                            <div class="error-message">
+                                {{ category.form.services.errors }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="time-group">
+                        <div class="form-group">
+                            <label>Время начала:</label>
+                            {{ category.form.start_datetime }}
+                        </div>
+                        <div class="form-group">
+                            <label>Время окончания:</label>
+                            {{ category.form.end_datetime }}
+                        </div>
+                    </div>
+                    
+                    <div class="category-summary">
+                        <p>Длительность: {{ category.duration }} минут</p>
+                        <p>Цена: {{ category.price }} ₽</p>
+                    </div>
+                    
+                    {% if category.form.errors %}
+                        <div class="form-errors">
+                            {{ category.form.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Кнопка добавления новой категории -->
+        <button type="button" id="add-form-button">Добавить категорию</button>
+        
+        <!-- Кнопка сохранения -->
         <button type="submit" class="submit-button">Сохранить изменения</button>
     </form>
+
+    <!-- Форма удаления бронирования -->
+    <form method="post" action="{% url 'delete_booking' appointment.id %}" id="delete-booking-form">
+        {% csrf_token %}
+        <button type="submit" class="delete-button">Удалить бронирование</button>
+    </form>
+
+    <!-- Отображение общих ошибок формы -->
+    {% if form.errors %}
+        <div class="form-errors">
+            {{ form.errors }}
+        </div>
+    {% endif %}
+    {% if formset.non_form_errors %}
+        <div class="formset-errors">
+            {{ formset.non_form_errors }}
+        </div>
+    {% endif %}
+
 </div>
+
 {% endblock %}
 
-{% block extra_css %}
-<style>
-.edit-booking {
-    background-color: rgb(70, 70, 70);
-    color: white;
-    padding: 20px;
-    border-radius: 8px;
-    margin: 20px;
-}
+{% block extra_js %}
 
-.edit-booking h1 {
-    color: rgb(240, 165, 0);
-    margin-bottom: 20px;
-}
+<script type="text/javascript">
 
-.barber-service-form {
-    margin-bottom: 20px;
-}
+    // Инициализация переменных из контекста
+    window.bookingFormIndex = '{{ formset.total_form_count }}';
+    window.totalDuration = '{{ total_duration }}';
+    window.languageCode = '{{ LANGUAGE_CODE }}';
 
-.submit-button {
-    padding: 10px 20px;
-    background-color: rgb(240, 165, 0);
-    color: white;
-    border: none;
-    cursor: pointer;
-    border-radius: 5px;
-}
+    $(document).ready(function() {
+        // Инициализация Select2 для выбора мастеров
+        $('.barber-select').select2({
+            width: '100%',
+            placeholder: 'Выберите мастеров',
+            templateResult: formatBarberOption,
+            templateSelection: formatBarberOption,
+        });
 
-.submit-button:hover {
-    background-color: rgb(220, 145, 0);
-}
-</style>
+        // Обработчик кнопки добавления новой категории
+        $('#add-form-button').click(function() {
+            var formCount = $('#id_barber_services-TOTAL_FORMS').val();
+            var emptyForm = $('#empty-form').html().replace(/__prefix__/g, formCount);
+            $('#formset-container').append(emptyForm);
+            $('#id_barber_services-TOTAL_FORMS').val(parseInt(formCount) + 1);
+
+            // Повторная инициализация Select2 для новых элементов
+            $('.barber-select').last().select2({
+                width: '100%',
+                placeholder: 'Выберите мастеров',
+                templateResult: formatBarberOption,
+                templateSelection: formatBarberOption,
+            });
+        });
+
+        // Обработчик удаления формы категории
+        $('#formset-container').on('click', '.remove-form-button', function() {
+            var formDiv = $(this).closest('.barber-service-form');
+            formDiv.remove();
+
+            // Обновление индексов форм
+            var forms = $('#formset-container .barber-service-form');
+            $('#id_barber_services-TOTAL_FORMS').val(forms.length);
+            forms.each(function(index) {
+                $(this).find(':input').each(function() {
+                    var name = $(this).attr('name').replace(/barber_services-\d+-/, 'barber_services-' + index + '-');
+                    var id = 'id_' + name;
+                    $(this).attr({'name': name, 'id': id});
+                });
+            });
+        });
+
+        // Инициализация Flatpickr для полей даты и времени
+        $('.datetime-input').flatpickr({
+            enableTime: true,
+            dateFormat: "d.m.Y H:i",
+        });
+    });
+
+    // Функция для форматирования опций Select2 с аватарками мастеров
+    function formatBarberOption(barber) {
+        if (!barber.id) {
+            return barber.text;
+        }
+        var imgSrc = $(barber.element).data('avatar-url');
+        if (!imgSrc) {
+            imgSrc = '{% static "salons/img/default-avatar.png" %}';
+        }
+        var $barber = $(
+            '<span><img src="' + imgSrc + '" class="barber-avatar-select2" /> ' + barber.text + '</span>'
+        );
+        return $barber;
+    }
+</script>
+
 {% endblock %}

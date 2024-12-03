@@ -1,6 +1,10 @@
 /* account/static/account/css/account.css */
 
 /* Верхнее меню */
+.menu-button{
+    display: none;
+}
+
 .top-menu {
     background-color: rgb(51, 51, 51); /* Темный фон */
     padding: 10px;
@@ -87,10 +91,45 @@
     padding: 20px;
 }
 
+
 /* Адаптивность */
 @media screen and (max-width: 768px) {
+    .dashboard-container {
+        position: relative;
+        /* flex-direction: column; */
+    }
 
+    /* Скрываем sidebar по умолчанию */
+    .sidebar {
+        position: fixed;
+        top: 0;
+        left: -250px; /* Прячем сайдбар за левым краем */
+        width: 250px;
+        height: 100%;
+        background-color: rgb(51, 51, 51);
+        transition: left 0.3s ease;
+        z-index: 1000;
+    }
+    .sidebar.active {
+        left: 0;
+    }
 
+    /* Добавляем кнопку для открытия меню */
+    .menu-button {
+        display: block;
+        background-color: rgb(51, 51, 51);
+        color: white;
+        padding: 15px;
+        text-align: center;
+        cursor: pointer;
+    }
+
+    /* Убираем отступы у main-content */
+    .main-content {
+        padding: 0;
+    }
+
+    
     .top-menu ul {
         flex-direction: column;
     }
@@ -98,5 +137,21 @@
     .top-menu ul li {
         margin-right: 0;
         margin-bottom: 10px;
+    }
+
+      /* Затемнение основного контента при открытом сайдбаре */
+      .overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+    }
+
+    .overlay.active {
+        display: block;
     }
 }

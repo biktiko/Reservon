@@ -1,0 +1,400 @@
+/* edit_booking.css */
+
+/* Общие стили для всех карточек */
+.time-card, 
+.client-info-card, 
+.barbers-card, 
+.price-duration-card {
+    background-color: rgb(51, 51, 51);
+    color: white;
+    padding: 20px;
+    border-radius: 10px;
+    width: calc(50% - 10px); /* Две карточки в ряд с промежутком */
+    box-sizing: border-box;
+    position: relative;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    transition: background-color 0.3s, box-shadow 0.3s;
+}
+
+/* Hover-эффект для всех карточек */
+.time-card:hover, 
+.client-info-card:hover, 
+.barbers-card:hover, 
+.price-duration-card:hover {
+    background-color: rgb(60, 60, 60);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+    cursor: pointer;
+}
+
+/* Контейнеры для карточек */
+.booking-cards-container-1, 
+.booking-cards-container-2 {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.booking-cards-container-1 {
+    margin-top: 20px; /* Отступ сверху от верхнего меню */
+}
+
+/* Заголовки карточек */
+.time-card h3, 
+.client-info-card h3, 
+.barbers-card h3, 
+.price-duration-card h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    color: white;
+}
+
+.time-card h3 i, 
+.client-info-card h3 i, 
+.barbers-card h3 i, 
+.price-duration-card h3 i {
+    margin-right: 10px;
+    color: rgb(240, 165, 0); /* Цвет иконок */
+}
+
+/* Текст времени бронирования */
+.booking-time {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: rgb(240, 165, 0);
+}
+
+/* Стили для информации о клиенте и общей информации */
+.client-info, 
+.price-duration-card .booking-info {
+    display: flex;
+    gap: 20px; /* Расстояние между элементами */
+}
+
+.client-info p, 
+.price-duration-card .booking-info p {
+    display: flex;
+    align-items: center;
+    margin: 5px 0;
+}
+
+.client-info i, 
+.price-duration-card .booking-info i {
+    color: rgb(240, 165, 0);
+    margin-right: 10px;
+    font-size: 1.2em;
+}
+
+.client-info span, 
+.price-duration-card .booking-info span {
+    font-size: 1em;
+    color: white;
+}
+
+/* Контейнер для мастеров */
+.barbers-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    align-items: center;
+    margin-top: 10px;
+}
+
+/* Индивидуальный элемент мастера */
+.barber-item {
+    display: flex;
+    align-items: center;
+}
+
+/* Аватар мастера */
+.barber-avatar-summary {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 10px;
+    border: 2px solid rgb(240, 165, 0);
+}
+
+/* Имя мастера */
+.barber-name {
+    font-size: 1em;
+    color: white;
+}
+
+/* Основной контейнер с отступами от краёв экрана на мобильных */
+.edit-booking {
+    padding: 20px; /* Отступы вокруг содержимого на десктопах */
+}
+
+/* Адаптивность для экранов до 768px */
+@media (max-width: 768px) {
+    /* Уменьшаем промежутки между карточками */
+    .booking-cards-container-1, 
+    .booking-cards-container-2 {
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+
+    /* Размещаем карточки вертикально */
+    .booking-cards-container-1, 
+    .booking-cards-container-2 {
+        flex-direction: column;
+    }
+
+    /* Карточки занимают всю ширину */
+    .time-card, 
+    .client-info-card, 
+    .barbers-card, 
+    .price-duration-card {
+        width: 100%; /* Одна карточка в ряд на маленьких экранах */
+        padding: 15px; /* Уменьшаем внутренние отступы */
+    }
+
+    /* Размещаем информацию внутри карточек горизонтально */
+    .client-info, 
+    .booking-info {
+        flex-direction: row; /* Горизонтальное расположение */
+        gap: 10px; /* Уменьшаем промежуток между элементами */
+        flex-wrap: wrap; /* Позволяет элементам переноситься при необходимости */
+    }
+
+    /* Уменьшаем промежуток между мастерами на мобильных */
+    .barbers-row {
+        gap: 10px;
+    }
+
+    /* Добавляем отступы от краёв экрана */
+    .edit-booking {
+        padding: 10px; /* Добавляет внутренние отступы для всего контейнера на мобильных */
+    }
+
+    /* Изменяем цвет текста времени бронирования на белый */
+    .booking-time {
+        color: white;
+    }
+
+    /* Настройка ширины элементов информации */
+    .client-info p, 
+    .booking-info p {
+        flex: 1 1 45%; /* Позволяет элементам занимать до 45% ширины контейнера */
+        min-width: 100px; /* Минимальная ширина для элементов */
+    }
+
+    /* Уменьшаем шрифты для лучшего отображения на мобильных */
+    .time-card h3, 
+    .client-info-card h3, 
+    .barbers-card h3, 
+    .price-duration-card h3 {
+        font-size: 18px;
+    }
+
+    .booking-time {
+        font-size: 1.1em;
+    }
+
+    .client-info i, 
+    .booking-info i {
+        font-size: 1em;
+    }
+
+    .client-info span, 
+    .booking-info span {
+        font-size: 0.95em;
+    }
+
+    /* Корректируем аватары мастеров для мобильных */
+    .barber-avatar-summary {
+        width: 35px;
+        height: 35px;
+    }
+}
+
+/* Адаптивность для экранов до 768px */
+@media (max-width: 768px) {
+    /* Уменьшаем промежутки между карточками */
+    .booking-cards-container-1, 
+    .booking-cards-container-2 {
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+
+    /* Размещаем карточки вертикально */
+    .booking-cards-container-1, 
+    .booking-cards-container-2 {
+        flex-direction: column;
+    }
+
+    /* Карточки занимают всю ширину */
+    .time-card, 
+    .client-info-card, 
+    .barbers-card, 
+    .price-duration-card {
+        width: 100%; /* Одна карточка в ряд на маленьких экранах */
+        padding: 15px; /* Уменьшаем внутренние отступы */
+    }
+
+    /* Размещаем информацию внутри карточек горизонтально */
+    .client-info, 
+    .booking-info {
+        flex-direction: row;
+        gap: 10px; /* Уменьшаем промежуток между элементами */
+        flex-wrap: wrap; /* Позволяет элементам переноситься на новую строку при необходимости */
+    }
+
+    /* Уменьшаем промежуток между мастерами на мобильных */
+    .barbers-row {
+        gap: 10px;
+    }
+
+    /* Добавляем отступы от краёв экрана */
+    .edit-booking {
+        padding: 10px; /* Добавляет внутренние отступы для всего контейнера */
+    }
+
+    /* Изменяем цвет текста времени бронирования на белый */
+    .booking-time {
+        color: white;
+    }
+
+    /* Убедимся, что информация о клиенте и общей информации отображается в строку, если места достаточно */
+    .client-info p, 
+    .booking-info p {
+        flex: 1 1 45%; /* Позволяет элементам занимать до 45% ширины контейнера */
+    }
+}
+
+.phone-link {
+    color: white;
+    text-decoration: none;
+}
+
+.phone-link:hover {
+    text-decoration: underline;
+}
+
+
+/* Стили для карточек категорий */
+.barber-service-form {
+    border: 1px solid rgb(200, 200, 200);
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+    background-color: rgb(60, 60, 60);
+    display: inline-block;
+    vertical-align: top;
+    width: 48%;
+    margin-right: 2%;
+}
+.barber-service-form:nth-child(2n) {
+    margin-right: 0;
+}
+.barber-service-form h3 {
+    color: rgb(240, 165, 0);
+    margin-top: 0;
+}
+
+.barber-avatar-select2 {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    margin-right: 8px;
+}
+
+
+.category-summary {
+    margin-top: 10px;
+    background-color: rgb(70, 70, 70);
+    padding: 10px;
+    border-radius: 4px;
+}
+.category-summary p {
+    margin: 5px 0;
+}
+/* Стили для кнопок */
+.remove-form-button {
+    background-color: transparent;
+    color: rgb(200, 0, 0);
+    border: none;
+    cursor: pointer;
+    float: right;
+    font-size: 1.2em;
+}
+.remove-form-button:hover {
+    color: rgb(170, 0, 0);
+}
+#add-form-button {
+    background-color: rgb(0, 123, 255);
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    cursor: pointer;
+    border-radius: 5px;
+    margin-top: 20px;
+}
+#add-form-button:hover {
+    background-color: rgb(0, 105, 217);
+}
+.submit-button {
+    padding: 10px 20px;
+    background-color: rgb(240, 165, 0);
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+    margin-top: 20px;
+}
+.submit-button:hover {
+    background-color: rgb(220, 145, 0);
+}
+.delete-button {
+    background-color: rgb(200, 0, 0);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    border-radius: 5px;
+    margin-top: 20px;
+}
+.delete-button:hover {
+    background-color: rgb(170, 0, 0);
+}
+/* Стили для форм */
+.form-group {
+    margin-bottom: 15px;
+}
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+}
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid rgb(200, 200, 200);
+    border-radius: 4px;
+    background-color: rgb(70, 70, 70);
+    color: white;
+}
+
+.time-group {
+    display: flex;
+    justify-content: space-between;
+}
+
+.time-group .summary-group {
+    width: 48%;
+}
+
+.price-duration-group {
+    display: flex;
+    justify-content: space-between;
+}
+
+.price-duration-group .summary-group {
+    width: 48%;
+}

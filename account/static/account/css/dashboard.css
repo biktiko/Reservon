@@ -30,11 +30,6 @@
 }
 
 /* Основной контент */
-.main-content {
-    flex-grow: 1;
-    background-color: rgb(70, 70, 70); /* Темный фон */
-    padding: 20px;
-}
 
 .map-container {
     width: 100%;
