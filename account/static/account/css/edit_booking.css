@@ -35,10 +35,6 @@
     margin-bottom: 20px;
 }
 
-.booking-cards-container-1 {
-    margin-top: 20px; /* Отступ сверху от верхнего меню */
-}
-
 /* Заголовки карточек */
 .time-card h3, 
 .client-info-card h3, 

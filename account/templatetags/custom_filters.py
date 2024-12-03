@@ -24,6 +24,12 @@ def format_date_localized(value):
     locale_code = LANGUAGE_LOCALE_MAP.get(current_language, 'en')
     return format_datetime(value, "d MMMM", locale=locale_code)
 
+@register.filter(name='add_class')
+def add_class(field, css_class):
+    if hasattr(field, 'as_widget'):
+        return field.as_widget(attrs={'class': css_class})
+    return field
+
 @register.filter
 def format_phone(value):
     # Форматируем номер телефона

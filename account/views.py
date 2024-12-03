@@ -9,7 +9,11 @@ from django.utils import timezone
 from django.contrib import messages
 from collections import defaultdict
 from django.db import transaction
+from django.http import JsonResponse
+import logging
 
+# logger = logging.getLogger(__name__)
+logger = logging.getLogger('booking')
 
 @login_required
 def add_booking(request):
@@ -91,6 +95,11 @@ def edit_booking(request, booking_id):
                 return redirect('manage_bookings')
         else:
             messages.error(request, 'Пожалуйста, исправьте ошибки ниже.')
+            print(form.errors)
+            print(formset.errors)
+            logger.error('Form errors: %s', form.errors)
+            logger.error('Formset errors: %s', formset.errors)
+
     else:
         form = AppointmentForm(instance=appointment)
         formset = AppointmentBarberServiceFormSet(instance=appointment)
@@ -234,6 +243,20 @@ def manage_bookings(request):
         'now': timezone.now(),
     }
     return render(request, 'account/manage_bookings.html', context)
+
+@login_required
+def get_services_duration_and_price(request):
+    service_ids = request.GET.get('service_ids', '')
+    service_ids = service_ids.split(',')
+
+    services = Service.objects.filter(id__in=service_ids)
+    total_duration = sum(service.duration.total_seconds() / 60 for service in services)
+    total_price = sum(service.price for service in services)
+
+    return JsonResponse({
+        'total_duration': total_duration,
+        'total_price': total_price,
+    })
 
 @login_required
 def delete_booking(request, booking_id):

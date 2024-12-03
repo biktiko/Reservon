@@ -53,21 +53,22 @@
                         {% endfor %}
                     </div>
                 </div>
-        
+
                 <!-- Карточка общей длительности и цены -->
                 <div class="price-duration-card">
                     <h3><i class="fas fa-chart-line"></i> Общая информация</h3>
                     <div class="booking-info">
                         <p>
                             <i class="fas fa-clock"></i>
-                            <span>{{ total_duration }} минут</span>
+                            <span id="total-duration">{{ total_duration }} минут</span>
                         </p>
                         <p>
                             <i class="fas fa-money-bill-wave"></i>
-                            <span>{{ total_price }} ₽</span>
+                            <span id="total-price">{{ total_price }} ₽</span>
                         </p>
                     </div>
                 </div>
+
             </div>
         
         </div>
@@ -76,11 +77,24 @@
     <!-- Форма редактирования бронирования -->
     <form method="post" id="booking-form">
         {% csrf_token %}
+        {{ form.non_field_errors }}
         {{ formset.management_form }}
+
+          <!-- Отображение поля start_datetime из формы AppointmentForm -->
+    <div class="form-group{% if form.start_datetime.errors %} has-error{% endif %}">
+        <label for="{{ form.start_datetime.id_for_label }}">Дата и время начала бронирования:</label>
+        {{ form.start_datetime }}
+        {% if form.start_datetime.errors %}
+            <div class="error-message">
+                {{ form.start_datetime.errors }}
+            </div>
+        {% endif %}
+    </div>
         
         <!-- Шаблон пустой формы для динамического добавления новых категорий -->
         <div id="empty-form" style="display: none;">
             <div class="barber-service-form">
+                {{ formset.empty_form.management_form }}
                 {{ formset.empty_form.id }}
                 <button type="button" class="remove-form-button"><i class="fas fa-trash-alt"></i></button>
                 <h3>Категория: Новая категория</h3>
@@ -103,20 +117,20 @@
                     </div>
                 </div>
                 <div class="category-summary">
-                    <p>Длительность: 0 минут</p>
-                    <p>Цена: 0 ₽</p>
+                    <p class="duration">Длительность: 0 минут</p>
+                    <p class="price">Цена: 0 ₽</p>
                 </div>
             </div>
         </div>
-        
+
         <!-- Контейнер для формсет -->
         <div id="formset-container">
             {% for category in category_forms %}
-                <div class="barber-service-form">
+                <div class="barber-service-form" data-duration="{{ category.duration }}" data-price="{{ category.price }}">
                     {{ category.form.id }} <!-- Поле ID формы -->
                     <button type="button" class="remove-form-button"><i class="fas fa-trash-alt"></i></button>
-                    <h3>Категория: {{ category.category_name }}</h3>
-                    
+                    <h3>{{ category.category_name }}</h3>
+        
                     <div class="form-group{% if category.form.barber.errors %} has-error{% endif %}">
                         <label>Мастер:</label>
                         {{ category.form.barber }}
@@ -126,7 +140,7 @@
                             </div>
                         {% endif %}
                     </div>
-                    
+        
                     <div class="form-group{% if category.form.services.errors %} has-error{% endif %}">
                         <label>Услуги:</label>
                         {{ category.form.services }}
@@ -136,23 +150,35 @@
                             </div>
                         {% endif %}
                     </div>
-                    
+        
                     <div class="time-group">
-                        <div class="form-group">
+                        <div class="form-group{% if category.form.start_datetime.errors %} has-error{% endif %}">
                             <label>Время начала:</label>
                             {{ category.form.start_datetime }}
+                            {% if category.form.start_datetime.errors %}
+                                <div class="error-message">
+                                    {{ category.form.start_datetime.errors }}
+                                </div>
+                            {% endif %}
                         </div>
-                        <div class="form-group">
+                        <div class="form-group{% if category.form.end_datetime.errors %} has-error{% endif %}">
                             <label>Время окончания:</label>
                             {{ category.form.end_datetime }}
+                            {% if category.form.end_datetime.errors %}
+                                <div class="error-message">
+                                    {{ category.form.end_datetime.errors }}
+                                </div>
+                            {% endif %}
                         </div>
+                        
                     </div>
                     
+        
                     <div class="category-summary">
-                        <p>Длительность: {{ category.duration }} минут</p>
-                        <p>Цена: {{ category.price }} ₽</p>
+                        <p class="duration">Длительность: {{ category.duration }} минут</p>
+                        <p class="price">Цена: {{ category.price }} ₽</p>
                     </div>
-                    
+        
                     {% if category.form.errors %}
                         <div class="form-errors">
                             {{ category.form.errors }}
@@ -161,6 +187,7 @@
                 </div>
             {% endfor %}
         </div>
+        
         
         <!-- Кнопка добавления новой категории -->
         <button type="button" id="add-form-button">Добавить категорию</button>

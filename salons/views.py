@@ -12,8 +12,8 @@ from django.utils import timezone
 from django.db.models import Q
 from django.db import transaction
 import pytz
-import logging
 import json
+import logging
 
 # logger = logging.getLogger(__name__)
 logger = logging.getLogger('booking')
