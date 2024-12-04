@@ -79,17 +79,6 @@
         {% csrf_token %}
         {{ form.non_field_errors }}
         {{ formset.management_form }}
-
-          <!-- Отображение поля start_datetime из формы AppointmentForm -->
-    <div class="form-group{% if form.start_datetime.errors %} has-error{% endif %}">
-        <label for="{{ form.start_datetime.id_for_label }}">Дата и время начала бронирования:</label>
-        {{ form.start_datetime }}
-        {% if form.start_datetime.errors %}
-            <div class="error-message">
-                {{ form.start_datetime.errors }}
-            </div>
-        {% endif %}
-    </div>
         
         <!-- Шаблон пустой формы для динамического добавления новых категорий -->
         <div id="empty-form" style="display: none;">

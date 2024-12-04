@@ -1,6 +1,7 @@
 # account/views.py
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
+from django.db import models
 from salons.models import Salon, Appointment, Barber, Service
 from django.db.models import Q
 from django.core.paginator import Paginator
@@ -57,7 +58,7 @@ def add_booking(request):
 def edit_booking(request, booking_id):
     user = request.user
     appointment = get_object_or_404(
-        Appointment.objects.select_related('user__main_profile').prefetch_related('barbers'),
+        Appointment.objects.select_related('user__main_profile').prefetch_related('barbers', 'barber_services'),
         id=booking_id,
         salon__in=user.administered_salons.all()
     )
@@ -76,11 +77,9 @@ def edit_booking(request, booking_id):
         customer_phone = 'Не указан'
 
     if request.method == 'POST':
-        form = AppointmentForm(request.POST, instance=appointment)
         formset = AppointmentBarberServiceFormSet(request.POST, instance=appointment)
-        if form.is_valid() and formset.is_valid():
+        if formset.is_valid():
             with transaction.atomic():
-                appointment = form.save()
                 formset.instance = appointment  # Устанавливаем связь формсета с appointment
 
                 # Сохраняем формы по отдельности
@@ -91,17 +90,17 @@ def edit_booking(request, booking_id):
                     instance.appointment = appointment
                     instance.save()
                 formset.save_m2m()
+
+                # После сохранения формсета обновляем start_datetime и end_datetime в Appointment
+                appointment.start_datetime = appointment.barber_services.aggregate(models.Min('start_datetime'))['start_datetime__min']
+                appointment.end_datetime = appointment.barber_services.aggregate(models.Max('end_datetime'))['end_datetime__max']
+                appointment.save(update_fields=['start_datetime', 'end_datetime'])
+
                 messages.success(request, 'Бронирование успешно обновлено.')
                 return redirect('manage_bookings')
         else:
             messages.error(request, 'Пожалуйста, исправьте ошибки ниже.')
-            print(form.errors)
-            print(formset.errors)
-            logger.error('Form errors: %s', form.errors)
-            logger.error('Formset errors: %s', formset.errors)
-
     else:
-        form = AppointmentForm(instance=appointment)
         formset = AppointmentBarberServiceFormSet(instance=appointment)
 
     # Вычисляем длительность и цену для каждой категории
@@ -113,10 +112,9 @@ def edit_booking(request, booking_id):
         if barber_service.pk:
             services = barber_service.services.all()
         else:
-            # Используем начальные данные в GET-запросе или незаполненные формы
-            services = form_instance.initial.get('services', [])
-            # Нужно получить реальные объекты Service
-            services = Service.objects.filter(id__in=services)
+            # Используем данные из формы
+            service_ids = form_instance['services'].value()
+            services = Service.objects.filter(id__in=service_ids)
         # Вычисляем длительность и цену категории
         total_duration_category = sum(service.duration.total_seconds() / 60 for service in services)
         total_price_category = sum(service.price for service in services)
@@ -135,7 +133,6 @@ def edit_booking(request, booking_id):
     category_count = len(category_forms)
 
     context = {
-        'form': form,
         'formset': formset,
         'appointment': appointment,
         'total_duration': total_duration,
@@ -149,6 +146,7 @@ def edit_booking(request, booking_id):
         'LANGUAGE_CODE': request.LANGUAGE_CODE,
     }
     return render(request, 'account/edit_booking.html', context)
+
 
 # account/views.py
 

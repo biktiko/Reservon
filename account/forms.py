@@ -32,12 +32,8 @@ class BarberSelectMultiple(forms.SelectMultiple):
 class AppointmentForm(ModelForm):
     class Meta:
         model = Appointment
-        fields = ['start_datetime']  # Удалено поле 'barbers'
-        widgets = {
-            'start_datetime': CustomDateTimeInput(attrs={'id': 'id_start_datetime'}),
-            # 'barbers' удалено
-        }
-
+        fields= []
+        
 class AppointmentBarberServiceForm(ModelForm):
     class Meta:
         model = AppointmentBarberService
