@@ -302,12 +302,13 @@
     font-size: 18px;
 }
 
-/* Стили для аватаров в Select2 */
 .barber-avatar-select2 {
     width: 30px;
     height: 30px;
     border-radius: 50%;
     margin-right: 8px;
+    object-fit: cover;
+    vertical-align: middle;
 }
 
 /* Стили для блока summary в категориях */
@@ -456,7 +457,7 @@
     background-color: var(--input-background) !important;
     border: 1px solid var(--input-border) !important;
     color: var(--text-color) !important;
-    height: 40px; /* Увеличиваем высоту */
+    height: 40px /* Увеличиваем высоту */ !important;
     overflow: hidden;
 }
 
@@ -512,4 +513,5 @@
 .select2-container--default .select2-selection--multiple .select2-selection__choice {
     font-size: 16px;
     line-height: 1.5;
+    padding-top: 5px;
 }
