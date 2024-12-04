@@ -1,18 +1,38 @@
 /* edit_booking.css */
 
+/* CSS-переменные для консистентности и удобства поддержки */
+:root {
+    --primary-color: #009bff; /* Яркий синий */
+    --primary-hover: #006bb3;
+    --secondary-color: #f0a500; /* Оранжевый для акцентов */
+    --secondary-hover: #dc9100;
+    --danger-color: #c80000; /* Красный для опасных действий */
+    --danger-hover: #aa0000;
+    --background-color: #333333;
+    --background-hover: #3c3c3c;
+    --card-background: #333333;
+    --card-hover-background: #3c3c3c;
+    --text-color: #ffffff;
+    --text-muted: #cccccc;
+    --border-color: #c8c8c8;
+    --shadow-color: rgba(0, 0, 0, 0.3);
+    --shadow-hover-color: rgba(0, 0, 0, 0.5);
+    --input-background: #464646;
+    --input-border: #c8c8c8;
+}
+
 /* Общие стили для всех карточек */
 .time-card, 
 .client-info-card, 
 .barbers-card, 
 .price-duration-card {
-    background-color: rgb(51, 51, 51);
-    color: white;
+    background-color: var(--card-background);
+    color: var(--text-color);
     padding: 20px;
     border-radius: 10px;
     width: calc(50% - 10px); /* Две карточки в ряд с промежутком */
     box-sizing: border-box;
-    position: relative;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 2px 5px var(--shadow-color);
     transition: background-color 0.3s, box-shadow 0.3s;
 }
 
@@ -21,8 +41,8 @@
 .client-info-card:hover, 
 .barbers-card:hover, 
 .price-duration-card:hover {
-    background-color: rgb(60, 60, 60);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+    background-color: var(--card-hover-background);
+    box-shadow: 0 4px 8px var(--shadow-hover-color);
     cursor: pointer;
 }
 
@@ -45,7 +65,7 @@
     font-size: 20px;
     display: flex;
     align-items: center;
-    color: white;
+    color: var(--text-color);
 }
 
 .time-card h3 i, 
@@ -53,14 +73,14 @@
 .barbers-card h3 i, 
 .price-duration-card h3 i {
     margin-right: 10px;
-    color: rgb(240, 165, 0); /* Цвет иконок */
+    color: var(--secondary-color);
 }
 
 /* Текст времени бронирования */
 .booking-time {
     font-size: 1.2em;
     font-weight: bold;
-    color: rgb(240, 165, 0);
+    color: var(--secondary-color);
 }
 
 /* Стили для информации о клиенте и общей информации */
@@ -79,7 +99,7 @@
 
 .client-info i, 
 .price-duration-card .booking-info i {
-    color: rgb(240, 165, 0);
+    color: var(--secondary-color);
     margin-right: 10px;
     font-size: 1.2em;
 }
@@ -87,7 +107,7 @@
 .client-info span, 
 .price-duration-card .booking-info span {
     font-size: 1em;
-    color: white;
+    color: var(--text-color);
 }
 
 /* Контейнер для мастеров */
@@ -112,13 +132,13 @@
     border-radius: 50%;
     object-fit: cover;
     margin-right: 10px;
-    border: 2px solid rgb(240, 165, 0);
+    border: 2px solid var(--secondary-color);
 }
 
 /* Имя мастера */
 .barber-name {
     font-size: 1em;
-    color: white;
+    color: var(--text-color);
 }
 
 /* Основной контейнер с отступами от краёв экрана на мобильных */
@@ -126,6 +146,7 @@
     padding: 20px; /* Отступы вокруг содержимого на десктопах */
 }
 
+/* Убираем дублирование @media блоков */
 /* Адаптивность для экранов до 768px */
 @media (max-width: 768px) {
     /* Уменьшаем промежутки между карточками */
@@ -150,7 +171,7 @@
         padding: 15px; /* Уменьшаем внутренние отступы */
     }
 
-    /* Размещаем информацию внутри карточек горизонтально */
+    /* Размещаем информацию внутри карточек вертикально */
     .client-info, 
     .booking-info {
         flex-direction: row; /* Горизонтальное расположение */
@@ -170,7 +191,7 @@
 
     /* Изменяем цвет текста времени бронирования на белый */
     .booking-time {
-        color: white;
+        color: var(--text-color);
     }
 
     /* Настройка ширины элементов информации */
@@ -207,64 +228,39 @@
         width: 35px;
         height: 35px;
     }
-}
 
-/* Адаптивность для экранов до 768px */
-@media (max-width: 768px) {
-    /* Уменьшаем промежутки между карточками */
-    .booking-cards-container-1, 
-    .booking-cards-container-2 {
-        gap: 10px;
-        margin-bottom: 10px;
+    /* Подгонка карточек категорий для мобильных */
+    .barber-service-form {
+        width: 100%; /* Занимает всю ширину на мобильных */
+        margin-right: 0;
     }
 
-    /* Размещаем карточки вертикально */
-    .booking-cards-container-1, 
-    .booking-cards-container-2 {
-        flex-direction: column;
+    /* Стили для группы времени */
+    .time-group {
+        flex-direction: column; /* Ставим поля вертикально */
     }
 
-    /* Карточки занимают всю ширину */
-    .time-card, 
-    .client-info-card, 
-    .barbers-card, 
-    .price-duration-card {
-        width: 100%; /* Одна карточка в ряд на маленьких экранах */
-        padding: 15px; /* Уменьшаем внутренние отступы */
+    /* Стили для отдельных полей времени */
+    .time-group .form-group {
+        width: 100%; /* Поля занимают всю ширину контейнера */
+        margin-bottom: 15px; /* Добавляем отступ снизу для разделения */
     }
 
-    /* Размещаем информацию внутри карточек горизонтально */
-    .client-info, 
-    .booking-info {
-        flex-direction: row;
-        gap: 10px; /* Уменьшаем промежуток между элементами */
-        flex-wrap: wrap; /* Позволяет элементам переноситься на новую строку при необходимости */
+    /* Опционально: уменьшение размера шрифта для полей времени */
+    .time-group .form-group label {
+        font-size: 14px;
     }
 
-    /* Уменьшаем промежуток между мастерами на мобильных */
-    .barbers-row {
-        gap: 10px;
-    }
-
-    /* Добавляем отступы от краёв экрана */
-    .edit-booking {
-        padding: 10px; /* Добавляет внутренние отступы для всего контейнера */
-    }
-
-    /* Изменяем цвет текста времени бронирования на белый */
-    .booking-time {
-        color: white;
-    }
-
-    /* Убедимся, что информация о клиенте и общей информации отображается в строку, если места достаточно */
-    .client-info p, 
-    .booking-info p {
-        flex: 1 1 45%; /* Позволяет элементам занимать до 45% ширины контейнера */
+    .time-group .form-group input {
+        font-size: 14px;
+        padding: 6px 8px;
     }
 }
 
+
+/* Стили для ссылок телефона */
 .phone-link {
-    color: white;
+    color: var(--text-color);
     text-decoration: none;
 }
 
@@ -272,27 +268,41 @@
     text-decoration: underline;
 }
 
-
 /* Стили для карточек категорий */
 .barber-service-form {
-    border: 1px solid rgb(200, 200, 200);
+    border: 1px solid var(--border-color);
     padding: 15px;
     margin-bottom: 20px;
     border-radius: 5px;
-    background-color: rgb(60, 60, 60);
+    background-color: var(--background-color);
     display: inline-block;
     vertical-align: top;
     width: 48%;
     margin-right: 2%;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    transition: background-color 0.3s, box-shadow 0.3s;
 }
+
+/* Hover effect for category forms */
+.barber-service-form:hover {
+    background-color: var(--card-hover-background);
+    box-shadow: 0 3px 6px var(--shadow-hover-color);
+}
+
+/* Убираем отступ справа для чётных карточек */
 .barber-service-form:nth-child(2n) {
     margin-right: 0;
 }
+
+/* Заголовок формы категории */
 .barber-service-form h3 {
-    color: rgb(240, 165, 0);
+    color: var(--secondary-color);
     margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 18px;
 }
 
+/* Стили для аватаров в Select2 */
 .barber-avatar-select2 {
     width: 30px;
     height: 30px;
@@ -300,81 +310,109 @@
     margin-right: 8px;
 }
 
-
+/* Стили для блока summary в категориях */
 .category-summary {
     margin-top: 10px;
-    background-color: rgb(70, 70, 70);
+    background-color: var(--input-background);
     padding: 10px;
     border-radius: 4px;
 }
+
 .category-summary p {
     margin: 5px 0;
+    color: var(--text-color);
 }
+
 /* Стили для кнопок */
 .remove-form-button {
     background-color: transparent;
-    color: rgb(200, 0, 0);
+    color: var(--danger-color);
     border: none;
     cursor: pointer;
     float: right;
     font-size: 1.2em;
+    transition: color 0.3s;
 }
+
 .remove-form-button:hover {
-    color: rgb(170, 0, 0);
+    color: var(--danger-hover);
 }
+
 #add-form-button {
-    background-color: rgb(0, 123, 255);
-    color: white;
+    background-color: var(--primary-color);
+    color: var(--text-color);
     border: none;
     padding: 10px 15px;
     cursor: pointer;
     border-radius: 5px;
     margin-top: 20px;
+    transition: background-color 0.3s;
 }
+
 #add-form-button:hover {
-    background-color: rgb(0, 105, 217);
+    background-color: var(--primary-hover);
 }
+
 .submit-button {
     padding: 10px 20px;
-    background-color: rgb(240, 165, 0);
-    color: white;
+    background-color: var(--secondary-color);
+    color: var(--text-color);
     border: none;
     cursor: pointer;
     border-radius: 5px;
     margin-top: 20px;
+    transition: background-color 0.3s;
 }
+
 .submit-button:hover {
-    background-color: rgb(220, 145, 0);
+    background-color: var(--secondary-hover);
 }
+
 .delete-button {
-    background-color: rgb(200, 0, 0);
-    color: white;
+    background-color: var(--danger-color);
+    color: var(--text-color);
     border: none;
     padding: 10px 20px;
     cursor: pointer;
     border-radius: 5px;
     margin-top: 20px;
+    transition: background-color 0.3s;
 }
+
 .delete-button:hover {
-    background-color: rgb(170, 0, 0);
+    background-color: var(--danger-hover);
 }
+
 /* Стили для форм */
 .form-group {
     margin-bottom: 15px;
 }
+
 .form-group label {
     display: block;
     margin-bottom: 5px;
+    color: var(--text-color);
+    font-weight: bold;
 }
+
 .form-group input,
 .form-group select,
 .form-group textarea {
     width: 100%;
     padding: 8px;
-    border: 1px solid rgb(200, 200, 200);
+    border: 1px solid var(--input-border);
     border-radius: 4px;
-    background-color: rgb(70, 70, 70);
-    color: white;
+    background-color: var(--input-background);
+    color: var(--text-color);
+    transition: border-color 0.3s, background-color 0.3s;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    border-color: var(--secondary-color);
+    background-color: #555555;
+    outline: none;
 }
 
 .time-group {
@@ -393,4 +431,85 @@
 
 .price-duration-group .summary-group {
     width: 48%;
+}
+
+/* Стили для сообщений об ошибках */
+.has-error .error-message {
+    color: #ff4d4d;
+    font-size: 0.9em;
+    margin-top: 5px;
+}
+
+/* Улучшение видимости полей ввода при ошибках */
+.has-error input,
+.has-error select,
+.has-error textarea {
+    border-color: #ff4d4d;
+}
+
+/* Стили для Select2 */
+
+/* Общие стили для одиночного и множественного селекта */
+/* Убираем белый фон и устанавливаем тёмный фон для селектов */
+.select2-container--default .select2-selection--single,
+.select2-container--default .select2-selection--multiple {
+    background-color: var(--input-background) !important;
+    border: 1px solid var(--input-border) !important;
+    color: var(--text-color) !important;
+    height: 40px; /* Увеличиваем высоту */
+    overflow: hidden;
+}
+
+/* Центрируем текст и предотвращаем выход за рамки */
+.select2-container--default .select2-selection--single .select2-selection__rendered,
+.select2-container--default .select2-selection--multiple .select2-selection__choice {
+    line-height: 40px; /* Центрирование по вертикали */
+    color: var(--text-color) !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Тёмный фон для выпадающего списка и белый текст */
+.select2-container--default .select2-dropdown {
+    background-color: var(--card-background) !important;
+    color: var(--text-color) !important;
+    border: 1px solid var(--input-border) !important;
+}
+
+/* Стилизация опций в списке */
+.select2-container--default .select2-results__option {
+    background-color: var(--card-background) !important;
+    color: var(--text-color) !important;
+}
+
+.select2-container--default .select2-results__option--highlighted {
+    background-color: var(--secondary-hover) !important;
+    color: var(--text-color) !important;
+}
+
+/* Стилизация выбранных опций в многовариантных селектах */
+.select2-container--default .select2-selection--multiple .select2-selection__choice {
+    background-color: var(--secondary-color) !important;
+    color: var(--text-color) !important;
+    border: 1px solid var(--secondary-hover) !important;
+}
+
+.select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+    color: var(--text-color) !important;
+}
+
+/* Стилизация поля поиска внутри Select2 */
+.select2-container--default .select2-search--inline .select2-search__field {
+    background-color: var(--input-background) !important;
+    color: var(--text-color) !important;
+    border: none !important;
+}
+
+/* Увеличение шрифта и высоты строк для лучшей читаемости */
+.select2-container--default .select2-results__option,
+.select2-container--default .select2-selection--single .select2-selection__rendered,
+.select2-container--default .select2-selection--multiple .select2-selection__choice {
+    font-size: 16px;
+    line-height: 1.5;
 }

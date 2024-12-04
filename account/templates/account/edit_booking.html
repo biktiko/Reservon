@@ -60,11 +60,12 @@
                     <div class="booking-info">
                         <p>
                             <i class="fas fa-clock"></i>
-                            <span id="total-duration">{{ total_duration }} минут</span>
+                            <span id="total-duration">{{ total_duration|floatformat:0 }} минут</span>
                         </p>
                         <p>
                             <i class="fas fa-money-bill-wave"></i>
-                            <span id="total-price">{{ total_price }} ₽</span>
+                            <span id="total-price">{{ total_price|floatformat:0 }} ֏</span>
+
                         </p>
                     </div>
                 </div>
@@ -81,9 +82,9 @@
         {{ formset.management_form }}
         
         <!-- Шаблон пустой формы для динамического добавления новых категорий -->
+        <!-- Шаблон пустой формы для динамического добавления новых категорий -->
         <div id="empty-form" style="display: none;">
-            <div class="barber-service-form">
-                {{ formset.empty_form.management_form }}
+            <div class="barber-service-form" data-duration="0" data-price="0">
                 {{ formset.empty_form.id }}
                 <button type="button" class="remove-form-button"><i class="fas fa-trash-alt"></i></button>
                 <h3>Категория: Новая категория</h3>
@@ -107,15 +108,17 @@
                 </div>
                 <div class="category-summary">
                     <p class="duration">Длительность: 0 минут</p>
-                    <p class="price">Цена: 0 ₽</p>
+                    <p class="price">Цена: 0 ֏</p>
                 </div>
             </div>
         </div>
+
 
         <!-- Контейнер для формсет -->
         <div id="formset-container">
             {% for category in category_forms %}
                 <div class="barber-service-form" data-duration="{{ category.duration }}" data-price="{{ category.price }}">
+
                     {{ category.form.id }} <!-- Поле ID формы -->
                     <button type="button" class="remove-form-button"><i class="fas fa-trash-alt"></i></button>
                     <h3>{{ category.category_name }}</h3>
@@ -129,7 +132,7 @@
                             </div>
                         {% endif %}
                     </div>
-        
+                    
                     <div class="form-group{% if category.form.services.errors %} has-error{% endif %}">
                         <label>Услуги:</label>
                         {{ category.form.services }}
@@ -139,6 +142,7 @@
                             </div>
                         {% endif %}
                     </div>
+                    
         
                     <div class="time-group">
                         <div class="form-group{% if category.form.start_datetime.errors %} has-error{% endif %}">
@@ -162,11 +166,11 @@
                         
                     </div>
                     
-        
                     <div class="category-summary">
-                        <p class="duration">Длительность: {{ category.duration }} минут</p>
-                        <p class="price">Цена: {{ category.price }} ₽</p>
+                        <p class="duration">Длительность: {{ category.duration|floatformat:0 }} минут</p>
+                        <p class="price">Цена: {{ category.price|floatformat:0 }} ֏</p>
                     </div>
+                    
         
                     {% if category.form.errors %}
                         <div class="form-errors">
@@ -177,7 +181,8 @@
             {% endfor %}
         </div>
         
-        
+        <button type="button" id="refresh-data-button">Обновить данные</button>
+
         <!-- Кнопка добавления новой категории -->
         <button type="button" id="add-form-button">Добавить категорию</button>
         
@@ -211,7 +216,9 @@
 
 <script type="text/javascript">
 
+    
     // Инициализация переменных из контекста
+    window.getServicesDurationAndPriceUrl = "{% url 'get_services_duration_and_price' %}";
     window.bookingFormIndex = '{{ formset.total_form_count }}';
     window.totalDuration = '{{ total_duration }}';
     window.languageCode = '{{ LANGUAGE_CODE }}';
