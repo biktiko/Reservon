@@ -82,39 +82,35 @@
         {{ formset.management_form }}
         
         <!-- account/templates/account/edit_booking.html -->
-<!-- account/templates/account/edit_booking.html -->
-<div id="empty-form" style="display: none;">
-    {{ formset.empty_form.id }}
-    <button type="button" class="remove-form-button"><i class="fas fa-trash-alt"></i></button>
-    <h3>Категория: Новая категория</h3>
-    <div class="form-group">
-        <label>Мастер:</label>
-        <!-- Удалите класс select2-hidden-accessible из селекта мастера -->
-        {{ formset.empty_form.barber|remove_class:"select2-hidden-accessible" }}
-    </div>
-    <div class="form-group">
-        <label>Услуги:</label>
-        <!-- Удалите класс select2-hidden-accessible из селекта услуг -->
-        {{ formset.empty_form.services|remove_class:"select2-hidden-accessible" }}
-    </div>
-    <div class="time-group">
-        <div class="form-group">
-            <label>Время начала:</label>
-            {{ formset.empty_form.start_datetime }}
+        <div id="empty-form" style="display: none;">
+            {{ formset.empty_form.id }}
+            <button type="button" class="remove-form-button"><i class="fas fa-trash-alt"></i></button>
+            <h3>Категория: Новая категория</h3>
+            <div class="form-group">
+                <label>Мастер:</label>
+                <!-- Удалите класс select2-hidden-accessible из селекта мастера -->
+                {{ formset.empty_form.barber|remove_class:"select2-hidden-accessible" }}
+            </div>
+            <div class="form-group">
+                <label>Услуги:</label>
+                <!-- Удалите класс select2-hidden-accessible из селекта услуг -->
+                {{ formset.empty_form.services|remove_class:"select2-hidden-accessible" }}
+            </div>
+            <div class="time-group">
+                <div class="form-group">
+                    <label>Время начала:</label>
+                    {{ formset.empty_form.start_datetime }}
+                </div>
+                <div class="form-group">
+                    <label>Время окончания:</label>
+                    {{ formset.empty_form.end_datetime }}
+                </div>
+            </div>
+            <div class="category-summary">
+                <p class="duration">Длительность: 0 минут</p>
+                <p class="price">Цена: 0 ֏</p>
+            </div>
         </div>
-        <div class="form-group">
-            <label>Время окончания:</label>
-            {{ formset.empty_form.end_datetime }}
-        </div>
-    </div>
-    <div class="category-summary">
-        <p class="duration">Длительность: 0 минут</p>
-        <p class="price">Цена: 0 ֏</p>
-    </div>
-</div>
-
-        
-
 
         <!-- Контейнер для формсет -->
         <div id="formset-container">
@@ -183,13 +179,12 @@
             {% endfor %}
         </div>
         
+        <button type="submit" class="submit-button">Сохранить изменения</button>
+        
         <button type="button" id="refresh-data-button">Обновить данные</button>
 
-        <!-- Кнопка добавления новой категории -->
         <button type="button" id="add-form-button">Добавить категорию</button>
         
-        <!-- Кнопка сохранения -->
-        <button type="submit" class="submit-button">Сохранить изменения</button>
     </form>
 
     <!-- Форма удаления бронирования -->

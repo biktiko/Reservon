@@ -101,8 +101,6 @@ class Barber(models.Model):
         if self.avatar and self.avatar.url:
             return self.avatar.url
         return '/static/salons/img/default-avatar.png'
-
-
 class Appointment(models.Model):
     salon = models.ForeignKey(Salon, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
@@ -120,8 +118,6 @@ class Appointment(models.Model):
     def get_total_duration(self):
         total_duration = sum(item.get_total_duration() for item in self.barber_services.all())
         return total_duration
-
-
 class AppointmentBarberService(models.Model):
     appointment = models.ForeignKey(Appointment, on_delete=models.CASCADE, related_name='barber_services')
     barber = models.ForeignKey(Barber, on_delete=models.SET_NULL, null=True, blank=True, related_name='appointmentbarberservice')

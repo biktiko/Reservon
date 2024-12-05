@@ -17,6 +17,29 @@ class CustomDateTimeInput(forms.DateTimeInput):
         super().__init__(attrs=final_attrs, format='%d.%m.%Y %H:%M')
 
 
+class AdminBookingForm(forms.ModelForm):
+    barber = forms.ModelChoiceField(
+        queryset=Barber.objects.all(),
+        required=False,
+        label='Мастер'
+    )
+    services = forms.ModelMultipleChoiceField(
+        queryset=Service.objects.all(),
+        required=False,
+        label='Услуги'
+    )
+
+    class Meta:
+        model = Appointment
+        fields = ['start_datetime', 'end_datetime', 'barber', 'services']
+        labels = {
+            'start_datetime': 'Начало бронирования',
+            'end_datetime': 'Конец бронирования',
+        }
+        widgets = {
+            'start_datetime': DateTimeInput(attrs={'type': 'datetime-local'}),
+            'end_datetime': DateTimeInput(attrs={'type': 'datetime-local'}),
+        }
 class BarberSelectMultiple(forms.SelectMultiple):
     def create_option(self, name, value, label, selected, index, subindex=None, attrs=None):
         option = super().create_option(

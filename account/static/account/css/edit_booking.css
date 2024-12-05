@@ -339,7 +339,7 @@
     color: var(--danger-hover);
 }
 
-#add-form-button {
+#add-form-button, #refresh-data-button {
     background-color: var(--primary-color);
     color: var(--text-color);
     border: none;
@@ -350,7 +350,7 @@
     transition: background-color 0.3s;
 }
 
-#add-form-button:hover {
+#add-form-button:hover, #refresh-data-button:hover {
     background-color: var(--primary-hover);
 }
 

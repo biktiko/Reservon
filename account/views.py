@@ -1,58 +1,70 @@
 # account/views.py
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import user_passes_test
 from django.db import models
-from salons.models import Salon, Appointment, Barber, Service
+from salons.models import Salon, Appointment, Barber, Service, AppointmentBarberService
 from django.db.models import Q
 from django.core.paginator import Paginator
-from .forms import AppointmentForm, AppointmentBarberServiceFormSet
+from .forms import AppointmentForm, AppointmentBarberServiceFormSet, AdminBookingForm
 from django.utils import timezone
 from django.contrib import messages
 from collections import defaultdict
 from django.db import transaction
 from django.http import JsonResponse
 import logging
+from .utils import get_random_available_barber
 
 # logger = logging.getLogger(__name__)
 logger = logging.getLogger('booking')
 
 @login_required
+@transaction.atomic
 def add_booking(request):
-    user = request.user
-    salons = user.administered_salons.all()
-
-    if not salons.exists():
-        messages.error(request, 'Вы не являетесь администратором ни одного салона.')
-        return redirect('account_dashboard')
-
     if request.method == 'POST':
-        form = AppointmentForm(request.POST, instance=appointment)
-        formset = AppointmentBarberServiceFormSet(request.POST, instance=appointment)
-        if form.is_valid() and formset.is_valid():
-            with transaction.atomic():
-                appointment = form.save()
-                barber_services = formset.save(commit=False)
-                # Удаляем помеченные на удаление объекты
-                for obj in formset.deleted_objects:
-                    obj.delete()
-                # Сохраняем новые и изменённые объекты
-                for bs in barber_services:
-                    bs.appointment = appointment
-                    bs.save()
-                formset.save_m2m()
-                messages.success(request, 'Бронирование успешно обновлено.')
-                return redirect('manage_bookings')
-    else:
-        salon = salons.first()  # Выбираем первый салон по умолчанию
-        form = AppointmentForm(salon=salon)
-        formset = AppointmentBarberServiceFormSet(salon=salon)
+        form = AdminBookingForm(request.POST)
+        salon_id = request.POST.get('salon_id')
+        salon = get_object_or_404(Salon, id=salon_id, admins=request.user)
+        
+        if form.is_valid():
+            appointment = form.save(commit=False)
+            appointment.salon = salon
+            appointment.user = None
+            appointment.save()
 
-    context = {
-        'form': form,
-        'formset': formset,
-        'salons': salons,
-    }
-    return render(request, 'account/add_booking.html', context)
+            barber = form.cleaned_data['barber']
+            services = form.cleaned_data['services']
+
+            if not barber:
+                barber = get_random_available_barber(
+                    appointment.start_datetime, 
+                    appointment.end_datetime, 
+                    appointment.salon
+                )
+                if not barber:
+                    form.add_error('barber', 'Нет доступных мастеров на выбранное время')
+                    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                        return JsonResponse({'success': False, 'errors': form.errors.as_json()}, status=400)
+                    return render(request, 'account/add_booking.html', {'form': form, 'selected_salon': salon})
+
+            appointment_barber_service = AppointmentBarberService.objects.create(
+                appointment=appointment,
+                barber=barber,
+                start_datetime=appointment.start_datetime,
+                end_datetime=appointment.end_datetime,
+            )
+            if services:
+                appointment_barber_service.services.set(services)
+
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'success': True, 'message': 'Бронирование успешно создано!'})
+            return redirect('booking_success')
+        else:
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'errors': form.errors.as_json()}, status=400)
+    else:
+        form = AdminBookingForm()
+    return render(request, 'account/add_booking.html', {'form': form})
 
 @login_required
 def edit_booking(request, booking_id):
@@ -147,9 +159,6 @@ def edit_booking(request, booking_id):
     }
     return render(request, 'account/edit_booking.html', context)
 
-
-# account/views.py
-
 @login_required
 def account_dashboard(request):
     user = request.user
@@ -231,6 +240,8 @@ def manage_bookings(request):
     # Получаем мастеров для фильтрации
     barbers = Barber.objects.filter(salon=selected_salon)
 
+    booking_form = AdminBookingForm()
+
     context = {
         'appointments': page_obj,
         'barbers': barbers,
@@ -239,6 +250,7 @@ def manage_bookings(request):
         'active_menu': 'bookings',
         'active_sidebar': 'salons',
         'now': timezone.now(),
+        'booking_form': booking_form,
     }
     return render(request, 'account/manage_bookings.html', context)
 

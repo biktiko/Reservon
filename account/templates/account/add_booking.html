@@ -1,44 +1,18 @@
-<!-- account/templates/account/add_booking.html -->
-
-{% extends "base.html" %}
+<!-- templates/account/add_booking.html -->
 {% load static %}
-{% block content %}
-<h1>Создать новое бронирование</h1>
+<link rel="stylesheet" href="{% static 'account/css/add_booking.css' %}">
 
-<form method="post">
+<form method="post" action="{% url 'add_booking' %}" id="admin-booking-form">
     {% csrf_token %}
-    <label for="id_salon">Салон:</label>
-    <select name="salon" id="id_salon">
-        {% for salon in salons %}
-            <option value="{{ salon.id }}" {% if salon.id == request.POST.salon|default:salon.id %}selected{% endif %}>{{ salon.name }}</option>
-        {% endfor %}
-    </select>
+    
+    <!-- Скрытое поле для salon_id -->
+    <input type="hidden" name="salon_id" value="{{ selected_salon.id }}">
+    
+    <!-- Блок для отображения сообщений -->
+    <div id="form-messages"></div>
+    
+    <!-- Рендерим поля формы -->
     {{ form.as_p }}
-
-    <div id="formset">
-        {{ formset.management_form }}
-        {% for form in formset %}
-            <div class="barber-service-form">
-                {{ form.as_p }}
-            </div>
-        {% endfor %}
-    </div>
-
-    <button id="add-form">Добавить мастера и услуги</button>
-    <button type="submit">Создать бронирование</button>
+    
+    <button type="submit" class="btn btn-success">Добавить бронирование</button>
 </form>
-
-<!-- Пустая форма для копирования -->
-<div id="empty-form" style="display: none;">
-    {% with form=formset.empty_form %}
-        <div class="barber-service-form">
-            {{ form.as_p }}
-        </div>
-    {% endwith %}
-</div>
-
-{% endblock %}
-
-{% block extra_js %}
-<script src="{% static 'account/js/formset.js' %}"></script>
-{% endblock %}
