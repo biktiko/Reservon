@@ -1,0 +1,54 @@
+.barbers-row {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.barber-small-card {
+    text-align: center;
+    padding: 10px;
+    background-color: #f0f0f0;
+    border-radius: 8px;
+    width: 100px;
+    cursor: pointer;
+}
+
+.barber-small-card.active {
+    border: 2px solid #1e90ff;
+}
+
+.barber-small-card .small-avatar {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.barber-details-container {
+    display: flex;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.barber-details-left .big-avatar {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.barber-details-right {
+    flex: 1;
+}
+
+.barber-details-right h3,
+.barber-details-right p {
+    margin: 5px 0;
+    cursor: pointer;
+}
+
+.schedule p {
+    margin: 5px 0;
+    cursor: pointer;
+}

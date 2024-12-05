@@ -1,0 +1,7 @@
+<!-- edit_barber_field.html -->
+<form method="post" id="edit-form" action="{% url 'edit_barber_field' barber.id %}?field={{ field }}">
+    {% csrf_token %}
+    <div id="form-errors"></div>
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-success">Сохранить</button>
+</form>

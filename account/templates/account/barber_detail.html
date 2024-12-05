@@ -1,0 +1,10 @@
+{% extends "account/account_base.html" %}
+{% block page_content %}
+<div class="barber-detail">
+    <img src="{{ barber.get_avatar_url }}" alt="{{ barber.name }}" class="barber-avatar-large">
+    <h1>{{ barber.name }}</h1>
+    <p><strong>Описание:</strong> {{ barber.description }}</p>
+    <p><strong>Категории:</strong> {{ barber.categories.all|join:", " }}</p>
+    <!-- Добавьте другие поля, например, график работы -->
+</div>
+{% endblock %}

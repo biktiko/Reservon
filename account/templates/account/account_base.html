@@ -4,6 +4,9 @@
 {% load static %}
 
 {% block content %}
+
+<link rel="stylesheet" href="">
+
 <div class="dashboard-container">
      <!-- Кнопка меню для мобильной версии -->
      <div class="menu-button" onclick="toggleSidebar()">
@@ -31,11 +34,14 @@
         <!-- Верхнее меню -->
         <div class="top-menu">
             <ul>
+                <li class="{% if active_menu == 'bookings' %}active{% endif %}">
+                    <a href="{% url 'manage_bookings' %}">Бронирования</a>
+                </li>
                 <li class="{% if active_menu == 'salon' %}active{% endif %}">
                     <a href="{% url 'account_dashboard' %}">Салон</a>
                 </li>
-                <li class="{% if active_menu == 'bookings' %}active{% endif %}">
-                    <a href="{% url 'manage_bookings' %}">Бронирования</a>
+                <li class="{% if active_menu == 'salon_masters' %}active{% endif %}">
+                    <a href="{% url 'salon_masters' %}">Мастера</a>
                 </li>
                 {% if salons|length > 1 %}
                     <li><a href="#" id="change-salon-button">Сменить салон</a></li>

@@ -1,12 +1,10 @@
 # account/views.py
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.decorators import user_passes_test
 from django.db import models
-from salons.models import Salon, Appointment, Barber, Service, AppointmentBarberService
-from django.db.models import Q
+from salons.models import Salon, Appointment, Barber, Service, AppointmentBarberService, BarberAvailability
 from django.core.paginator import Paginator
-from .forms import AppointmentForm, AppointmentBarberServiceFormSet, AdminBookingForm
+from .forms import  AppointmentBarberServiceFormSet, AdminBookingForm
 from django.utils import timezone
 from django.contrib import messages
 from collections import defaultdict
@@ -14,6 +12,8 @@ from django.db import transaction
 from django.http import JsonResponse
 import logging
 from .utils import get_random_available_barber
+from django.forms import modelform_factory, ModelForm
+from django.template.loader import render_to_string
 
 # logger = logging.getLogger(__name__)
 logger = logging.getLogger('booking')
@@ -281,3 +281,176 @@ def delete_booking(request, booking_id):
         'appointment': appointment,
     }
     return render(request, 'account/delete_booking.html', context)
+
+
+@login_required
+def salon_masters(request):
+    user = request.user
+    salons = user.administered_salons.all()
+
+    salon_id = request.GET.get('salon_id')
+    if salon_id:
+        salon = get_object_or_404(Salon, id=salon_id, admins=user)
+    else:
+        salon = salons.first()
+
+    if salon:
+        barbers = Barber.objects.filter(salon=salon).prefetch_related('categories')
+        # Определяем активного мастера
+        active_barber_id = request.GET.get('active_barber_id')
+        if active_barber_id:
+            active_barber = get_object_or_404(Barber, id=active_barber_id, salon=salon)
+        else:
+            active_barber = barbers.first() if barbers.exists() else None
+    else:
+        barbers = []
+        active_barber = None
+        active_barber_id = None
+
+    # Подготовка расписания для каждого мастера уже была описана ранее
+    # Предположим, мы уже добавили day_schedules для active_barber
+    if active_barber:
+        # Аналогичный код получения расписания для active_barber
+        day_schedules = []
+        for day_code, day_name in BarberAvailability.DAY_OF_WEEK_CHOICES:
+            availabilities = BarberAvailability.objects.filter(barber=active_barber, day_of_week=day_code)
+            if availabilities.exists():
+                intervals = []
+                for availability in availabilities:
+                    status = 'Работает' if availability.is_available else 'Недоступен'
+                    intervals.append(f"{availability.start_time.strftime('%H:%M')}-{availability.end_time.strftime('%H:%M')} ({status})")
+                day_schedules.append({
+                    'day': day_code,
+                    'day_display': day_name,
+                    'intervals': intervals
+                })
+            else:
+                day_schedules.append({
+                    'day': day_code,
+                    'day_display': day_name,
+                    'intervals': ['Выходной']
+                })
+        active_barber.day_schedules = day_schedules
+
+    context = {
+        'barbers': barbers,
+        'salon': salon,
+        'active_menu': 'salon_masters',
+        'active_barber': active_barber,
+        'active_barber_id': active_barber_id,
+    }
+    return render(request, 'account/salon_masters.html', context)
+
+@login_required
+def barber_detail(request, barber_id):
+    barber = get_object_or_404(Barber, id=barber_id, salon__admins=request.user)
+    context = {
+        'barber': barber,
+    }
+    return render(request, 'account/barber_detail.html', context)
+
+
+@login_required
+def add_availability(request, barber_id):
+    barber = get_object_or_404(Barber, id=barber_id)
+    AvailabilityForm = modelform_factory(BarberAvailability, fields=('day_of_week', 'start_time', 'end_time', 'is_available'))
+
+    if request.method == 'POST':
+        form = AvailabilityForm(request.POST)
+        if form.is_valid():
+            availability = form.save(commit=False)
+            availability.barber = barber
+            availability.save()
+            return JsonResponse({'success': True})
+        else:
+            return JsonResponse({'success': False, 'errors': form.errors})
+    else:
+        day = request.GET.get('day')
+        form = AvailabilityForm(initial={'day_of_week': day})
+        return render(request, 'account/availability_form.html', {'form': form, 'barber': barber})
+
+
+class BarberEditForm(ModelForm):
+    class Meta:
+        model = Barber
+        fields = ['name', 'description', 'categories']
+
+@login_required
+def edit_barber_field(request, barber_id):
+    barber = get_object_or_404(Barber, id=barber_id, salon__admins=request.user)
+    field = request.GET.get('field')
+
+    if field not in ['name', 'description', 'categories']:
+        return JsonResponse({'success': False, 'error': 'Недопустимое поле.'})
+
+    if request.method == 'POST':
+        form = BarberEditForm(request.POST, instance=barber)
+        if form.is_valid():
+            form.save()
+            return JsonResponse({'success': True})
+        else:
+            return JsonResponse({'success': False, 'errors': form.errors})
+    else:
+        form = BarberEditForm(instance=barber)
+        # Отображаем только нужное поле
+        form.fields = {field: form.fields[field]}
+        html = render_to_string('account/edit_barber_field.html', {'form': form, 'barber': barber, 'field': field})
+        return JsonResponse({'success': True, 'html': html})
+    
+# views.py
+
+from django.forms import modelformset_factory
+
+@login_required
+def edit_barber_schedule(request, barber_id):
+    barber = get_object_or_404(Barber, id=barber_id, salon__admins=request.user)
+    day = request.GET.get('day')
+
+    BarberAvailabilityFormSet = modelformset_factory(
+        BarberAvailability,
+        fields=('start_time', 'end_time', 'is_available'),
+        extra=1,
+        can_delete=True
+    )
+
+    queryset = BarberAvailability.objects.filter(barber=barber, day_of_week=day)
+
+    if request.method == 'POST':
+        formset = BarberAvailabilityFormSet(request.POST, queryset=queryset)
+        if formset.is_valid():
+            instances = formset.save(commit=False)
+            # Удаляем старые записи
+            queryset.delete()
+            for instance in instances:
+                instance.barber = barber
+                instance.day_of_week = day
+                instance.save()
+            return JsonResponse({'success': True})
+        else:
+            return JsonResponse({'success': False, 'errors': formset.errors})
+    else:
+        formset = BarberAvailabilityFormSet(queryset=queryset)
+        html = render_to_string('account/edit_barber_schedule.html', {'formset': formset, 'barber': barber, 'day': day}, request=request)
+
+        return JsonResponse({'success': True, 'html': html})
+
+class BarberPhotoForm(ModelForm):
+    class Meta:
+        model = Barber
+        fields = ['avatar']
+
+@login_required
+def edit_barber_photo(request, barber_id):
+    barber = get_object_or_404(Barber, id=barber_id, salon__admins=request.user)
+
+    if request.method == 'POST':
+        form = BarberPhotoForm(request.POST, request.FILES, instance=barber)
+        if form.is_valid():
+            form.save()
+            return JsonResponse({'success': True})
+        else:
+            return JsonResponse({'success': False, 'errors': form.errors})
+    else:
+        form = BarberPhotoForm(instance=barber)
+        html = render_to_string('account/edit_barber_photo.html', {'form': form, 'barber': barber})
+        return JsonResponse({'success': True, 'html': html})

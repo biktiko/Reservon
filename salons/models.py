@@ -2,6 +2,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from datetime import timedelta
+from django.utils.translation import gettext_lazy as _
 
 class Salon(models.Model):
     admins = models.ManyToManyField(User, related_name='administered_salons', blank=True)
@@ -101,6 +102,29 @@ class Barber(models.Model):
         if self.avatar and self.avatar.url:
             return self.avatar.url
         return '/static/salons/img/default-avatar.png'
+    
+    
+class BarberAvailability(models.Model):
+    DAY_OF_WEEK_CHOICES = [
+        ('monday', 'Понедельник'),
+        ('tuesday', 'Вторник'),
+        ('wednesday', 'Среда'),
+        ('thursday', 'Четверг'),
+        ('friday', 'Пятница'),
+        ('saturday', 'Суббота'),
+        ('sunday', 'Воскресенье'),
+    ]
+
+    barber = models.ForeignKey(Barber, on_delete=models.CASCADE, related_name='availabilities')
+    day_of_week = models.CharField(max_length=9, choices=DAY_OF_WEEK_CHOICES)
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+    is_available = models.BooleanField(default=True)
+
+    def __str__(self):
+        status = 'Доступен' if self.is_available else 'Недоступен'
+        return f"{self.barber.name} - {self.get_day_of_week_display()} {self.start_time}-{self.end_time} ({status})"
+
 class Appointment(models.Model):
     salon = models.ForeignKey(Salon, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)

@@ -89,6 +89,7 @@ def get_barber_availability(request, barber_id):
         return JsonResponse({'availability': availability})
     except Barber.DoesNotExist:
         return JsonResponse({'error': 'Barber not found'}, status=404)
+    
 
 @api_view(['POST'])
 def get_available_minutes(request):

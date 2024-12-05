@@ -1,0 +1,75 @@
+{% extends "account/account_base.html" %}
+{% load static %}
+{% block page_content %}
+<h1>Расписание мастера {{ barber.name }}</h1>
+
+<div class="schedule-container">
+    {% for day in days_of_week %}
+        <div class="day-card">
+            <h2>{{ day.label }}</h2>
+            <div class="availabilities">
+                {% for availability in barber.availabilities.all %}
+                    {% if availability.day_of_week == day.value %}
+                        <div class="availability-card">
+                            <p>С {{ availability.start_time }} до {{ availability.end_time }} - 
+                            {% if availability.is_available %}
+                                <span class="available">Доступен</span>
+                            {% else %}
+                                <span class="unavailable">Недоступен</span>
+                            {% endif %}
+                            </p>
+                            <button class="edit-btn" data-id="{{ availability.id }}">Редактировать</button>
+                            <button class="delete-btn" data-id="{{ availability.id }}">Удалить</button>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+            <button class="add-interval-btn" data-day="{{ day.value }}">Добавить интервал</button>
+        </div>
+    {% endfor %}
+</div>
+
+<!-- Модальное окно для добавления/редактирования интервала -->
+<div id="availabilityModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <!-- Содержимое модального окна будет загружаться через AJAX -->
+</div>
+
+{% endblock %}
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Обработчик для кнопки "Добавить интервал"
+        document.querySelectorAll('.add-interval-btn').forEach(function(button) {
+            button.addEventListener('click', function() {
+                var day = this.dataset.day;
+                fetch(`{% url 'add_availability' barber.id %}?day=${day}`)
+                    .then(response => response.text())
+                    .then(html => {
+                        document.getElementById('availabilityModal').innerHTML = html;
+                        $('#availabilityModal').modal('show');
+                    });
+            });
+        });
+    
+        // Обработчик для отправки формы
+        document.getElementById('availabilityModal').addEventListener('submit', function(e) {
+            e.preventDefault();
+            var form = e.target;
+            var formData = new FormData(form);
+            fetch(form.action, {
+                method: 'POST',
+                headers: {'X-Requested-With': 'XMLHttpRequest'},
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    // Отобразить ошибки
+                }
+            });
+        });
+    });
+    </script>
+    

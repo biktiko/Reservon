@@ -1,0 +1,10 @@
+<!-- account/edit_barber_schedule.html -->
+<form method="post" id="edit-form" action="{% url 'edit_barber_schedule' barber.id %}?day={{ day }}">
+    {% csrf_token %}
+    <div id="form-errors"></div>
+    {{ formset.management_form }}
+    {% for form in formset %}
+        {{ form.as_p }}
+    {% endfor %}
+    <button type="submit" class="btn btn-success">Сохранить</button>
+</form>
