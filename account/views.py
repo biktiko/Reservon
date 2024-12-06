@@ -12,10 +12,11 @@ from django.db import transaction
 from django.http import JsonResponse
 import logging
 from .utils import get_random_available_barber
-from django.forms import modelform_factory, ModelForm
+from django.forms import modelform_factory, modelformset_factory, ModelForm
 from django.template.loader import render_to_string
+from django import forms
 
-# logger = logging.getLogger(__name__)
+
 logger = logging.getLogger('booking')
 
 @login_required
@@ -380,26 +381,23 @@ def edit_barber_field(request, barber_id):
     barber = get_object_or_404(Barber, id=barber_id, salon__admins=request.user)
     field = request.GET.get('field')
 
-    if field not in ['name', 'description', 'categories']:
-        return JsonResponse({'success': False, 'error': 'Недопустимое поле.'})
+    # Создаем форму только с нужным полем
+    class SingleFieldForm(forms.ModelForm):
+        class Meta:
+            model = Barber
+            fields = [field]
 
     if request.method == 'POST':
-        form = BarberEditForm(request.POST, instance=barber)
+        form = SingleFieldForm(request.POST, instance=barber)
         if form.is_valid():
             form.save()
             return JsonResponse({'success': True})
         else:
             return JsonResponse({'success': False, 'errors': form.errors})
     else:
-        form = BarberEditForm(instance=barber)
-        # Отображаем только нужное поле
-        form.fields = {field: form.fields[field]}
-        html = render_to_string('account/edit_barber_field.html', {'form': form, 'barber': barber, 'field': field})
+        form = SingleFieldForm(instance=barber)
+        html = render_to_string('account/edit_barber_field.html', {'form': form, 'barber': barber, 'field': field}, request=request)
         return JsonResponse({'success': True, 'html': html})
-    
-# views.py
-
-from django.forms import modelformset_factory
 
 @login_required
 def edit_barber_schedule(request, barber_id):
@@ -430,9 +428,15 @@ def edit_barber_schedule(request, barber_id):
             return JsonResponse({'success': False, 'errors': formset.errors})
     else:
         formset = BarberAvailabilityFormSet(queryset=queryset)
-        html = render_to_string('account/edit_barber_schedule.html', {'formset': formset, 'barber': barber, 'day': day}, request=request)
 
-        return JsonResponse({'success': True, 'html': html})
+
+        html = render_to_string('account/edit_barber_schedule.html', {
+        'formset': formset,
+        'barber': barber,
+        'day': day
+    }, request=request)
+    return JsonResponse({'success': True, 'html': html})
+
 
 class BarberPhotoForm(ModelForm):
     class Meta:
@@ -452,5 +456,5 @@ def edit_barber_photo(request, barber_id):
             return JsonResponse({'success': False, 'errors': form.errors})
     else:
         form = BarberPhotoForm(instance=barber)
-        html = render_to_string('account/edit_barber_photo.html', {'form': form, 'barber': barber})
+        html = render_to_string('account/edit_barber_photo.html', {'form': form, 'barber': barber}, request=request)
         return JsonResponse({'success': True, 'html': html})

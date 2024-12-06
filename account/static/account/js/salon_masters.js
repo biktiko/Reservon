@@ -43,17 +43,24 @@ document.addEventListener('DOMContentLoaded', function() {
     // Редактирование фотографии
     document.querySelectorAll('.editable-photo').forEach(function(element) {
         element.addEventListener('click', function() {
-            var barberId = this.dataset.barberId;
-
-            fetch(`/account/barbers/${barberId}/edit_photo/`)
-                .then(response => response.text())
-                .then(html => {
-                    document.getElementById('editModal').innerHTML = html;
+            var barberId = this.dataset.barberId; // Обязательно объявить здесь barberId
+            fetch(`/account/barbers/${barberId}/edit_photo/`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('editModal').innerHTML = data.html;
                     $('#editModal').modal('show');
-                });
+                } else {
+                    alert('Ошибка загрузки формы редактирования фото.');
+                }
+            });
         });
     });
-
+    
     // Редактирование расписания
     document.querySelectorAll('.editable-schedule').forEach(function(element) {
         element.addEventListener('click', function() {
@@ -61,9 +68,9 @@ document.addEventListener('DOMContentLoaded', function() {
             var day = this.dataset.day;
 
             fetch(`/account/barbers/${barberId}/edit_schedule/?day=${day}`)
-                .then(response => response.text())
-                .then(html => {
-                    document.getElementById('editModal').innerHTML = html;
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('editModal').innerHTML = data.html;
                     $('#editModal').modal('show');
                 });
         });

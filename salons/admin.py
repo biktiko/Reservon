@@ -7,13 +7,13 @@ from .models import (
     Service,
     SalonImage,
     Barber,
+    BarberAvailability,
     ServiceCategory,
     Appointment,
     AppointmentBarberService,
 )
 from import_export import resources
 from import_export.admin import ImportExportModelAdmin
-from django.contrib.auth.models import User
 
 # --- Настройка админки для AppointmentBarberService ---
 
@@ -93,27 +93,32 @@ class ServiceCategoryAdmin(admin.ModelAdmin):
 # --- Настройка админки для Barber ---
 
 # Форма для модели Barber с использованием стандартного виджета Textarea
-class BarberAdminForm(forms.ModelForm):
-    class Meta:
-        model = Barber
-        fields = '__all__'
-        widgets = {
-            'availability': forms.Textarea(attrs={'rows': 3, 'cols': 40}),  # Используем стандартный виджет
-        }
+
+class BarberAvailabilityInline(admin.TabularInline):
+    model = BarberAvailability
+    extra = 1
+    fields = ('day_of_week', 'start_time', 'end_time', 'is_available')
 
 @admin.register(Barber)
 class BarberAdmin(ImportExportModelAdmin):
-    form = BarberAdminForm  # Используем форму с стандартным виджетом
     list_display = ('name', 'salon', 'get_categories')
     list_filter = ('salon', 'categories')
     search_fields = ('name', 'salon__name')
     filter_horizontal = ('categories',)
     autocomplete_fields = ['salon', 'categories']
-    fields = ('salon', 'name', 'avatar', 'description', 'availability', 'categories')
+    fields = ('salon', 'name', 'avatar', 'description', 'categories')
+    inlines = [BarberAvailabilityInline]
 
     def get_categories(self, obj):
         return ", ".join([category.name for category in obj.categories.all()])
     get_categories.short_description = 'Категории'
+
+
+@admin.register(BarberAvailability)
+class BarberAvailabilityAdmin(admin.ModelAdmin):
+    list_display = ('barber', 'day_of_week', 'start_time', 'end_time', 'is_available')
+    list_filter = ('barber', 'day_of_week', 'is_available')
+    search_fields = ('barber__name',)    
 
 # --- Настройка админки для Salon ---
 
@@ -134,8 +139,7 @@ class SalonAdminForm(forms.ModelForm):
 class BarberInline(admin.StackedInline):
     model = Barber
     extra = 1
-    form = BarberAdminForm  # Используем форму с стандартным виджетом
-    fields = ('name', 'avatar', 'description', 'availability', 'categories')
+    fields = ('name', 'avatar', 'description', 'categories')
     filter_horizontal = ('categories',)
     autocomplete_fields = ['categories']
 

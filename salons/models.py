@@ -90,7 +90,6 @@ class Barber(models.Model):
     salon = models.ForeignKey(Salon, on_delete=models.CASCADE, related_name='barbers')
     user = models.OneToOneField(User, on_delete=models.SET_NULL, null=True, blank=True)
     name = models.CharField(max_length=100)
-    availability = models.JSONField("Barber's Working Hours", default=dict)
     avatar = models.ImageField(upload_to='salons/barbers', blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     categories = models.ManyToManyField(ServiceCategory, related_name='barbers')  # Add this line

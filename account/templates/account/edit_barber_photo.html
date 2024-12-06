@@ -1,3 +1,6 @@
+<!-- C:\Reservon\Reservon\account\templates\account\edit_barber_photo.html -->
+{% csrf_token %}
+
 <form method="post" enctype="multipart/form-data" id="edit-form" action="{% url 'edit_barber_photo' barber.id %}">
     {% csrf_token %}
     <div id="form-errors"></div>
