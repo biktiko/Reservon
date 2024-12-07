@@ -1,7 +1,21 @@
-<!-- edit_barber_field.html -->
-<form method="post" id="edit-form" action="{% url 'edit_barber_field' barber.id %}?field={{ field }}">
-    {% csrf_token %}
-    <div id="form-errors"></div>
-    {{ form.as_p }}
-    <button type="submit">Сохранить</button>
-</form>
+{% load crispy_forms_tags %}:
+
+{% load crispy_forms_tags %}
+<div class="modal-content">
+  <div class="modal-header">
+    <h5>Сменить {{ field_display_name }}</h5>
+    <!-- <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+      <span aria-hidden="true">&times;</span>
+    </button> -->
+      </div>
+  <div class="modal-body">
+    <form method="post" id="edit-form" action="{% url 'edit_barber_field' barber.id %}?field={{ field }}">
+      {% csrf_token %}
+      <div id="form-errors"></div>
+      {{ form|crispy }}
+      <button type="submit" class="btn btn-success">Сохранить</button>
+    </form>
+  </div>
+</div>
+
+  

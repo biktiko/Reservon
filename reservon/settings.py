@@ -41,6 +41,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django_json_widget',
+    'crispy_forms',
+    'crispy_bootstrap4',
     'rest_framework',
     'authentication',
     'main',
@@ -48,7 +50,7 @@ INSTALLED_APPS = [
     'account',
 ]
 
-
+CRISPY_TEMPLATE_PACK = 'bootstrap4'  # Или другой используемый шаблон (например, bootstrap5)
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

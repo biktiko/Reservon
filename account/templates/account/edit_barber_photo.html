@@ -1,9 +1,20 @@
-<!-- C:\Reservon\Reservon\account\templates\account\edit_barber_photo.html -->
-{% csrf_token %}
-
-<form method="post" enctype="multipart/form-data" id="edit-form" action="{% url 'edit_barber_photo' barber.id %}">
-    {% csrf_token %}
-    <div id="form-errors"></div>
-    {{ form.as_p }}
-    <button type="submit" class="btn btn-success">Сохранить</button>
-</form>
+<div class="modal-content">
+    <div class="modal-header">
+      <h5>Сменить фото</h5>
+      <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+      </button>
+          </div>
+    <div class="modal-body">
+      <form method="post" enctype="multipart/form-data" id="edit-form" action="{% url 'edit_barber_photo' barber.id %}">
+        {% csrf_token %}
+        <div id="form-errors"></div>
+        <div class="form-group">
+            {{ form.avatar.label_tag }}
+            {{ form.avatar }}
+        </div>
+        <button type="submit" class="btn btn-success">Сохранить</button>
+      </form>
+    </div>
+  </div>
+  

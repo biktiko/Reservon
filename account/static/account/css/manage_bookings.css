@@ -16,7 +16,7 @@
 .filter-fields {
     display: flex;
     align-items: center;
-    flex-wrap: wrap;
+    /* flex-wrap: wrap; */
 }
 
 .filter-buttons {
@@ -49,6 +49,10 @@
 
 .add-booking-button:hover {
     background-color: rgb(0, 105, 217);
+}
+
+.filter-fields select{
+    margin-bottom: 4px;
 }
 
 /* Контейнер для бронирований */
@@ -239,7 +243,7 @@
 @media screen and (max-width: 768px) {
     .filter-fields {
         display: flex;
-        flex-wrap: wrap;
+        /* flex-wrap: wrap; */
         width: 100%;
     }
 
@@ -254,10 +258,6 @@
         width: auto;
     }
 
-    .filter-fields select {
-        width: auto;
-    }
-
     .filter-buttons {
         width: 100%;
         margin-top: 10px;
@@ -266,5 +266,9 @@
     .add-booking-button {
         width: 100%;
         text-align: center;
+    }
+
+    .filter-form button{
+        width: 100%;
     }
 }

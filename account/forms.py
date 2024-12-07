@@ -3,8 +3,8 @@
 from django import forms
 from django.forms import ModelForm
 from django.forms.models import inlineformset_factory
-from salons.models import Appointment, AppointmentBarberService, Barber, Service
-from django.forms.widgets import DateTimeInput, SelectMultiple
+from salons.models import Appointment, AppointmentBarberService, Barber, Service, BarberAvailability
+from django.forms.widgets import DateTimeInput
 
 class CustomDateTimeInput(forms.DateTimeInput):
     input_type = 'text'  # Используем текстовый ввод для совместимости с Flatpickr
@@ -68,8 +68,6 @@ class AppointmentBarberServiceForm(ModelForm):
             'end_datetime': CustomDateTimeInput(attrs={'class': 'datetime-input end-datetime'}),
         }
 
-
-
 AppointmentBarberServiceFormSet = inlineformset_factory(
     Appointment,
     AppointmentBarberService,
@@ -78,3 +76,32 @@ AppointmentBarberServiceFormSet = inlineformset_factory(
     extra=0,
     can_delete=True
 )
+
+class BarberFieldForm(forms.ModelForm):
+    class Meta:
+        model = Barber
+        fields = ['name', 'categories', 'description']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'categories': forms.SelectMultiple(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        field = kwargs.pop('field', None)
+        super(BarberFieldForm, self).__init__(*args, **kwargs)
+        if field:
+            # Ограничиваем поля для редактирования в зависимости от 'field'
+            for f in self.fields:
+                if f != field:
+                    self.fields[f].widget = forms.HiddenInput()
+
+
+class BarberScheduleForm(forms.ModelForm):
+    class Meta:
+        model = BarberAvailability
+        fields = ['start_time', 'end_time', 'is_available']
+        widgets = {
+            'start_time': forms.TimeInput(format='%H:%M', attrs={'type': 'time', 'class': 'form-control'}),
+            'end_time': forms.TimeInput(format='%H:%M', attrs={'type': 'time', 'class': 'form-control'}),
+        }

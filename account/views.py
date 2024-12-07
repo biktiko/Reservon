@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.db import models
 from salons.models import Salon, Appointment, Barber, Service, AppointmentBarberService, BarberAvailability
 from django.core.paginator import Paginator
-from .forms import  AppointmentBarberServiceFormSet, AdminBookingForm
+from .forms import  AppointmentBarberServiceFormSet, AdminBookingForm, BarberScheduleForm
 from django.utils import timezone
 from django.contrib import messages
 from collections import defaultdict
@@ -311,26 +311,42 @@ def salon_masters(request):
     # Подготовка расписания для каждого мастера уже была описана ранее
     # Предположим, мы уже добавили day_schedules для active_barber
     if active_barber:
-        # Аналогичный код получения расписания для active_barber
         day_schedules = []
         for day_code, day_name in BarberAvailability.DAY_OF_WEEK_CHOICES:
             availabilities = BarberAvailability.objects.filter(barber=active_barber, day_of_week=day_code)
+
             if availabilities.exists():
-                intervals = []
-                for availability in availabilities:
-                    status = 'Работает' if availability.is_available else 'Недоступен'
-                    intervals.append(f"{availability.start_time.strftime('%H:%M')}-{availability.end_time.strftime('%H:%M')} ({status})")
-                day_schedules.append({
-                    'day': day_code,
-                    'day_display': day_name,
-                    'intervals': intervals
-                })
+                # Проверяем доступные интервалы
+                if all(not a.is_available for a in availabilities):
+                    # Все интервалы недоступны → "Выходной"
+                    day_schedules.append({
+                        'day': day_code,
+                        'day_display': day_name,
+                        'intervals': ['Выходной']
+                    })
+                else:
+                    intervals = []
+                    for availability in availabilities:
+                        if availability.is_available:
+                            intervals.append(f"{availability.start_time.strftime('%H:%M')}-{availability.end_time.strftime('%H:%M')}")
+                        # Недоступные интервалы игнорируем
+
+                    # Если intervals пуст — значит не было доступных интервалов,
+                    # но мы уже проверили этот случай через all(not a.is_available),
+                    # значит intervals точно не пуст.
+                    day_schedules.append({
+                        'day': day_code,
+                        'day_display': day_name,
+                        'intervals': intervals
+                    })
             else:
+                # Нет записей → Выходной
                 day_schedules.append({
                     'day': day_code,
                     'day_display': day_name,
                     'intervals': ['Выходной']
                 })
+
         active_barber.day_schedules = day_schedules
 
     context = {
@@ -387,6 +403,13 @@ def edit_barber_field(request, barber_id):
             model = Barber
             fields = [field]
 
+    field_display_map = {
+        'name': 'Имя',
+        'description': 'Описание',
+        'categories': 'Категории'
+        }
+    field_display_name = field_display_map.get(field, 'Параметр')
+
     if request.method == 'POST':
         form = SingleFieldForm(request.POST, instance=barber)
         if form.is_valid():
@@ -396,7 +419,13 @@ def edit_barber_field(request, barber_id):
             return JsonResponse({'success': False, 'errors': form.errors})
     else:
         form = SingleFieldForm(instance=barber)
-        html = render_to_string('account/edit_barber_field.html', {'form': form, 'barber': barber, 'field': field}, request=request)
+        html = render_to_string('account/edit_barber_field.html', {
+            'form': form, 
+            'barber': barber, 
+            'field': field,  
+            'field_display_name': field_display_name
+        }, request=request)
+        
         return JsonResponse({'success': True, 'html': html})
 
 @login_required
@@ -407,7 +436,8 @@ def edit_barber_schedule(request, barber_id):
     BarberAvailabilityFormSet = modelformset_factory(
         BarberAvailability,
         fields=('start_time', 'end_time', 'is_available'),
-        extra=1,
+        form=BarberScheduleForm,  # ВАЖНО указать form=BarberScheduleForm
+        extra=2,
         can_delete=True
     )
 

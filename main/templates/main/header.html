@@ -24,7 +24,7 @@
     <div class="auth-buttons">
       {% if user.is_authenticated %}
         <!-- Пользователь залогинен -->
-          <a href="/account/"><span class="user-name">{% trans "My account" %}</span></a>
+          <a href="/account/bookings/"><span class="user-name">{% trans "My account" %}</span></a>
       {% else %}
         <!-- Пользователь не залогинен -->
         <a href="#" class="btn login-btn" onclick="openAuthModal('login')"><i class="fa-solid fa-user"></i>{% trans "Login" %}</a>

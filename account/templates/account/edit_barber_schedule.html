@@ -1,11 +1,51 @@
-<!-- account/edit_barber_schedule.html -->
+{% load form_tags %}
 
-<form method="post" id="edit-form" action="{% url 'edit_barber_schedule' barber.id %}?day={{ day }}">
-    {% csrf_token %}
-    <div id="form-errors"></div>
-    {{ formset.management_form }}
-    {% for form in formset %}
-        {{ form.as_p }}
-    {% endfor %}
-    <button type="submit" class="btn btn-success">Сохранить</button>
-</form>
+<div class="modal-content">
+  <div class="modal-header">
+    <h5>Редактировать расписание для {{ day_display }}</h5>
+    <!-- Если нужна кнопка закрытия:
+    <button type="button" class="close" aria-label="Close" onclick="hideModal()">
+        <span aria-hidden="true">&times;</span>
+    </button>
+    -->
+  </div>
+  <div class="modal-body">
+    <form method="post" id="edit-form" action="{% url 'edit_barber_schedule' barber.id %}?day={{ day }}">
+      {% csrf_token %}
+      <div id="form-errors"></div>
+      {{ formset.management_form }}
+      {% for form in formset %}
+        {{ form.id }}
+        <div class="form-row">
+          <div class="col-half">
+            <div class="form-group">
+              <label for="{{ form.start_time.id_for_label }}">Начало:</label>
+              {{ form.start_time|add_class:"form-control" }}
+            </div>
+          </div>
+          <div class="col-half">
+            <div class="form-group">
+              <label for="{{ form.end_time.id_for_label }}">Конец:</label>
+              {{ form.end_time|add_class:"form-control" }}
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div class="switch-container">
+            <span class="switch-label-left">Свободен</span>
+            <label class="switch">
+              {{ form.is_available }}
+              <span class="slider"></span>
+            </label>
+            <span class="switch-label-right">Занят</span>
+          </div>
+        </div>
+
+        <hr>
+      {% endfor %}
+    
+      <button type="submit" class="btn btn-success">Сохранить</button>
+    </form>
+  </div>
+</div>

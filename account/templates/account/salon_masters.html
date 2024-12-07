@@ -1,19 +1,26 @@
-<!-- templates/account/salon_masters.html -->
 {% extends "account/account_base.html" %}
 {% load static %}
-
 {% block page_content %}
+<link rel="stylesheet" href="{% static 'account/css/unified.css' %}">
+
 <h1>Мастера салона "{{ salon.name }}"</h1>
 
 <!-- Верхний ряд с карточками мастеров -->
 <div class="barbers-row">
-    <link rel="stylesheet" href="{% static 'account/css/salon_masters.css' %}">
     {% for barber in barbers %}
-        <div class="barber-small-card {% if barber.id == active_barber_id %}active{% endif %}">
-            <a href="?active_barber_id={{ barber.id }}{% if salon.id %}&salon_id={{ salon.id }}{% endif %}">
-                <img src="{{ barber.get_avatar_url }}" alt="{{ barber.name }}" class="small-avatar" />
-                <p>{{ barber.name }}</p>
-            </a>
+        <div class="barber-small-card {% if barber.id == active_barber_id %}active{% endif %}"
+             data-url="?active_barber_id={{ barber.id }}{% if salon.id %}&salon_id={{ salon.id }}{% endif %}">
+            <img src="{{ barber.get_avatar_url }}" alt="{{ barber.name }}" class="small-avatar" />
+            <div class="barber-info">
+                <p class="barber-name">{{ barber.name }}</p>
+                <p class="barber-categories">
+                    {% if barber.categories.all %}
+                        {{ barber.categories.all|join:", " }}
+                    {% else %}
+                        Нет категорий
+                    {% endif %}
+                </p>
+            </div>
         </div>
     {% empty %}
         <p>Нет мастеров в салоне.</p>
@@ -21,29 +28,39 @@
 </div>
 
 {% if active_barber %}
-<!-- Детали активного мастера -->
 <div class="barber-details-container">
-    <!-- Левая часть: фотография -->
     <div class="barber-details-left">
         <img src="{{ active_barber.get_avatar_url }}" alt="{{ active_barber.name }}" class="big-avatar editable-photo" data-barber-id="{{ active_barber.id }}">
-    </div>
-    <!-- Правая часть: имя, описание, категории, график -->
-    <div class="barber-details-right">
-        <h3 class="editable-field" data-barber-id="{{ active_barber.id }}" data-field="name">{{ active_barber.name }}</h3>
-        <p class="editable-field" data-barber-id="{{ active_barber.id }}" data-field="description">{{ active_barber.description }}</p>
-        <p><strong>Категории:</strong>
-            <span class="editable-field" data-barber-id="{{ active_barber.id }}" data-field="categories">
+        <div class="barber-info-under-photo">
+            <h3 class="editable-field editable-hint" data-barber-id="{{ active_barber.id }}" data-field="name">
+                {{ active_barber.name }} 
+                <span class="edit-icon">✎</span>
+            </h3>
+            <p class="editable-field editable-hint" data-barber-id="{{ active_barber.id }}" data-field="categories">
+                <strong>Категории:</strong>
                 {% if active_barber.categories.all %}
                     {{ active_barber.categories.all|join:", " }}
                 {% else %}
                     Нет категорий
                 {% endif %}
-            </span>
-        </p>
+                <span class="edit-icon">✎</span>
+            </p>
+            <p class="editable-field editable-hint" data-barber-id="{{ active_barber.id }}" data-field="description">
+                <strong>Текст:</strong>
+                {{ active_barber.description }}
+                <span class="edit-icon">✎</span>
+            </p>
+        </div>
+    </div>
+    <div class="barber-details-right">
         <div class="schedule">
+            <strong style="color: white;">График</strong>
             {% for day_schedule in active_barber.day_schedules %}
                 <p class="editable-schedule" data-barber-id="{{ active_barber.id }}" data-day="{{ day_schedule.day }}">
-                    {{ day_schedule.day_display }} - {{ day_schedule.intervals|join:", " }}
+                    <strong>{{ day_schedule.day_display }}:</strong>
+                    {% for interval in day_schedule.intervals %}
+                        <span>{{ interval }}</span>{% if not forloop.last %}, {% endif %}
+                    {% endfor %}
                 </p>
             {% endfor %}
         </div>

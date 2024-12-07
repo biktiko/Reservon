@@ -1,11 +1,12 @@
 <!-- C:\Reservon\Reservon\salons\templates\salons\book-confirm.html -->
+{% load i18n %}
 
 <!-- Модальное окно подтверждения бронирования -->
 <div id="booking-confirmation-modal" class="modal booking-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
     <div class="modal-content booking-modal-content">
         <span class="close-button" aria-label="Close modal">&times;</span>
         <div class="modal-body booking-modal-body">
-            <h2 id="modal-title">Подтверждение бронирования</h2>
+            <h2 id="modal-title">{% trans "Подтверждение бронирования" %}</h2>
             <!-- Дата, время и общая длительность бронирования -->
             <p class="booking-date-time">
                 <strong>Дата:</strong> 2024-11-29<br>
@@ -16,7 +17,7 @@
             <div class="booking-details">
                 <div class="category-section">
                     <h4>Стрижки</h4>
-                    <p><strong>Мастер:</strong> Любой мастер</p>
+                    <p><strong>Мастер:</strong>Любой мастер</p>
                     <p><strong>Услуги</strong></p>
                     <div class="services-badges">
                         <span class="service-badge">Շերտաներկում</span>
@@ -27,8 +28,8 @@
             </div>
         </div>
         <div class="modal-footer booking-modal-footer">
-            <button class="confirm-button"><i class="fas fa-check-circle" aria-hidden="true"></i> Подтвердить</button>
-            <button class="cancel-button"><i class="fas fa-times-circle" aria-hidden="true"></i> Отменить</button>
+            <button class="confirm-button"><i class="fas fa-check-circle" aria-hidden="true"></i>{% trans "Подтвердить" %}</button>
+            <button class="cancel-button"><i class="fas fa-times-circle" aria-hidden="true"></i>{% trans "Отменить" %}</button>
         </div>
     </div>
 </div>

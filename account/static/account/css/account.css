@@ -129,11 +129,6 @@
         padding: 0;
     }
 
-    
-    .top-menu ul {
-        flex-direction: column;
-    }
-
     .top-menu ul li {
         margin-right: 0;
         margin-bottom: 10px;

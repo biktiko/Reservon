@@ -1,7 +1,8 @@
-<!-- C:\Reservon\Reservon\account\templates\account\barber_schedule.html -->
 {% extends "account/account_base.html" %}
 {% load static %}
 {% block page_content %}
+<link rel="stylesheet" href="{% static 'account/css/unified.css' %}">
+
 <h1>Расписание мастера {{ barber.name }}</h1>
 
 <div class="schedule-container">
@@ -12,20 +13,20 @@
                 {% for availability in barber.availabilities.all %}
                     {% if availability.day_of_week == day.value %}
                         <div class="availability-card">
-                            <p>С {{ availability.start_time }} до {{ availability.end_time }} - 
+                            <p>С {{ availability.start_time|time:"H:i" }} до {{ availability.end_time|time:"H:i" }} - 
                             {% if availability.is_available %}
                                 <span class="available">Доступен</span>
                             {% else %}
                                 <span class="unavailable">Недоступен</span>
                             {% endif %}
                             </p>
-                            <button class="edit-btn" data-id="{{ availability.id }}">Редактировать</button>
-                            <button class="delete-btn" data-id="{{ availability.id }}">Удалить</button>
+                            <button class="edit-btn btn btn-primary btn-sm" data-id="{{ availability.id }}">Сменить</button>
+                            <button class="delete-btn btn btn-danger btn-sm" data-id="{{ availability.id }}">Удалить</button>
                         </div>
                     {% endif %}
                 {% endfor %}
             </div>
-            <button class="add-interval-btn" data-day="{{ day.value }}">Добавить интервал</button>
+            <button class="add-interval-btn btn btn-success btn-sm" data-day="{{ day.value }}">Добавить интервал</button>
         </div>
     {% endfor %}
 </div>
@@ -51,26 +52,86 @@
                     });
             });
         });
-    
-        // Обработчик для отправки формы
+
+        // Обработчик для кнопки "Сменить" и "Удалить"
+        document.querySelectorAll('.edit-btn, .delete-btn').forEach(function(button) {
+            button.addEventListener('click', function() {
+                var availabilityId = this.dataset.id;
+                var action = this.classList.contains('edit-btn') ? 'edit' : 'delete';
+                
+                if(action === 'edit') {
+                    fetch(`/account/barbers/${barber.id}/edit_availability/${availabilityId}/`, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            document.getElementById('availabilityModal').innerHTML = data.html;
+                            $('#availabilityModal').modal('show');
+                        } else {
+                            alert('Ошибка загрузки формы редактирования.');
+                        }
+                    });
+                } else if(action === 'delete') {
+                    if(confirm('Вы уверены, что хотите удалить этот интервал?')) {
+                        fetch(`/account/barbers/${barber.id}/delete_availability/${availabilityId}/`, {
+                            method: 'POST',
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'X-CSRFToken': csrftoken
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if(data.success) {
+                                location.reload();
+                            } else {
+                                alert('Ошибка удаления интервала.');
+                            }
+                        });
+                    }
+                }
+            });
+        });
+
+        // Обработка отправки форм внутри модального окна
         document.getElementById('availabilityModal').addEventListener('submit', function(e) {
             e.preventDefault();
             var form = e.target;
             var formData = new FormData(form);
+
             fetch(form.action, {
                 method: 'POST',
-                headers: {'X-Requested-With': 'XMLHttpRequest'},
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': csrftoken
+                },
                 body: formData
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
+                    $('#availabilityModal').modal('hide');
                     location.reload();
                 } else {
-                    // Отобразить ошибки
+                    var errorContainer = document.getElementById('form-errors');
+                    errorContainer.innerHTML = '';
+                    for (var field in data.errors) {
+                        data.errors[field].forEach(function(err) {
+                            errorContainer.innerHTML += `<div class="alert alert-danger">${err}</div>`;
+                        });
+                    }
                 }
             });
         });
+
+        // Обработка закрытия модального окна по нажатию кнопки "Закрыть"
+        document.querySelectorAll('.modal .close').forEach(function(button) {
+            button.addEventListener('click', function() {
+                $('#availabilityModal').modal('hide');
+            });
+        });
     });
-    </script>
-    
+</script>

@@ -784,6 +784,12 @@ const serviceCard = document.querySelector(`.service-card[data-service-id="${ser
         cancelButton.onclick = () => {
             hideBookingConfirmationModal();
         };
+
+        function hideBookingConfirmationModal() {
+            const modal = document.getElementById('booking-confirmation-modal');
+            modal.classList.remove('show');
+        }
+    
     
         // Обработчик закрытия по клику вне модального окна
         window.onclick = (event) => {
@@ -792,12 +798,6 @@ const serviceCard = document.querySelector(`.service-card[data-service-id="${ser
             }
         };
     }
-    
-    function hideBookingConfirmationModal() {
-        const modal = document.getElementById('booking-confirmation-modal');
-        modal.classList.remove('show');
-    }
-
     
      // Функция для генерации HTML деталей бронирования
      function generateBookingDetailsHTML(data) {
