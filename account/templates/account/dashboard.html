@@ -1,51 +1,79 @@
-<!-- account/templates/account/dashboard.html -->
-
 {% extends "account/account_base.html" %}
+{% load static %}
 
 {% block page_content %}
 <div class="salon-content">
     {% if selected_salon %}
-        <div class="salon-details">
-            <h1>{{ selected_salon.name }}</h1>
-            <p><strong>Описание:</strong> {{ selected_salon.description_ru }}</p>
-            <p><strong>Адрес:</strong> {{ selected_salon.address }}</p>
-            <!-- Отображение времени работы -->
-            <p><strong>Время работы:</strong></p>
-            <ul>
-                {% for day, hours in selected_salon.opening_hours.items %}
-                    <li>{{ day|capfirst }}: {{ hours.open }} - {{ hours.close }}</li>
-                {% endfor %}
-            </ul>
-            <p><strong>Статус:</strong> {{ selected_salon.get_status_display }}</p>
+        <!-- Карточка с информацией о салоне -->
+        <div class="card">
+            <h1 class="card-title">{{ selected_salon.name }}</h1>
+            <div class="card-body">
+                <p class="salon-description">{{ selected_salon.description_hy|default:"Описание не указано" }}</p>
+                <p class="salon-address"><i class="fas fa-map-marker-alt"></i> {{ selected_salon.address }}</p>
+                <p class="salon-status"><strong>Статус:</strong> {{ selected_salon.get_status_display }}</p>
+            </div>
+        </div>
 
-            <!-- Отображение мастеров -->
-            <h2>Мастера</h2>
-            <ul>
-                {% for barber in selected_salon.barbers.all %}
-                    <li>{{ barber.name }}</li>
-                {% empty %}
-                    <li>Нет мастеров.</li>
-                {% endfor %}
-            </ul>
-
-            <!-- Отображение услуг по категориям -->
-            <h2>Услуги</h2>
-            {% if categories_with_services %}
-                {% for category_name, services in categories_with_services %}
-                    <h3>{{ category_name }}</h3>
-                    <ul>
-                        {% for service in services %}
-                            <li>{{ service.name }} - {{ service.price }} {{ currency_symbol }}</li>
+        <!-- Карточка с временем работы -->
+        <div class="card">
+            <h2 class="card-subtitle"><i class="far fa-clock"></i> Время работы</h2>
+            <div class="card-body">
+                {% if selected_salon.opening_hours %}
+                    <ul class="working-hours-list">
+                        {% for day, hours in selected_salon.opening_hours.items %}
+                            <li><span class="day">{{ day|capfirst }}:</span> <span class="hours">{{ hours.open }} - {{ hours.close }}</span></li>
                         {% endfor %}
                     </ul>
-                {% endfor %}
-            {% else %}
-                <p>Нет услуг.</p>
-            {% endif %}
-
-            <!-- Кнопка редактирования -->
-            <a href="#" class="edit-button"><i class="fas fa-edit"></i> Редактировать информацию</a>
+                {% else %}
+                    <p>Информация о времени работы не указана.</p>
+                {% endif %}
+            </div>
         </div>
+
+        <!-- Карточка с мастерами (обернута в ссылку) -->
+        <a href="{% url 'salon_masters' %}" class="card card-link">
+            <h2 class="card-subtitle"><i class="fas fa-user-friends"></i> Мастера</h2>
+            <div class="card-body">
+                {% if selected_salon.barbers.all %}
+                    <ul class="barbers-list">
+                        {% for barber in selected_salon.barbers.all %}
+                            <li>{{ barber.name }}</li>
+                        {% empty %}
+                            <li>Нет мастеров.</li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>Нет мастеров.</p>
+                {% endif %}
+            </div>
+        </a>
+
+        <!-- Карточка с услугами -->
+        <div class="card">
+            <h2 class="card-subtitle"><i class="fas fa-concierge-bell"></i> Услуги</h2>
+            <div class="card-body">
+                {% if categories_with_services %}
+                    {% for category_name, services in categories_with_services %}
+                        <div class="service-category">
+                            <h3 class="service-category-title">{{ category_name }}</h3>
+                            <ul class="services-list">
+                                {% for service in services %}
+                                    <li>
+                                        <span class="service-name">{{ service.name }}</span> 
+                                        - <span class="service-price">{{ service.price }} {{ currency_symbol }}</span>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p>Нет услуг.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Кнопка редактирования (пока статичная) -->
+        <a href="#" class="edit-button"><i class="fas fa-edit"></i> Редактировать информацию</a>
     {% else %}
         <p>У вас нет салонов.</p>
     {% endif %}

@@ -1,174 +1,161 @@
-/* Основные стили для dashboard */
-
-.dashboard-container {
-    display: flex;
-    flex-wrap: nowrap; /* Prevents items from wrapping */
-    min-height: 80vh;
-}
-
-.salon-details h2 {
-    margin-top: 20px;
-    color: rgb(240, 165, 0);
-}
-
-.salon-details h3 {
-    margin-top: 10px;
-    color: rgb(200, 200, 200);
-}
-
-.salon-details ul {
-    list-style-type: none;
-    padding-left: 0;
-}
-
-.salon-details ul li {
-    margin: 5px 0;
-}
-
-.salon-details p, .salon-details li {
-    color: white;
-}
-
-/* Основной контент */
-
-.map-container {
-    width: 100%;
-    height: 400px;
-    margin-top: 20px;
+/* Карточки */
+.card {
+    background-color: #444;
     border-radius: 8px;
-    overflow: hidden;
+    padding: 20px;
+    margin-bottom: 20px;
+    border: 1px solid #555;
+    transition: transform 0.3s, box-shadow 0.3s;
 }
 
-.main-image-container {
-    position: relative;
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+}
+
+.card-title {
+    font-size: 2em;
+    margin: 0 0 10px;
+    color: rgb(240,165,0);
+    word-wrap: break-word;
+}
+
+.card-subtitle {
+    font-size: 1.5em;
+    margin: 0 0 15px;
+    color: rgb(240,165,0);
     display: flex;
-    justify-content: center;
     align-items: center;
 }
 
-.main-image img {
-    width: 100%;
-    max-width: 300px;
-    border-radius: 8px;
+.card-subtitle i {
+    margin-right: 10px;
 }
 
-.salon-content {
-    max-width: 800px;
-    margin: 20px auto; /* Центрирование контента и отступ сверху */
-    background-color: rgb(51, 51, 51); /* Темный фон для карточки */
-    padding: 20px;
-    border-radius: 8px;
-    color: white;
-}
-
-.salon-details h1 {
-    font-size: 2em;
+.card-body p {
     margin-bottom: 10px;
-    word-wrap: break-word;
-    color: rgb(240, 165, 0); /* Оранжевый цвет для названия */
+    font-size: 1rem;
+    line-height: 1.4;
+    color: #fff;
 }
 
-.salon-details p {
-    font-size: 1em;
-    line-height: 1.5;
-    color: white;
-}
-
-.salon-details ul {
+.card-body ul {
     list-style-type: none;
     padding-left: 0;
+    margin: 0;
 }
 
-.salon-details ul li {
-    padding: 5px 0;
+.card-body li {
+    margin: 5px 0;
+    font-size: 1rem;
+    color: #ccc;
+}
+
+.salon-description {
+    margin-bottom: 15px;
+}
+
+.salon-address i {
+    margin-right: 5px;
+}
+
+.working-hours-list li .day {
+    font-weight: bold;
+    color: #fff;
+    margin-right: 5px;
+}
+
+.working-hours-list li .hours {
+    color: #ccc;
+}
+
+.barbers-list li {
+    color: #ccc;
+}
+
+.service-category {
+    margin-bottom: 15px;
+}
+
+.service-category-title {
+    margin: 10px 0;
+    font-size: 1.2rem;
+    color: #ddd;
+}
+
+.services-list li {
+    display: flex;
+    justify-content: space-between;
+    font-size: 1rem;
+    color: #ccc;
+}
+
+.services-list .service-name {
+    color: #fff;
+    margin-right: 10px;
+}
+
+.services-list .service-price {
+    color: rgb(240,165,0);
 }
 
 .edit-button {
     display: inline-block;
     margin-top: 20px;
     padding: 10px 20px;
-    background-color: rgb(240, 165, 0);
+    background-color: rgb(240,165,0);
     color: white;
     text-decoration: none;
     border-radius: 5px;
+    transition: background-color 0.3s;
 }
 
 .edit-button:hover {
-    background-color: rgb(220, 145, 0);
+    background-color: rgb(220,145,0);
 }
 
 .edit-button i {
     margin-right: 5px;
 }
 
-/* Модальное окно */
-.modal {
-    display: none;
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgba(0, 0, 0, 0.5);
-}
-
-.modal-content {
-    background-color: rgb(51, 51, 51);
-    margin: 10% auto;
-    padding: 20px;
-    width: 80%;
-    max-width: 500px;
-    border-radius: 8px;
-    color: white;
-}
-
-.modal-content h2 {
-    color: rgb(240, 165, 0);
-}
-
-.modal-content ul {
-    list-style-type: none;
-    padding-left: 0;
-}
-
-.modal-content ul li {
-    margin: 10px 0;
-}
-
-.modal-content ul li a {
-    color: white;
+/* Ссылка-карточка */
+.card-link {
     text-decoration: none;
-    font-size: 1.2em;
+    color: inherit;
+    display: block;
 }
 
-.modal-content ul li a:hover {
-    color: rgb(240, 165, 0);
-}
-
-.close-button {
-    float: right;
-    font-size: 28px;
-    font-weight: bold;
-    cursor: pointer;
-    color: white;
-}
-
-.close-button:hover,
-.close-button:focus {
-    color: rgb(240, 165, 0);
-    text-decoration: none;
-    cursor: pointer;
-}
-
+/* Адаптивность */
 @media screen and (max-width: 768px) {
-    .dashboard-container {
-        flex-direction: column;
+    .card {
+        padding: 15px;
     }
 
-    .salon-content {
-        padding: 10px;
+    .card-title {
+        font-size: 1.8em;
+    }
+
+    .card-subtitle {
+        font-size: 1.3em;
+    }
+
+    .services-list li {
+        flex-direction: column;
+        align-items: flex-start;
     }
 }
 
+@media screen and (max-width: 480px) {
+    .card-title {
+        font-size: 1.5em;
+    }
+
+    .service-category-title {
+        font-size: 1.1rem;
+    }
+
+    .edit-button {
+        width: 100%;
+        text-align: center;
+    }
+}
