@@ -341,8 +341,9 @@ input[type="datetime-local"].form-control:focus {
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-left: 20%;
+    margin-top:10px;
 }
+
 
 .switch {
     position: relative;
@@ -430,8 +431,14 @@ label {
 }
 
 .col-half {
-    flex: 1 1 50%;
-    min-width: 0; /* Для правильного сжатия */
+    flex: 1;
+    min-width: 200px;
+    box-sizing: border-box;
+    padding-right: 10px; /* Отступ справа */
+}
+
+.single-form {
+    margin-bottom: 20px;
 }
 
 .alert-danger {

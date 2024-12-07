@@ -433,40 +433,68 @@ def edit_barber_schedule(request, barber_id):
     barber = get_object_or_404(Barber, id=barber_id, salon__admins=request.user)
     day = request.GET.get('day')
 
+    # Определяем есть ли записи в БД
+    queryset = BarberAvailability.objects.filter(barber=barber, day_of_week=day).order_by('start_time')
+
+    # Если день пуст - показываем 2 формы с дефолтными значениями
+    if queryset.exists():
+        extra = 0
+        initial = []
+    else:
+        extra = 2
+        initial = [
+            {'start_time': '09:00', 'end_time': '18:00', 'is_available': True},
+            {'start_time': '13:00', 'end_time': '14:00', 'is_available': False}
+        ]
+
     BarberAvailabilityFormSet = modelformset_factory(
         BarberAvailability,
         fields=('start_time', 'end_time', 'is_available'),
-        form=BarberScheduleForm,  # ВАЖНО указать form=BarberScheduleForm
-        extra=2,
+        form=BarberScheduleForm,
+        extra=extra,
         can_delete=True
     )
-
-    queryset = BarberAvailability.objects.filter(barber=barber, day_of_week=day)
 
     if request.method == 'POST':
         formset = BarberAvailabilityFormSet(request.POST, queryset=queryset)
         if formset.is_valid():
-            instances = formset.save(commit=False)
-            # Удаляем старые записи
+            # Если нет изменений – не трогаем базу, просто возвращаем успех
+            if not formset.has_changed():
+                return JsonResponse({'success': True})
+            
             queryset.delete()
-            for instance in instances:
+            instances = formset.save(commit=False)
+            for form in formset.forms:
+                start = form.cleaned_data.get('start_time')
+                end = form.cleaned_data.get('end_time')
+                # Пропускаем полностью пустые формы
+                if not start and not end:
+                    continue
+
+                instance = form.save(commit=False)
                 instance.barber = barber
                 instance.day_of_week = day
                 instance.save()
+
             return JsonResponse({'success': True})
         else:
-            return JsonResponse({'success': False, 'errors': formset.errors})
+            # Обработка ошибок
+            errors_data = []
+            for f in formset.forms:
+                if f.errors:
+                    errors_data.append(f.errors)
+                else:
+                    errors_data.append({})
+            return JsonResponse({'success': False, 'errors': errors_data})
     else:
-        formset = BarberAvailabilityFormSet(queryset=queryset)
-
-
+        formset = BarberAvailabilityFormSet(queryset=queryset, initial=initial)
         html = render_to_string('account/edit_barber_schedule.html', {
-        'formset': formset,
-        'barber': barber,
-        'day': day
-    }, request=request)
-    return JsonResponse({'success': True, 'html': html})
-
+            'formset': formset,
+            'barber': barber,
+            'day': day,
+            'day_display': day
+        }, request=request)
+        return JsonResponse({'success': True, 'html': html})
 
 class BarberPhotoForm(ModelForm):
     class Meta:
