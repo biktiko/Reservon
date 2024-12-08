@@ -5,7 +5,9 @@ from django.template.loader import render_to_string
 from django.contrib.auth import login, authenticate
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.models import User
-from django.contrib.auth.hashers import make_password
+from django.contrib.auth import logout
+from django.shortcuts import redirect
+from django.views.decorators.http import require_http_methods
 import json
 import re
 
@@ -52,8 +54,6 @@ def load_modal(request):
             return JsonResponse({'error': str(e)}, status=500)
     else:
         return JsonResponse({'error': 'Invalid request method.'}, status=400)
-
-
 
 @csrf_exempt
 def get_form(request):
@@ -183,8 +183,6 @@ def verify_code(request):
     else:
         return JsonResponse({'error': 'Invalid request method.'}, status=400)
 
-
-
 def set_password(request):
     if request.method == 'POST':
         data = json.loads(request.body)
@@ -298,3 +296,8 @@ def resend_verification_code(request):
             return JsonResponse({'error': 'Internal server error.'}, status=500)
     else:
         return JsonResponse({'error': 'Invalid request method.'}, status=400)
+
+@require_http_methods(["GET", "POST"])
+def custom_logout_view(request):
+    logout(request)
+    return redirect('/')  # Перенаправление на главную страницу после логаута

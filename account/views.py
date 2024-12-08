@@ -3,6 +3,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.db import models
 from salons.models import Salon, Appointment, Barber, Service, AppointmentBarberService, BarberAvailability
+from authentication.models import Profile
 from django.core.paginator import Paginator
 from .forms import  AppointmentBarberServiceFormSet, AdminBookingForm, BarberScheduleForm
 from django.utils import timezone
@@ -15,7 +16,7 @@ from .utils import get_random_available_barber
 from django.forms import modelform_factory, modelformset_factory, ModelForm
 from django.template.loader import render_to_string
 from django import forms
-
+from authentication.forms import UserProfileForm, ProfileForm
 
 logger = logging.getLogger('booking')
 
@@ -521,3 +522,31 @@ def edit_barber_photo(request, barber_id):
         form = BarberPhotoForm(instance=barber)
         html = render_to_string('account/edit_barber_photo.html', {'form': form, 'barber': barber}, request=request)
         return JsonResponse({'success': True, 'html': html})
+
+@login_required
+def my_account_view(request):
+    user = request.user
+    try:
+        profile = user.main_profile
+    except Profile.DoesNotExist:
+        profile = Profile.objects.create(user=user)
+
+    if request.method == 'POST':
+        user_form = UserProfileForm(request.POST, instance=user)
+        profile_form = ProfileForm(request.POST, request.FILES, instance=profile)
+        if user_form.is_valid() and profile_form.is_valid():
+            user_form.save()
+            profile_form.save()
+            return redirect('my_account')  # Обновить страницу
+    else:
+        user_form = UserProfileForm(instance=user)
+        profile_form = ProfileForm(instance=profile)
+
+    context = {
+        'user_form': user_form,
+        'profile_form': profile_form,
+        'phone_number': profile.phone_number,  # просто для отображения
+        'email': user.email,  # для отображения
+        'active_sidebar': 'account'
+    }
+    return render(request, 'account/my_account.html', context)

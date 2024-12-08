@@ -1,0 +1,80 @@
+<!-- account/templates/account/my_account.html -->
+
+{% extends "account/account_base.html" %}
+{% load static %}
+
+{% block page_content %}
+<h2>Мой аккаунт</h2>
+<form method="post" enctype="multipart/form-data" class="account-form">
+    {% csrf_token %}
+    <div class="account-form-container">
+        <div class="avatar-section">
+            <label for="id_avatar" class="avatar-label">
+                {% if profile_form.instance.avatar %}
+                    <img src="{{ profile_form.instance.avatar.url }}" alt="avatar" class="avatar-image" id="avatar-preview">
+                {% else %}
+                    <img src="{% static 'account/img/default-avatar.png' %}" alt="default avatar" class="avatar-image" id="avatar-preview">
+                {% endif %}
+                <div class="camera-icon">
+                    <i class="fas fa-camera"></i>
+                </div>
+            </label>
+            <input type="file" name="avatar" class="avatar-input" id="id_avatar" accept="image/*">
+        </div>        
+        <div class="info-section">
+            <div class="form-group">
+                <label for="{{ user_form.first_name.id_for_label }}">Имя:</label>
+                {{ user_form.first_name }}
+                {% if user_form.first_name.errors %}
+                    <div class="text-danger">
+                        {{ user_form.first_name.errors }}
+                    </div>
+                {% endif %}
+            </div>
+            <div class="form-group">
+                <label for="{{ user_form.email.id_for_label }}">Email:</label>
+                {{ user_form.email }}
+                {% if user_form.email.errors %}
+                    <div class="text-danger">
+                        {{ user_form.email.errors }}
+                    </div>
+                {% endif %}
+            </div>
+            <div class="form-group">
+                <label>Телефон:</label>
+                <input type="text" value="{{ phone_number }}" readonly class="form-control-plaintext">
+            </div>
+        </div>
+    </div>
+    <button type="submit" class="btn btn-success mt-3 save-button">Сохранить</button>
+</form>
+<hr>
+<div class="button-group">
+    <form method="post" action="{% url 'authentication:logout' %}" style="display:inline;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger logout-button">Выйти</button>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const avatarInput = document.getElementById('id_avatar');
+        const avatarPreview = document.getElementById('avatar-preview');
+
+        avatarInput.addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    avatarPreview.src = e.target.result;
+                }
+                reader.readAsDataURL(file);
+            } else {
+                avatarPreview.src = "{% static 'account/img/default-avatar.png' %}";
+            }
+        });
+    });
+</script>
+{% endblock %}

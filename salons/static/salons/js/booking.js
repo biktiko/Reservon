@@ -856,11 +856,6 @@ const serviceCard = document.querySelector(`.service-card[data-service-id="${ser
             hideBookingConfirmationModal();
         };
 
-        function hideBookingConfirmationModal() {
-            const modal = document.getElementById('booking-confirmation-modal');
-            modal.classList.remove('show');
-        }
-    
     
         // Обработчик закрытия по клику вне модального окна
         window.onclick = (event) => {
@@ -989,6 +984,11 @@ const serviceCard = document.querySelector(`.service-card[data-service-id="${ser
             }
         }
         return cookieValue;
+    }
+
+    function hideBookingConfirmationModal() {
+        const modal = document.getElementById('booking-confirmation-modal');
+        modal.classList.remove('show');
     }
     
 });

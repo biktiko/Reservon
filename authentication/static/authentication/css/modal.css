@@ -7,6 +7,7 @@
     --input-background: #f9f9f9;
     --input-border-color: #cccccc;
     --input-focus-border-color: #f0a500;
+    --inpit-color: black;
     --error-color: #FF4B4B;
     --close-button-color: #888888;
     --close-button-hover-color: #333333;
@@ -322,13 +323,14 @@
 
 #enter-password-form .form-group input {
     flex: 1;
-    max-width: 220px; /* Ограничение ширины инпута */
+    max-width: 220px;
     padding: 10px 12px;
     font-size: 1rem;
     border: 1px solid var(--input-border-color);
     border-radius: 5px;
     background-color: var(--input-background);
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    color: black;
 }
 
 #enter-password-form .form-group input:focus {

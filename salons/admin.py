@@ -127,9 +127,6 @@ class SalonAdminForm(forms.ModelForm):
     class Meta:
         model = Salon
         fields = '__all__'
-        widgets = {
-            'opening_hours': forms.Textarea(attrs={'rows': 5, 'cols': 60}),  # Используем стандартный виджет
-        }
 
     def __init__(self, *args, **kwargs):
         super(SalonAdminForm, self).__init__(*args, **kwargs)
@@ -153,7 +150,7 @@ class SalonAdmin(ImportExportModelAdmin):
     autocomplete_fields = ['admins']  # Добавляем 'admins' в autocomplete_fields
     fieldsets = (
         (None, {
-            'fields': ('name', 'logo', 'address', 'coordinates', 'opening_hours', 'reservDays', 'status', 'admins')
+            'fields': ('name', 'logo', 'address', 'coordinates', 'reservDays', 'status', 'admins')
         }),
         ('Описание', {
             'fields': (

@@ -18,11 +18,6 @@ class Salon(models.Model):
     logo = models.ImageField('Logo', upload_to='salon_logos/', blank=True, null=True)
     address = models.CharField('Address', max_length=100)
     coordinates = models.CharField('Coordinates', max_length=50, blank=True, null=True)
-    opening_hours = models.JSONField(
-        "Working Hours", 
-        default=dict,
-        help_text="JSON format: {'monday': {'open': '09:00', 'close': '18:00'}, ... }"
-    )
     default_duration = models.IntegerField('Default duration (minutes)', default=20)
     default_price = models.DecimalField('Default price', max_digits=15, decimal_places=0, default=2000)
     services_hy = models.CharField('Services_hy', max_length=100, blank=True, null=True)
