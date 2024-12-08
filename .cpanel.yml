@@ -1,0 +1,11 @@
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/reservon/public_html/
+    - export VENV_PATH=/home/reservon/venv/
+    - /bin/bash -c "python3 -m venv $VENV_PATH"
+    - /bin/bash -c "source $VENV_PATH/bin/activate && pip install --upgrade pip"
+    - /bin/bash -c "source $VENV_PATH/bin/activate && pip install -r /home/reservon/repositories/Reservon/requirements.txt"
+    - /bin/bash -c "source $VENV_PATH/bin/activate && python /home/reservon/repositories/Reservon/manage.py migrate"
+    - /bin/bash -c "source $VENV_PATH/bin/activate && python /home/reservon/repositories/Reservon/manage.py collectstatic --noinput"
+    - /bin/bash -c "touch /home/reservon/public_html/wsgi.py"  # Перезапуск приложения
