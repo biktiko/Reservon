@@ -456,9 +456,16 @@ def edit_barber_schedule(request, barber_id):
     )
 
     if request.method == 'POST':
+        day = request.GET.get('day') or request.POST.get('day')  # Убедитесь, что day не пуст
         formset = BarberAvailabilityFormSet(request.POST, queryset=queryset)
+        total_forms = int(request.POST.get('form-TOTAL_FORMS', 0))
+
+        if total_forms == 0:
+            # Нет форм → день выходной, удаляем все интервалы
+            queryset.delete()
+            return JsonResponse({'success': True})
+
         if formset.is_valid():
-            # Если нет изменений – не трогаем базу, просто возвращаем успех
             if not formset.has_changed():
                 return JsonResponse({'success': True})
             
@@ -467,10 +474,8 @@ def edit_barber_schedule(request, barber_id):
             for form in formset.forms:
                 start = form.cleaned_data.get('start_time')
                 end = form.cleaned_data.get('end_time')
-                # Пропускаем полностью пустые формы
                 if not start and not end:
                     continue
-
                 instance = form.save(commit=False)
                 instance.barber = barber
                 instance.day_of_week = day

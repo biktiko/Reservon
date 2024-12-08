@@ -165,6 +165,10 @@ def get_available_minutes(request):
                 minute_start_datetime = start_datetime + timedelta(minutes=minute)
                 minute_end_datetime = minute_start_datetime + timedelta(minutes=total_duration)
 
+                now = timezone.now()
+                if minute_start_datetime < now:
+                    continue
+
                 if minute_end_datetime > end_datetime:
                     continue
 
@@ -304,27 +308,6 @@ def book_appointment(request, id):
     except (ValueError, TypeError) as e:
         logger.error(f"Ошибка форматирования времени: {e}")
         return JsonResponse({'error': 'Некорректный формат времени.'}, status=400)
-
-    # Проверка рабочего времени салона
-    day_name = date.strftime('%A').lower()
-    salon_hours = salon.opening_hours.get(day_name)
-    logger.debug(f"Рабочие часы салона на {day_name}: {salon_hours}")
-
-    if not salon_hours or not salon_hours.get('open') or not salon_hours.get('close'):
-        logger.info(f"Салон закрыт на выбранный день: {day_name}")
-        return JsonResponse({'error': 'Салон закрыт в выбранный день.'}, status=400)
-
-    try:
-        salon_open = datetime.strptime(salon_hours['open'], '%H:%M').time()
-        salon_close = datetime.strptime(salon_hours['close'], '%H:%M').time()
-        logger.debug(f"Салон работает с {salon_open} до {salon_close}")
-    except (ValueError, KeyError) as e:
-        logger.error(f"Ошибка получения рабочих часов: {e}")
-        return JsonResponse({'error': 'Некорректные рабочие часы салона.'}, status=400)
-
-    if not (salon_open <= start_time < salon_close):
-        logger.info(f"Выбранное время {start_time} вне рабочего графика салона.")
-        return JsonResponse({'error': 'Выбранное время вне рабочего графика салона.'}, status=400)
 
     # Рассчитываем start_datetime и end_datetime
     start_datetime_naive = datetime.combine(date, start_time)

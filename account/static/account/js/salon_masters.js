@@ -98,7 +98,8 @@ document.addEventListener('DOMContentLoaded', function(){
 
     function submitForm() {
         const form = document.getElementById('edit-form');
-        if (!form) return; // Нет формы - нет сабмита
+    
+        // if (!form) return; // Нет формы - нет сабмита
         var formData = new FormData(form);
         fetch(form.action, {
             method: 'POST',
@@ -157,14 +158,23 @@ document.addEventListener('DOMContentLoaded', function(){
     document.getElementById('editModal').addEventListener('click', function(e) {
         const formsContainer = document.getElementById('forms-container');
         if (e.target && e.target.id === 'mark-holiday-button') {
-            // Отметить как выходной: если есть формы - очистим и отправим пустой набор
+            
             if (formsContainer) {
                 formsContainer.innerHTML = '';
                 const totalFormsInput = document.getElementById('id_form-TOTAL_FORMS');
                 if (totalFormsInput) totalFormsInput.value = 0;
             }
-            submitForm(); // Отправляем пустой набор
+        
+            const form = document.getElementById('edit-form');
+            const day = formsContainer.dataset.day; 
+            const hiddenDayInput = document.createElement('input');
+            hiddenDayInput.type = 'hidden';
+            hiddenDayInput.name = 'day';
+            hiddenDayInput.value = day;
+            form.appendChild(hiddenDayInput);
+            submitForm(); 
         }
+             
         if (e.target && e.target.id === 'add-time-button') {
             addNewForm();
         }
@@ -237,7 +247,4 @@ document.addEventListener('DOMContentLoaded', function(){
         totalFormsInput.value = index;
     }
 
-    $('#editModal').on('hidden.bs.modal', function () {
-        $(this).find('.modal-content').empty();
-    });
 });

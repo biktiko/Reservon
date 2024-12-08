@@ -49,14 +49,6 @@
                     <p>{{ salon.description_hy }}</p>
                 </div>
 
-                <!-- Рабочие часы -->
-                <div class="salon-hours">
-                    <ul>
-                        {% for day, hours in salon.opening_hours.items %}
-                            <li><strong>{{ day|title }}:</strong> {{ hours.open }} - {{ hours.close }}</li>
-                        {% endfor %}
-                    </ul>
-                </div>
             </div>
 
             <!-- Правая часть -->

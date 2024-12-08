@@ -8,7 +8,7 @@
       {% csrf_token %}
       <div id="form-errors"></div>
       {{ formset.management_form }}
-      <div id="forms-container">
+      <div id="forms-container"  data-day="{{ day }}">
         {% for form in formset %}
           {{ form.id }}
           <div class="single-form">

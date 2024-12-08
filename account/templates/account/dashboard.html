@@ -14,22 +14,6 @@
             </div>
         </div>
 
-        <!-- Карточка с временем работы -->
-        <div class="card">
-            <h2 class="card-subtitle"><i class="far fa-clock"></i> Время работы</h2>
-            <div class="card-body">
-                {% if selected_salon.opening_hours %}
-                    <ul class="working-hours-list">
-                        {% for day, hours in selected_salon.opening_hours.items %}
-                            <li><span class="day">{{ day|capfirst }}:</span> <span class="hours">{{ hours.open }} - {{ hours.close }}</span></li>
-                        {% endfor %}
-                    </ul>
-                {% else %}
-                    <p>Информация о времени работы не указана.</p>
-                {% endif %}
-            </div>
-        </div>
-
         <!-- Карточка с мастерами (обернута в ссылку) -->
         <a href="{% url 'salon_masters' %}" class="card card-link">
             <h2 class="card-subtitle"><i class="fas fa-user-friends"></i> Мастера</h2>
