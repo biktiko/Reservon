@@ -1,5 +1,3 @@
-// static/salons/js/services.js
-
 document.addEventListener('DOMContentLoaded', function() {
     const categoryButtons = document.querySelectorAll('.category-button');
     const categorySections = document.querySelectorAll('.category-section');
@@ -11,7 +9,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const totalPriceElement = document.getElementById('total-price');
     const totalDurationElement = document.getElementById('total-duration');
 
-    // Переменные для пагинации (если используется)
+    // Переменные для пагинации
     const paginationContainer = document.querySelector('.pagination-container');
     const servicesPerPage = 4;
     let currentPage = 1;
@@ -22,27 +20,18 @@ document.addEventListener('DOMContentLoaded', function() {
     const servicesBarbersContainer = document.querySelector('.selected-services-barbers');
 
     // Инициализация при загрузке страницы
-    initializePagination('all');
     initializeCategorySelection();
 
-    // Обработчики событий для выбора барбера через CustomEvent
-    document.addEventListener('barberSelected', function(e) {
-        const { categoryId, barberId } = e.detail;
-        selectedBarbers[categoryId] = barberId;
-        updateBookingForm();
-    });
-
+    // Обработчики событий для кнопок категорий
     function initializeCategorySelection() {
         // Устанавливаем первую категорию как выбранную
-        const firstCategoryButton = categoryButtons[0];
-        if (firstCategoryButton) {
-            firstCategoryButton.classList.add('selected');
-            const categoryId = firstCategoryButton.getAttribute('data-category-id');
-            showCategory(categoryId);
-            showBarbersForCategory(categoryId);
+        if (categoryButtons.length > 0) {
+            categoryButtons[0].classList.add('selected');
+            const firstCategoryId = categoryButtons[0].getAttribute('data-category-id');
+            showCategory(firstCategoryId);
+            initializePagination(firstCategoryId);
         }
 
-        // Обработчики событий для кнопок категорий
         categoryButtons.forEach(button => {
             button.addEventListener('click', function() {
                 // Удаляем класс 'selected' со всех кнопок
@@ -51,13 +40,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 this.classList.add('selected');
 
                 const categoryId = this.getAttribute('data-category-id');
-
-                // Показываем выбранную категорию
                 showCategory(categoryId);
-                // Инициализируем пагинацию для выбранной категории
                 initializePagination(categoryId);
-                // Отображаем выбор барберов для этой категории
-                showBarbersForCategory(categoryId);
+                // При смене категории сбрасываем выбранного барбера (по желанию)
+                // Например:
+                // selectedBarbers[categoryId] = 'any';
+                // updateBarberSelectionUI('any', categoryId);
             });
         });
     }
@@ -71,16 +59,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 section.classList.add('hidden');
             }
         });
-    }
-
-    // Функция для отображения барберов, должна быть определена в barber.js
-    // Предполагается, что barber.js уже загрузил необходимые функции
-    function showBarbersForCategory(categoryId) {
-        // Здесь вызываем функцию из barber.js, если она доступна
-        // В текущей реализации barber.js не экспортирует функции, поэтому мы предполагаем, что
-        // showBarbersForCategory уже вызывается в barber.js
-        // Поэтому здесь ничего не делаем
-        // Если требуется, можно использовать глобальные функции или события
     }
 
     function gatherServices(categoryId) {
@@ -112,9 +90,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Обновляем активный стиль для пагинации
         const buttons = paginationContainer.querySelectorAll('.pagination-button');
-        buttons.forEach(button => {
-            button.classList.remove('active');
-        });
+        buttons.forEach(button => button.classList.remove('active'));
         const activeButton = paginationContainer.querySelector(`.pagination-button[data-page="${page}"]`);
         if (activeButton) {
             activeButton.classList.add('active');
@@ -162,7 +138,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const serviceCard = target.closest('.service-card');
         if (serviceCard) {
             const serviceId = serviceCard.getAttribute('data-service-id');
-            const categoryId = serviceCard.getAttribute('data-category-id');
+            const categoryId = serviceCard.getAttribute('data-category-id'); // Теперь присутствует
             const price = parseFloat(serviceCard.getAttribute('data-price'));
             const duration = parseInt(serviceCard.getAttribute('data-duration'));
 
@@ -170,10 +146,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 selectedServices[categoryId] = [];
             }
 
-            if (serviceCard.classList.contains('selected')) {
+            const existingServiceIndex = selectedServices[categoryId].findIndex(service => service.id === serviceId);
+
+            if (existingServiceIndex > -1) {
                 // Если уже выбран, снимаем выделение
                 serviceCard.classList.remove('selected');
-                selectedServices[categoryId] = selectedServices[categoryId].filter(service => service.id !== serviceId);
+                selectedServices[categoryId].splice(existingServiceIndex, 1);
             } else {
                 // Добавляем выделение
                 serviceCard.classList.add('selected');
@@ -198,7 +176,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         totalPriceElement.innerText = Math.round(totalPrice) + ' драм';
-        totalDurationElement.innerText = Math.round(totalDuration / 60) + ' минут';
+        totalDurationElement.innerText = Math.round(totalDuration) + ' минут';
     }
 
     // Функция для обновления скрытых полей бронирования

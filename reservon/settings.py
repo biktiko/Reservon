@@ -194,7 +194,7 @@ TWILIO_ACCOUNT_SID = env('TWILIO_ACCOUNT_SID')
 TWILIO_AUTH_TOKEN = env('TWILIO_AUTH_TOKEN')
 TWILIO_VERIFY_SERVICE_SID = env('TWILIO_VERIFY_SERVICE_SID')
 
-ALLOWED_HOSTS = ['reservon.herokuapp.com', 'reservon.am', 'staging-reservon.am']
+ALLOWED_HOSTS = ['reservon.am', 'staging-reservon.am', 'reservon-8b5da3853ffa.herokuapp.com', 'localhost', '127.0.0.1']
 
 # Logging Configuration
 LOGGING = {

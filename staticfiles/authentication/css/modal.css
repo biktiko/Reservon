@@ -7,6 +7,7 @@
     --input-background: #f9f9f9;
     --input-border-color: #cccccc;
     --input-focus-border-color: #f0a500;
+    --inpit-color: black;
     --error-color: #FF4B4B;
     --close-button-color: #888888;
     --close-button-hover-color: #333333;
@@ -106,14 +107,12 @@
     border-radius: 5px;
     background-color: var(--input-background);
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
-    color: black;
 }
 
 .modal-content form p input:focus {
     border-color: var(--input-focus-border-color);
     outline: none;
     box-shadow: 0 0 5px rgba(240, 165, 0, 0.5);
-    color: black;
 }
 
 .modal-content form button {
@@ -324,14 +323,14 @@
 
 #enter-password-form .form-group input {
     flex: 1;
-    max-width: 220px; /* Ограничение ширины инпута */
+    max-width: 220px;
     padding: 10px 12px;
     font-size: 1rem;
     border: 1px solid var(--input-border-color);
     border-radius: 5px;
     background-color: var(--input-background);
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
-    color:black
+    color: black;
 }
 
 #enter-password-form .form-group input:focus {
@@ -401,6 +400,10 @@
         text-align: left;
         margin-right: 0;
         margin-bottom: 5px;
+    }
+
+    #enter-password-form .form-group input {
+        max-width: 100%; /* Поле ввода занимает всю ширину */
     }
 
     #enter-password-form button {

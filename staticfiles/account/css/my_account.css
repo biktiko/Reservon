@@ -1,0 +1,192 @@
+/* Структура аккаунта */
+.account-form-container {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 20px;
+    align-items: center;
+}
+
+.avatar-section {
+    flex: 1 1 150px;
+    max-width: 200px;
+    text-align: center;
+    position: relative;
+}
+
+.avatar-label {
+    display: inline-block;
+    cursor: pointer;
+    position: relative;
+}
+
+.avatar-image {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 2px solid #ccc;
+    transition: border-color 0.3s;
+}
+
+.avatar-image:hover {
+    border-color: #28a745;
+}
+
+.camera-icon {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    background-color: rgba(0, 0, 0, 0.6);
+    border-radius: 50%;
+    padding: 5px;
+    display: none;
+}
+
+.avatar-label:hover .camera-icon {
+    display: block;
+}
+
+.camera-icon i {
+    color: white;
+    font-size: 14px;
+}
+
+
+.loading-spinner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #28a745;
+    font-size: 24px;
+}
+
+.info-section {
+    flex: 2 1 300px;
+}
+
+.info-section .form-group {
+    margin-bottom: 15px;
+}
+
+.info-section label {
+    font-weight: bold;
+}
+
+.button-group {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.form-control-plaintext {
+    background-color: transparent;
+    border: none;
+    padding-left: 0;
+    font-size: 1rem;
+}
+/* Адаптивность */
+@media screen and (max-width: 768px) {
+    .dashboard-container {
+        position: relative;
+        /* flex-direction: column; */
+    }
+
+    /* Скрываем sidebar по умолчанию */
+    .sidebar {
+        position: fixed;
+        top: 0;
+        left: -250px; /* Прячем сайдбар за левым краем */
+        width: 250px;
+        height: 100%;
+        background-color: rgb(51, 51, 51);
+        transition: left 0.3s ease;
+        z-index: 1000;
+    }
+    .sidebar.active {
+        left: 0;
+    }
+
+    /* Добавляем кнопку для открытия меню */
+    .menu-button {
+        display: block;
+        background-color: rgb(51, 51, 51);
+        color: white;
+        padding: 15px;
+        text-align: center;
+        cursor: pointer;
+    }
+
+    /* Убираем отступы у main-content */
+    .main-content {
+        padding: 10px;
+    }
+
+    .top-menu ul li {
+        margin-right: 0;
+        margin-bottom: 10px;
+    }
+
+    /* Затемнение основного контента при открытом сайдбаре */
+    .overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+    }
+
+    .overlay.active {
+        display: block;
+    }
+
+    .info-section{
+        margin-top: -35px;
+    }
+
+    /* Инпуты во всю ширину */
+    .info-section .form-group input,
+    .info-section .form-group select,
+    .info-section .form-group textarea,
+    .info-section .form-group button {
+        width: 100%;
+    }
+
+    /* Кнопки: сохранить выше */
+    .button-group {
+        flex-direction: column-reverse;
+        width: 100%;
+    }
+
+    .button-group form,
+    .button-group a {
+        width: 100%;
+    }
+
+    /* Центрирование аватара на мобильных устройствах */
+    .avatar-section {
+        margin-bottom: 20px;
+    }
+
+    .account-form-container {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .info-section {
+        flex: none;
+        width: 100%;
+    }
+
+    .info-section .form-group {
+        width: 100%;
+    }
+
+    .avatar-image {
+        width: 150px;
+        height: 150px;
+    }
+}
