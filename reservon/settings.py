@@ -4,6 +4,8 @@ from pathlib import Path
 from django.utils.translation import gettext_lazy as _
 import os
 import environ
+import dj_database_url
+import sys
 
 # Initialize django-environ
 env = environ.Env(
@@ -25,7 +27,7 @@ SECRET_KEY = env('SECRET_KEY')  # Moved to .env
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env('DEBUG')
 
-ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[])
+# ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[])
 
 # Application definition
 
@@ -50,12 +52,13 @@ INSTALLED_APPS = [
     'account',
 ]
 
-CRISPY_TEMPLATE_PACK = 'bootstrap4'  # Или другой используемый шаблон (например, bootstrap5)
+CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware', 
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.locale.LocaleMiddleware',  # Ensure LocaleMiddleware is after SessionMiddleware
+    'django.middleware.locale.LocaleMiddleware', 
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -105,15 +108,19 @@ WSGI_APPLICATION = 'reservon.wsgi.application'
 #     }
 # }
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.mysql',
+#         'NAME': 'reservon_db',
+#         'USER': 'reservon_admin', 
+#         'PASSWORD': '5cf5c7ca60_R',
+#         'HOST': 'localhost',
+#         'PORT': '3306',
+#     }
+# }
+
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'reservon_db',
-        'USER': 'reservon_admin', 
-        'PASSWORD': '5cf5c7ca60_R',
-        'HOST': 'localhost',
-        'PORT': '3306',
-    }
+    'default': dj_database_url.config(default='sqlite:///db.sqlite3')
 }
 
 
@@ -187,6 +194,8 @@ TWILIO_ACCOUNT_SID = env('TWILIO_ACCOUNT_SID')
 TWILIO_AUTH_TOKEN = env('TWILIO_AUTH_TOKEN')
 TWILIO_VERIFY_SERVICE_SID = env('TWILIO_VERIFY_SERVICE_SID')
 
+ALLOWED_HOSTS = ['reservon.herokuapp.com', 'reservon.am', 'staging-reservon.am']
+
 # Logging Configuration
 LOGGING = {
     'version': 1,
@@ -240,3 +249,14 @@ ADMIN_INTERFACE = {
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+LOGGING['handlers']['console'] = {
+    'level': 'DEBUG',
+    'class': 'logging.StreamHandler',
+    'stream': sys.stdout,
+}
+
+LOGGING['root'] = {
+    'handlers': ['console'],
+    'level': 'INFO',
+}
