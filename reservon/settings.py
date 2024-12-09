@@ -199,7 +199,7 @@ ALLOWED_HOSTS = ['reservon.herokuapp.com', 'reservon.am', 'staging-reservon.am']
 # Logging Configuration
 LOGGING = {
     'version': 1,
-    'disable_existing_loggers': False,  # Preserve existing loggers
+    'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
             'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
@@ -211,27 +211,20 @@ LOGGING = {
         },
     },
     'handlers': {
-        'file_booking': {
+        'console': {  # Используем консоль для логов
             'level': 'DEBUG',
-            'class': 'logging.FileHandler',
-            'filename': os.path.join(BASE_DIR, 'logs', 'booking.log'),
-            'formatter': 'verbose',
-            'encoding': 'utf-8',
-            'errors': 'replace',  # Replaces characters that can't be encoded
-        },
-        'console': {
             'class': 'logging.StreamHandler',
-            'formatter': 'simple',
+            'formatter': 'verbose',
         },
     },
     'loggers': {
-        'booking': {
-            'handlers': ['file_booking', 'console'],
+        'django': {  # Логгер для Django
+            'handlers': ['console'],
             'level': 'DEBUG',
-            'propagate': False,  # Prevents logs from propagating to the root logger
+            'propagate': False,
         },
-        'authentication': {  # Добавляем этот логгер
-            'handlers': ['file_booking', 'console'],
+        'booking': {  # кастомный логгер
+            'handlers': ['console'],
             'level': 'DEBUG',
             'propagate': False,
         },
