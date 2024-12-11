@@ -168,14 +168,13 @@ else:
     AWS_STORAGE_BUCKET_NAME = env('CLOUDFLARE_R2_BUCKET_NAME')
     AWS_S3_REGION_NAME = 'auto'
     AWS_S3_ENDPOINT_URL = f'https://{env("CLOUDFLARE_R2_ACCOUNT_ID")}.r2.cloudflarestorage.com'
-    # AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.{env("CLOUDFLARE_R2_ACCOUNT_ID")}.r2.cloudflarestorage.com'
+    AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.{env("CLOUDFLARE_R2_ACCOUNT_ID")}.r2.cloudflarestorage.com'
     AWS_S3_OBJECT_PARAMETERS = {
         'CacheControl': 'max-age=86400',
     }
     AWS_DEFAULT_ACL = None
 
     DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-    AWS_S3_CUSTOM_DOMAIN = env('AWS_S3_CUSTOM_DOMAIN')
     MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
