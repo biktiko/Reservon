@@ -27,8 +27,6 @@ SECRET_KEY = env('SECRET_KEY')  # Moved to .env
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env('DEBUG')
 
-# ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[])
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -46,6 +44,7 @@ INSTALLED_APPS = [
     'crispy_forms',
     'crispy_bootstrap4',
     'rest_framework',
+    'storages',
     'authentication',
     'main',
     'salons.apps.SalonsConfig',
@@ -98,34 +97,9 @@ GRAPPELLI_ADMIN_TITLE = "Reservon Admin"
 
 WSGI_APPLICATION = 'reservon.wsgi.application'
 
-# Database
-# https://docs.djangoproject.com/en/5.1/ref/settings/#databases
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',  # Убедитесь, что здесь указан полный путь
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.mysql',
-#         'NAME': 'reservon_db',
-#         'USER': 'reservon_admin', 
-#         'PASSWORD': '5cf5c7ca60_R',
-#         'HOST': 'localhost',
-#         'PORT': '3306',
-#     }
-# }
-
 DATABASES = {
     'default': dj_database_url.config(default='sqlite:///db.sqlite3')
 }
-
-
-# Password validation
-# https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 
 LOGOUT_REDIRECT_URL = '/'
 
@@ -144,13 +118,10 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-# Internationalization
-# https://docs.djangoproject.com/en/5.1/topics/i18n/
-
 USE_I18N = True
 USE_L10N = True
 USE_TZ = True
-TIME_ZONE = 'UTC'  # It's recommended to use UTC
+TIME_ZONE = 'UTC'
 
 LANGUAGE_CODE = 'en'
 
@@ -184,8 +155,25 @@ STATICFILES_DIRS = [
 ]
 
 # Media files (Uploaded by users)
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+if DEBUG:
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+else:
+    # Настройки Cloudflare R2
+    AWS_ACCESS_KEY_ID = env('CLOUDFLARE_R2_ACCESS_KEY_ID')
+    AWS_SECRET_ACCESS_KEY = env('CLOUDFLARE_R2_SECRET_ACCESS_KEY')
+    AWS_STORAGE_BUCKET_NAME = env('CLOUDFLARE_R2_BUCKET_NAME')
+    AWS_S3_REGION_NAME = 'auto'
+    AWS_S3_ENDPOINT_URL = f'https://{env("CLOUDFLARE_R2_ACCOUNT_ID")}.r2.cloudflarestorage.com'
+    AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.{env("CLOUDFLARE_R2_ACCOUNT_ID")}.r2.cloudflarestorage.com'
+    AWS_S3_OBJECT_PARAMETERS = {
+        'CacheControl': 'max-age=86400',
+    }
+    AWS_DEFAULT_ACL = None
+
+    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+    MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
@@ -194,7 +182,14 @@ TWILIO_ACCOUNT_SID = env('TWILIO_ACCOUNT_SID')
 TWILIO_AUTH_TOKEN = env('TWILIO_AUTH_TOKEN')
 TWILIO_VERIFY_SERVICE_SID = env('TWILIO_VERIFY_SERVICE_SID')
 
-ALLOWED_HOSTS = ['www.reservon.am', 'reservon.am', 'staging-reservon.am', 'reservon-8b5da3853ffa.herokuapp.com', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = [
+    'www.reservon.am', 
+    'reservon.am', 
+    'staging-reservon.am', 
+    'reservon-8b5da3853ffa.herokuapp.com', 
+    'localhost', 
+    '127.0.0.1'
+    ]
 
 # Logging Configuration
 LOGGING = {
@@ -231,8 +226,6 @@ LOGGING = {
     },
 }
 
-
-
 # Настройки django-admin-interface
 ADMIN_INTERFACE = {
     'HEADER': 'Reservon Admin',
@@ -242,6 +235,7 @@ ADMIN_INTERFACE = {
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
 
 LOGGING['handlers']['console'] = {
     'level': 'DEBUG',
@@ -254,9 +248,11 @@ LOGGING['root'] = {
     'level': 'INFO',
 }
 
-
-SESSION_COOKIE_SECURE = True
-SESSION_COOKIE_DOMAIN = 'reservon.am'
-
-CSRF_COOKIE_SECURE = True
-CSRF_TRUSTED_ORIGINS = ['https://reservon.am', 'https://www.reservon.am']
+if DEBUG:
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
+else:
+    SESSION_COOKIE_SECURE = True
+    SESSION_COOKIE_DOMAIN = 'reservon.am'
+    CSRF_COOKIE_SECURE = True
+    CSRF_TRUSTED_ORIGINS = ['https://reservon.am', 'https://www.reservon.am']
