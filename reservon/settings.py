@@ -162,7 +162,6 @@ if DEBUG:
     DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
 else:
     # Настройки Cloudflare R2
-    
     AWS_ACCESS_KEY_ID = env('CLOUDFLARE_R2_ACCESS_KEY_ID')
     AWS_SECRET_ACCESS_KEY = env('CLOUDFLARE_R2_SECRET_ACCESS_KEY')
     AWS_STORAGE_BUCKET_NAME = env('CLOUDFLARE_R2_BUCKET_NAME')
@@ -174,10 +173,18 @@ else:
     }
     AWS_DEFAULT_ACL = None
 
-    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-    MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
+    # Дополнительные настройки для совместимости с Cloudflare R2
+    AWS_S3_SIGNATURE_VERSION = 's3v4'
+    AWS_S3_ADDRESSING_STYLE = 'virtual'  # Попробуйте 'path' если 'virtual' не работает
+    AWS_QUERYSTRING_AUTH = False  # Для публичного доступа без подписей
+    AWS_S3_VERIFY = True 
 
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+    # DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+    DEFAULT_FILE_STORAGE = 'reservon.custom_storages.MediaStorage' 
+
+    MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
+    
+
 
 # Twilio Settings
 TWILIO_ACCOUNT_SID = env('TWILIO_ACCOUNT_SID')
@@ -214,6 +221,11 @@ LOGGING = {
             'formatter': 'verbose',
         },
     },
+    'storages': {  # Добавьте логгер для storages
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
     'loggers': {
         'django': {  # Логгер для Django
             'handlers': ['console'],
