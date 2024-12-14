@@ -47,7 +47,7 @@ def add_booking(request):
                     form.add_error('barber', 'Нет доступных мастеров на выбранное время')
                     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
                         return JsonResponse({'success': False, 'errors': form.errors.as_json()}, status=400)
-                    return render(request, 'account/add_booking.html', {'form': form, 'selected_salon': salon})
+                    return render(request, 'user_account/add_booking.html', {'form': form, 'selected_salon': salon})
 
             appointment_barber_service = AppointmentBarberService.objects.create(
                 appointment=appointment,
@@ -195,7 +195,7 @@ def account_dashboard(request):
         'active_menu': 'salon',
         'active_sidebar': 'salons',
     }
-    return render(request, 'account/dashboard.html', context)
+    return render(request, 'user_account/dashboard.html', context)
 # account/views.py
 
 @login_required
@@ -254,7 +254,7 @@ def manage_bookings(request):
         'now': timezone.now(),
         'booking_form': booking_form,
     }
-    return render(request, 'account/manage_bookings.html', context)
+    return render(request, 'user_account/manage_bookings.html', context)
 
 @login_required
 def get_services_duration_and_price(request):
@@ -282,7 +282,7 @@ def delete_booking(request, booking_id):
     context = {
         'appointment': appointment,
     }
-    return render(request, 'account/delete_booking.html', context)
+    return render(request, 'user_account/delete_booking.html', context)
 
 
 @login_required
@@ -357,7 +357,7 @@ def salon_masters(request):
         'active_barber': active_barber,
         'active_barber_id': active_barber_id,
     }
-    return render(request, 'account/salon_masters.html', context)
+    return render(request, 'user_account/salon_masters.html', context)
 
 @login_required
 def barber_detail(request, barber_id):
@@ -365,7 +365,7 @@ def barber_detail(request, barber_id):
     context = {
         'barber': barber,
     }
-    return render(request, 'account/barber_detail.html', context)
+    return render(request, 'user_account/barber_detail.html', context)
 
 
 @login_required
@@ -385,7 +385,7 @@ def add_availability(request, barber_id):
     else:
         day = request.GET.get('day')
         form = AvailabilityForm(initial={'day_of_week': day})
-        return render(request, 'account/availability_form.html', {'form': form, 'barber': barber})
+        return render(request, 'user_account/availability_form.html', {'form': form, 'barber': barber})
 
 
 class BarberEditForm(ModelForm):
@@ -420,7 +420,7 @@ def edit_barber_field(request, barber_id):
             return JsonResponse({'success': False, 'errors': form.errors})
     else:
         form = SingleFieldForm(instance=barber)
-        html = render_to_string('account/edit_barber_field.html', {
+        html = render_to_string('user_account/edit_barber_field.html', {
             'form': form, 
             'barber': barber, 
             'field': field,  
@@ -494,7 +494,7 @@ def edit_barber_schedule(request, barber_id):
             return JsonResponse({'success': False, 'errors': errors_data})
     else:
         formset = BarberAvailabilityFormSet(queryset=queryset, initial=initial)
-        html = render_to_string('account/edit_barber_schedule.html', {
+        html = render_to_string('user_account/edit_barber_schedule.html', {
             'formset': formset,
             'barber': barber,
             'day': day,
@@ -520,7 +520,7 @@ def edit_barber_photo(request, barber_id):
             return JsonResponse({'success': False, 'errors': form.errors})
     else:
         form = BarberPhotoForm(instance=barber)
-        html = render_to_string('account/edit_barber_photo.html', {'form': form, 'barber': barber}, request=request)
+        html = render_to_string('user_account/edit_barber_photo.html', {'form': form, 'barber': barber}, request=request)
         return JsonResponse({'success': True, 'html': html})
 
 @login_required
@@ -549,4 +549,4 @@ def my_account_view(request):
         'email': user.email,  # для отображения
         'active_sidebar': 'account'
     }
-    return render(request, 'account/my_account.html', context)
+    return render(request, 'user_account/my_account.html', context)
