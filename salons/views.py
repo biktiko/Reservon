@@ -18,14 +18,19 @@ import logging
 logger = logging.getLogger('booking')
 
 def main(request):
-    query = request.GET.get('q')
+    query = request.GET.get('q', '')
     if query:
         salons = Salon.objects.filter(
             Q(name__icontains=query) | Q(address__icontains=query)
         )
     else:
         salons = Salon.objects.filter(status='active')
-    return render(request, 'salons/salons.html', {'salons': salons})
+    context = {
+        'salons': salons,
+        'q': query,  # Добавляем 'q' в контекст
+    }
+    logger.debug(f"Passing 'q' to context: '{query}'")
+    return render(request, 'salons/salons.html', context)
 
 def salon_detail(request, id):
     salon = get_object_or_404(Salon, id=id)
