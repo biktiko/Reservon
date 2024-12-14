@@ -82,24 +82,22 @@ def get_form(request):
                     profile = user.main_profile
                 except User.DoesNotExist:
                     user = None
+                except Profile.DoesNotExist:
+                    profile = None
 
             # Логика отображения форм
-            # Если пользователь есть и login_method = 'google', то пароль не показываем.
-            # Если login_method = 'password', не показываем google кнопку.
-            # Если login_method ещё не установлен (user без пароля и без google), тогда показываем set_password и google опции.
-
             if step == 'verify_code':
                 html = render_to_string('authentication/verify_code.html', context, request=request)
             
             elif step == 'set_password':
-                # Если пользователь уже выбрал google - ошибка
-                if user and profile.login_method == 'google':
+                # Если пользователь уже выбрал Google - ошибка
+                if user and profile and getattr(profile, 'login_method', None) == 'google':
                     return JsonResponse({'error': 'Доступен только вход через Google.', 'google_only': True}, status=400)
                 html = render_to_string('authentication/set_password.html', context, request=request)
             
             elif step == 'enter_password':
-                # Если пользователь уже google - пароль не показываем
-                if user and profile.login_method == 'google':
+                # Если пользователь уже выбрал Google - пароль не показываем
+                if user and profile and getattr(profile, 'login_method', None) == 'google':
                     return JsonResponse({'error': 'Доступен только вход через Google.', 'google_only': True}, status=400)
                 html = render_to_string('authentication/enter_password.html', context, request=request)
 
@@ -109,14 +107,13 @@ def get_form(request):
             return JsonResponse({'html': html})
 
         except json.JSONDecodeError:
-            logger.error("JSON decode error in get_form")
+            logger.error("JSON decode error in get_form", exc_info=True)
             return JsonResponse({'error': 'Invalid JSON.'}, status=400)
         except Exception as e:
-            logger.error(f"Error in get_form: {e}")
+            logger.error(f"Error in get_form: {e}", exc_info=True)
             return JsonResponse({'error': 'Internal server error.'}, status=500)
     else:
         return JsonResponse({'error': 'Invalid request method.'}, status=400)
-
 @csrf_exempt
 def login_view(request):
     # Начало процесса логина по номеру телефона

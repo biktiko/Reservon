@@ -4,6 +4,11 @@
 
 
 {% block content %}
+    <!-- Отображаем заголовок в зависимости от наличия поискового запроса -->
+    {% if q %}
+        <h2>Результаты поиска для "{{ q }}"</h2>
+    {% endif %}
+
     <div class="salon-list">
         <link rel="stylesheet" href="{% static 'salons/css/salons.css' %}">
         {% for salon in salons %}

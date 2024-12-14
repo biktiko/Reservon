@@ -1,8 +1,8 @@
 <!-- templates/account/add_booking.html -->
 {% load static %}
-<link rel="stylesheet" href="{% static 'account/css/add_booking.css' %}">
+<link rel="stylesheet" href="{% static 'user_account/css/add_booking.css' %}">
 
-<form method="post" action="{% url 'add_booking' %}" id="admin-booking-form">
+<form method="post" action="{% url 'user_account:add_booking' %}" id="admin-booking-form">
     {% csrf_token %}
     
     <!-- Скрытое поле для salon_id -->

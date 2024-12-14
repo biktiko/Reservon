@@ -1,5 +1,4 @@
 .env
-logs/booking.log
 media
 todolist.txt
 .cpanel.yml

@@ -246,15 +246,22 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': False,
         },
+        'authentication': {  # Добавьте этот блок
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
         'myapp.adapter': {
             'handlers': ['console', 'file'],
             'level': 'DEBUG',
             'propagate': False,
         },
-        
+    },
+    'root': {  # Убедитесь, что root логгер настроен
+        'handlers': ['console'],
+        'level': 'INFO',
     },
 }
-
 # Настройки django-admin-interface
 ADMIN_INTERFACE = {
     'HEADER': 'Reservon Admin',
