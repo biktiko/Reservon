@@ -6,7 +6,7 @@
 <!-- Форма поиска -->
 <div class="search-container">
     <form method="GET" action="{% url 'salons:salons_main' %}" id="search-form">
-        <input type="text" name="q" placeholder="Search..." value="{{ request.GET.q }}" id="search-input">
+        <input type="text" name="q" placeholder="Search..." value="{{ request.GET.q|default:'' }}" id="search-input">
     </form>
 </div>
 

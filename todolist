@@ -1,3 +1,5 @@
+Количество запросов о1 - 4-5
+
     ; const barbersByCategory = JSON.parse('{{ barbers_by_category_json|escapejs }}');
 !!! ОРГАНИЗОВАТЬ ДЕВОПС БАГИ !!!
 

@@ -14,6 +14,8 @@ class Profile(models.Model):
     last_verification_sent_at = models.DateTimeField(null=True, blank=True) 
     notes = models.TextField('Notes', blank=True, null=True)
     avatar = models.ImageField(upload_to='avatars/', null=True, blank=True)
+    login_method = models.CharField(max_length=20, choices=[('password', 'Password'), ('google', 'Google')])
+    google_uid = models.CharField(max_length=255, null=True, blank=True)
 
     def __str__(self):
         return f"{self.user.first_name} ({self.phone_number})"

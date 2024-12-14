@@ -15,7 +15,6 @@ import pytz
 import json
 import logging
 
-# logger = logging.getLogger(__name__)
 logger = logging.getLogger('booking')
 
 def main(request):
@@ -141,8 +140,6 @@ def get_available_minutes(request):
                 ).values_list('id', flat=True).distinct()
 
                 available_barbers = Barber.objects.filter(salon=salon).exclude(id__in=busy_barbers)
-
-                logger.debug(f"Minute {minute}: Busy barbers IDs: {list(busy_barbers)}, Available barbers IDs: {list(available_barbers.values_list('id', flat=True))}")
 
                 if available_barbers.exists():
                     # Проверяем расписание хотя бы одного мастера
@@ -278,7 +275,6 @@ def book_appointment(request, id):
     if request.headers.get('Content-Type') == 'application/json':
         try:
             data = json.loads(request.body)
-            logger.debug(data)
         except json.JSONDecodeError as e:
             logger.error(f"Ошибка декодирования JSON: {e}")
             return JsonResponse({'error': 'Некорректный формат данных.'}, status=400)
@@ -287,7 +283,6 @@ def book_appointment(request, id):
         time_str = data.get("time")
         booking_details = data.get("booking_details", [])
         total_service_duration = data.get("total_service_duration", salon.default_duration)
-        logger.debug(f"Получены данные бронирования - date: {date_str}, time: {time_str}, booking_details: {booking_details}")
     else:
         # Если запрос не является JSON, возвращаем ошибку
         logger.error("Некорректный формат данных. Ожидается JSON.")
@@ -296,7 +291,6 @@ def book_appointment(request, id):
     # Валидация даты
     try:
         date = datetime.strptime(date_str, '%Y-%m-%d').date()
-        logger.debug(f"Отформатированная дата: {date}")
     except (ValueError, TypeError) as e:
         logger.error(f"Ошибка форматирования даты: {e}")
         return JsonResponse({'error': 'Некорректный формат даты.'}, status=400)
@@ -304,7 +298,6 @@ def book_appointment(request, id):
     # Валидация времени
     try:
         start_time = datetime.strptime(time_str, '%H:%M').time()
-        logger.debug(f"Отформатированное время: {start_time}")
     except (ValueError, TypeError) as e:
         logger.error(f"Ошибка форматирования времени: {e}")
         return JsonResponse({'error': 'Некорректный формат времени.'}, status=400)
@@ -320,7 +313,6 @@ def book_appointment(request, id):
         total_service_duration = salon.default_duration  # Используем длительность по умолчанию
 
     end_datetime = start_datetime + timedelta(minutes=total_service_duration)
-    logger.debug(f"Время бронирования: {start_datetime} - {end_datetime}")
 
     # Создаем Appointment
     appointment = Appointment(
@@ -365,7 +357,6 @@ def book_appointment(request, id):
         )
         appointment_barber_service.save()
         appointments_to_create.append(appointment_barber_service)
-        logger.debug(f"Создано AppointmentBarberService: {appointment_barber_service}")
 
     else:
         # Есть booking_details
@@ -438,7 +429,6 @@ def book_appointment(request, id):
                     return JsonResponse({'error': f"Услуга с ID {service_id} не найдена в салоне."}, status=400)
 
             appointments_to_create.append(appointment_barber_service)
-            logger.debug(f"Создано AppointmentBarberService: {appointment_barber_service}")
 
             # Обновляем start_datetime для следующей услуги
             start_datetime = interval_end

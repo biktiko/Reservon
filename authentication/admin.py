@@ -1,4 +1,3 @@
-# C:\Reservon\Reservon\authentication\admin.py
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as DefaultUserAdmin
 from django.contrib.auth.models import User
@@ -12,14 +11,35 @@ class ProfileInline(admin.StackedInline):
     can_delete = False
     verbose_name_plural = 'Профиль'
     fk_name = 'user'
-    fields = ('phone_number', 'status', 'notes')  # Поля, которые будут отображаться в админке
-    extra = 0  # Убираем дополнительные пустые формы
+    fields = ('phone_number', 'status', 'notes', 'login_method', 'google_uid') 
+    extra = 0
 
 class CustomUserAdmin(DefaultUserAdmin):
     inlines = (ProfileInline,)
     list_display = DefaultUserAdmin.list_display + ('has_password', 'profile_status', 'get_notes')
     list_filter = DefaultUserAdmin.list_filter + ('main_profile__status',)
     search_fields = DefaultUserAdmin.search_fields + ('main_profile__phone_number',)
+
+    add_fieldsets = (
+        (None, {
+            'classes': ('wide',),
+            'fields': ('username', 'email', 'first_name', 'last_name', 'is_staff', 'is_active'),
+        }),
+    )
+
+    def save_model(self, request, obj, form, change):
+        if not obj.pk:  # Если это новый объект
+            obj.set_unusable_password()  # Устанавливает, что у пользователя нет пароля
+        super().save_model(request, obj, form, change)
+
+    def save_formset(self, request, form, formset, change):
+        if formset.model == Profile:
+            instances = formset.save(commit=False)
+            for instance in instances:
+                instance.save()
+            formset.save_m2m()
+        else:
+            super().save_formset(request, form, formset, change)
 
     def has_password(self, obj):
         return obj.has_usable_password()
@@ -41,10 +61,4 @@ class CustomUserAdmin(DefaultUserAdmin):
             return 'No Notes'
     get_notes.short_description = 'Notes'
 
-    class Meta:
-        proxy = True
-        verbose_name = 'Custom User'
-        verbose_name_plural = 'Custom Users'
-
-# Регистрация кастомного UserAdmin
 admin.site.register(User, CustomUserAdmin)

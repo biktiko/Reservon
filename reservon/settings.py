@@ -7,35 +7,30 @@ import environ
 import dj_database_url
 import sys
 
-# Initialize django-environ
 env = environ.Env(
     DEBUG=(bool, False)
 )
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Read the .env file
 environ.Env.read_env(env_file=os.path.join(BASE_DIR, '.env'))
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = env('SECRET_KEY')  # Moved to .env
+SECRET_KEY = env('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env('DEBUG')
 
-# Application definition
-
 INSTALLED_APPS = [
-    # 'suit',
     'grappelli',
     'colorfield',
     'import_export',
     'django.contrib.admin',
     'django.contrib.auth',
+    'django.contrib.sites', 
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
@@ -47,11 +42,23 @@ INSTALLED_APPS = [
     'storages',
     'authentication',
     'main',
-    'salons.apps.SalonsConfig',
-    'account',
+    'user_account.apps.UserAccountConfig',
+    'salons'
 ]
 
+
+SITE_ID = 1
+
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
+
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+)
+
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -60,9 +67,11 @@ MIDDLEWARE = [
     'django.middleware.locale.LocaleMiddleware', 
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
+    'reservon.middleware.DynamicSiteMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
 ]
 
 ROOT_URLCONF = 'reservon.urls'
@@ -70,12 +79,12 @@ ROOT_URLCONF = 'reservon.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],  # You can add template directories here if needed
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],  # You can add template directories here if needed
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.debug',
-                'django.template.context_processors.request',  # Required for some Django features
+                'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'django.template.context_processors.media',
@@ -84,7 +93,6 @@ TEMPLATES = [
     },
 ]
 
-# JSON Editor Settings (если используете)
 JSON_EDITOR_JS = [
     'https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/9.5.6/jsoneditor.min.js',
 ]
@@ -143,9 +151,6 @@ TIME_FORMAT = _('H:i')
 SHORT_DATE_FORMAT = DATE_FORMAT
 SHORT_TIME_FORMAT = TIME_FORMAT
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.1/howto/static-files/
-
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATIC_URL = '/static/'
 
@@ -160,8 +165,6 @@ if DEBUG:
 else:
     STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# Media files (Uploaded by users)
-# Медиа-файлы
 if DEBUG:
     MEDIA_URL = '/media/'
     MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
@@ -191,8 +194,6 @@ else:
 
     MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
     
-
-
 # Twilio Settings
 TWILIO_ACCOUNT_SID = env('TWILIO_ACCOUNT_SID')
 TWILIO_AUTH_TOKEN = env('TWILIO_AUTH_TOKEN')
@@ -213,7 +214,7 @@ LOGGING = {
     'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
-            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'format': '{levelname} {asctime} {module} {message}',
             'style': '{',
         },
         'simple': {
@@ -222,28 +223,35 @@ LOGGING = {
         },
     },
     'handlers': {
-        'console': {  # Используем консоль для логов
+        'console': {  
             'level': 'DEBUG',
             'class': 'logging.StreamHandler',
             'formatter': 'verbose',
         },
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': 'debug.log',
+            'formatter': 'verbose',
+        },
     },
-    'storages': {  # Добавьте логгер для storages
-            'handlers': ['console'],
-            'level': 'DEBUG',
-            'propagate': False,
-        },
     'loggers': {
-        'django': {  # Логгер для Django
-            'handlers': ['console'],
+        'django': {
+            'handlers': ['file'],
             'level': 'DEBUG',
             'propagate': False,
         },
-        'booking': {  # кастомный логгер
-            'handlers': ['console'],
+        'allauth': {
+            'handlers': ['console', 'file'],
             'level': 'DEBUG',
             'propagate': False,
         },
+        'myapp.adapter': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        
     },
 }
 
@@ -257,7 +265,6 @@ ADMIN_INTERFACE = {
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-
 LOGGING['handlers']['console'] = {
     'level': 'DEBUG',
     'class': 'logging.StreamHandler',
@@ -269,7 +276,10 @@ LOGGING['root'] = {
     'level': 'INFO',
 }
 
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'  # Сохранять сессии в базе данных
+
 if DEBUG:
+    SESSION_COOKIE_SAMESITE = 'Strict'
     SESSION_COOKIE_SECURE = False
     CSRF_COOKIE_SECURE = False
 else:
@@ -277,3 +287,20 @@ else:
     SESSION_COOKIE_DOMAIN = 'reservon.am'
     CSRF_COOKIE_SECURE = True
     CSRF_TRUSTED_ORIGINS = ['https://reservon.am', 'https://www.reservon.am']
+
+SOCIALACCOUNT_LOGIN_ON_GET = True
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_EMAIL_VERIFICATION = "optional"  # или " mandatory", в зависимости требований
+
+SOCIALACCOUNT_AUTO_SIGNUP = True
+SOCIALACCOUNT_QUERY_EMAIL = True
+SOCIALACCOUNT_ADAPTER = 'authentication.adapters.MySocialAccountAdapter'
+
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'LOGIN_ON_GET': True,
+    }
+}
+
+TEMPLATES[0]['OPTIONS']['debug'] = True
+

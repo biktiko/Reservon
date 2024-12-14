@@ -1,37 +1,37 @@
-# authentication/views.py
-
 from django.http import JsonResponse
 from django.template.loader import render_to_string
-from django.contrib.auth import login, authenticate
+from django.contrib.auth import login, authenticate, logout
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.models import User
-from django.contrib.auth import logout
 from django.shortcuts import redirect
 from django.views.decorators.http import require_http_methods
+from django.contrib.auth import get_backends
+from django.conf import settings
 import json
 import re
-
-from .models import Profile  # Если у вас есть модель Profile
-from .utils import send_verification_code, check_verification_code  # Функции для отправки и проверки кода
-
 import logging
+
+from .models import Profile
+from .utils import send_verification_code, check_verification_code
+
 logger = logging.getLogger('authentication')
 
 def normalize_phone_number(phone_number):
-    # Убираем пробелы и приводим к стандартному формату
+    # Приводим номер к формату +374xxxxxxxx или +15005550007 для теста
     phone_number = phone_number.strip()
     if not phone_number.startswith('+'):
         phone_number = '+' + phone_number
     return phone_number
 
-
 @csrf_exempt
 def load_modal(request):
+    # Возвращает html модалки логина или регистрации
     if request.method == 'POST':
         data = json.loads(request.body)
-        print(data)
         action = data.get('action')
-        context = {}
+        context = {
+            'from_booking': False
+        }
 
         try:
             if action in ['login', 'login_from_booking']:
@@ -41,15 +41,17 @@ def load_modal(request):
                     salon_id = data.get('salon_id', None)
                     if salon_id:
                         request.session['salon_id'] = salon_id
+                # login_modal.html должен сам решать, показывать ли кнопку Google или нет 
+                # в зависимости от ситуации (шаблон проверит login_method позже)
                 html = render_to_string('authentication/login_modal.html', context, request=request)
                 return JsonResponse({'html': html})
             elif action == 'register':
+                # регистрация не особо актуальна, т.к. у нас логика верификации номера
                 html = render_to_string('authentication/register_modal.html', context, request=request)
                 return JsonResponse({'html': html})
             else:
                 return JsonResponse({'error': 'Invalid action'}, status=400)
         except Exception as e:
-            # Логируем ошибку и возвращаем ответ с ошибкой
             logger.error(f"Error in load_modal: {e}")
             return JsonResponse({'error': str(e)}, status=500)
     else:
@@ -57,24 +59,55 @@ def load_modal(request):
 
 @csrf_exempt
 def get_form(request):
+    # Возвращает нужную форму в зависимости от шага (verify_code, set_password, enter_password)
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
             step = data.get('step')
             phone_number = data.get('phone_number')
+            if phone_number:
+                phone_number = normalize_phone_number(phone_number)
+
             context = {
                 'phone_number': phone_number,
                 'from_booking': request.session.get('from_booking', False)
             }
+
+            # Определяем пользователя
+            user = None
+            profile = None
+            if phone_number:
+                try:
+                    user = User.objects.get(username=phone_number)
+                    profile = user.main_profile
+                except User.DoesNotExist:
+                    user = None
+
+            # Логика отображения форм
+            # Если пользователь есть и login_method = 'google', то пароль не показываем.
+            # Если login_method = 'password', не показываем google кнопку.
+            # Если login_method ещё не установлен (user без пароля и без google), тогда показываем set_password и google опции.
+
             if step == 'verify_code':
                 html = render_to_string('authentication/verify_code.html', context, request=request)
+            
             elif step == 'set_password':
+                # Если пользователь уже выбрал google - ошибка
+                if user and profile.login_method == 'google':
+                    return JsonResponse({'error': 'Доступен только вход через Google.', 'google_only': True}, status=400)
                 html = render_to_string('authentication/set_password.html', context, request=request)
+            
             elif step == 'enter_password':
+                # Если пользователь уже google - пароль не показываем
+                if user and profile.login_method == 'google':
+                    return JsonResponse({'error': 'Доступен только вход через Google.', 'google_only': True}, status=400)
                 html = render_to_string('authentication/enter_password.html', context, request=request)
+
             else:
                 return JsonResponse({'error': 'Invalid step.'}, status=400)
+            
             return JsonResponse({'html': html})
+
         except json.JSONDecodeError:
             logger.error("JSON decode error in get_form")
             return JsonResponse({'error': 'Invalid JSON.'}, status=400)
@@ -84,9 +117,9 @@ def get_form(request):
     else:
         return JsonResponse({'error': 'Invalid request method.'}, status=400)
 
-
 @csrf_exempt
 def login_view(request):
+    # Начало процесса логина по номеру телефона
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
@@ -95,40 +128,53 @@ def login_view(request):
             if not phone_number:
                 return JsonResponse({'error': 'Номер телефона обязателен.'}, status=400)
 
-            # Нормализуем номер телефона
             phone_number = normalize_phone_number(phone_number)
 
             if not (re.match(r'^\+374\d{8}$', phone_number) or phone_number == "+15005550007"):
                 return JsonResponse({'error': 'Неверный формат армянского номера телефона.'}, status=400)
 
-            # Получаем или создаём пользователя и профиль
             user, user_created = User.objects.get_or_create(username=phone_number)
             if user_created:
                 user.set_unusable_password()
                 user.save()
-                logger.debug(f"Создан новый пользователь: {phone_number} с неиспользуемым паролем.")
 
-            profile, profile_created = Profile.objects.get_or_create(user=user, defaults={'phone_number': phone_number, 'status': 'unverified'})
+            try:
+                profile = Profile.objects.get(user=user)
+            except Profile.DoesNotExist:
+                if Profile.objects.filter(phone_number=phone_number).exists():
+                    return JsonResponse({'error': 'Этот номер уже используется другим профилем.'}, status=400)
+                else:
+                    profile = Profile.objects.create(user=user, phone_number=phone_number, status='unverified')
 
-            logger.debug(f"user.has_usable_password(): {user.has_usable_password()}")
-
+            # Если пользователь не верифицирован, посылаем код
             if profile.status == 'unverified':
-                # Отправляем код верификации
                 try:
-                    send_verification_code(phone_number, profile)  # Передаём profile
+                    send_verification_code(phone_number, profile)
                     request.session['phone_number'] = phone_number
                     return JsonResponse({'next_step': 'verify_code', 'phone_number': phone_number})
                 except Exception as e:
                     logger.error(f"Failed to send verification code to {phone_number}: {e}")
-                    return JsonResponse({'error': str(e)}, status=429)  # Статус 429 Too Many Requests
-            elif not user.has_usable_password():
-                # Пользователь верифицирован, но не зарегистрирован (нет пароля)
-                logger.debug(f"Пользователь {phone_number} прошёл верификацию, требуется установка пароля.")
-                return JsonResponse({'next_step': 'set_password', 'user_exists': False, 'phone_number': phone_number})
-            else:
-                # Пользователь существует и зарегистрирован, запрашиваем пароль
-                logger.debug(f"Пользователь {phone_number} имеет установленный пароль. Запрос ввода пароля.")
+                    return JsonResponse({'error': str(e)}, status=429)
+            
+            # Если пользователь верифицирован
+            if profile.login_method == 'google':
+                # Вход только через Google
+                # Сразу говорим фронту, что нужен Google
+                # Фронт пусть делает редирект на /accounts/google/login (где LOGIN_ON_GET включен, сразу редирект на Google)
+                # Не показываем пароли
+                request.session['phone_number'] = phone_number
+                return JsonResponse({'google_only': True, 'phone_number': phone_number})
+            
+            # Если login_method=password или login_method не установлен, но пользователь уже верифицирован
+            # Проверяем, есть ли пароль
+            if user.has_usable_password():
+                # Пользователь создан пароль ранее, просим ввести пароль
+                request.session['phone_number'] = phone_number
                 return JsonResponse({'next_step': 'enter_password', 'user_exists': True, 'phone_number': phone_number})
+            else:
+                # Пользователь верифицирован, но логин_method не google, значит можно задать пароль или выбрать Google
+                request.session['phone_number'] = phone_number
+                return JsonResponse({'next_step': 'set_password', 'user_exists': False, 'phone_number': phone_number})
 
         except json.JSONDecodeError:
             logger.error("JSON decode error in login_view")
@@ -139,7 +185,9 @@ def login_view(request):
     else:
         return JsonResponse({'error': 'Invalid request method.'}, status=400)
 
+@csrf_exempt
 def verify_code(request):
+    # Проверка кода из СМС
     if request.method == 'POST':
         data = json.loads(request.body)
         phone_number = data.get('phone_number')
@@ -148,27 +196,28 @@ def verify_code(request):
         if not phone_number or not code:
             return JsonResponse({'error': 'Номер телефона и код обязательны.'}, status=400)
 
-        # Нормализуем номер телефона
         phone_number = normalize_phone_number(phone_number)
 
-        # Проверка кода через Verify API
         try:
             status = check_verification_code(phone_number, code)
         except Exception as e:
             logger.error(f"Failed to verify code for {phone_number}: {e}")
-            return JsonResponse({'error': 'Не удалось проверить код. Пожалуйста, попробуйте позже.'}, status=500)
+            return JsonResponse({'error': 'Не удалось проверить код. Попробуйте позже.'}, status=500)
 
         if status == 'approved':
             try:
                 user = User.objects.get(username=phone_number)
-                profile = user.main_profile  # Используем related_name='main_profile'
+                profile = user.main_profile
                 profile.status = 'verified'
                 profile.save()
                 request.session['phone_number'] = phone_number
-                logger.debug(f"Пользователь {phone_number} прошёл верификацию.")
-                
-                logger.debug(f"user.has_usable_password(): {user.has_usable_password()}")
 
+                # Если пользователь уже привязал google - тогда вообще пароли не спрашиваем
+                if profile.login_method == 'google':
+                    # Возвращаем фронту, что нужен google
+                    return JsonResponse({'google_only': True, 'phone_number': phone_number})
+                
+                # Иначе проверяем пароль
                 if user.has_usable_password():
                     next_step = 'enter_password'
                 else:
@@ -200,22 +249,31 @@ def set_password(request):
         if len(password) < 6:
             return JsonResponse({'error': 'Пароль должен быть не менее 6 символов.'}, status=400)
 
-        # Нормализуем номер телефона
         phone_number = normalize_phone_number(phone_number)
 
         try:
             user = User.objects.get(username=phone_number)
-            user.first_name = first_name
-            user.set_password(password)  # Используем метод set_password
-            user.save()
-            login(request, user)
-            logger.debug(f"Пользователь {phone_number} установил пароль и вошёл в систему.")
+            profile = user.main_profile
+            # Если уже google, то пароль ставить нельзя
+            if profile.login_method == 'google':
+                return JsonResponse({'error': 'Доступен только вход через Google.'}, status=400)
 
-            # Проверяем, пришёл ли пользователь с бронирования
+            user.first_name = first_name
+            user.set_password(password)
+            user.save()
+
+            profile.login_method = 'password'
+            profile.save()
+
+            # Явно указываем backend для логина
+            backend = get_backends()[0].__class__.__name__
+            user.backend = f'django.contrib.auth.backends.{backend}'
+            login(request, user)
+
+            # Redirect logic
             from_booking = request.session.get('from_booking', False)
             salon_id = request.session.get('salon_id', None)
             if from_booking and salon_id:
-                # Удаляем флаги бронирования из сессии
                 del request.session['from_booking']
                 del request.session['salon_id']
                 return JsonResponse({'success': True, 'redirect_to_booking': True, 'salon_id': salon_id})
@@ -224,10 +282,11 @@ def set_password(request):
         except User.DoesNotExist:
             return JsonResponse({'error': 'Пользователь не найден.'}, status=404)
 
-    else:
-        return JsonResponse({'error': 'Invalid request method.'}, status=400)
+    return JsonResponse({'error': 'Invalid request method.'}, status=400)
 
+@csrf_exempt
 def enter_password(request):
+    # Вход по паролю
     if request.method == 'POST':
         data = json.loads(request.body)
         phone_number = data.get('phone_number')
@@ -236,7 +295,6 @@ def enter_password(request):
         if not phone_number or not password:
             return JsonResponse({'error': 'Номер телефона и пароль обязательны.'}, status=400)
 
-        # Нормализуем номер телефона
         phone_number = normalize_phone_number(phone_number)
 
         user = authenticate(username=phone_number, password=password)
@@ -244,11 +302,9 @@ def enter_password(request):
             login(request, user)
             logger.debug(f"Пользователь {phone_number} вошёл в систему.")
 
-            # Проверяем, пришёл ли пользователь с бронирования
             from_booking = request.session.get('from_booking', False)
             salon_id = request.session.get('salon_id', None)
             if from_booking and salon_id:
-                # Удаляем флаги бронирования из сессии
                 del request.session['from_booking']
                 del request.session['salon_id']
                 return JsonResponse({'success': True, 'redirect_to_booking': True, 'salon_id': salon_id})
@@ -258,6 +314,7 @@ def enter_password(request):
             return JsonResponse({'error': 'Неверный пароль.'}, status=400)
     else:
         return JsonResponse({'error': 'Invalid request method.'}, status=400)
+
 
 @csrf_exempt
 def resend_verification_code(request):
@@ -269,25 +326,20 @@ def resend_verification_code(request):
             if not phone_number:
                 return JsonResponse({'error': 'Номер телефона обязателен.'}, status=400)
 
-            # Нормализуем номер телефона
             phone_number = normalize_phone_number(phone_number)
-            
+
             try:
                 user = User.objects.get(username=phone_number)
-                profile = user.main_profile  # Используем related_name='main_profile'
+                profile = user.main_profile
             except User.DoesNotExist:
                 return JsonResponse({'error': 'Пользователь не найден.'}, status=404)
-            except Profile.DoesNotExist:
-                # Создаём профиль, если его нет
-                profile = Profile.objects.create(user=user, phone_number=phone_number, status='unverified')
 
-            # Отправляем код верификации
             try:
-                send_verification_code(phone_number, profile)  # Передаём profile
+                send_verification_code(phone_number, profile)
                 return JsonResponse({'message': 'Код отправлен заново.'})
             except Exception as e:
                 logger.error(f"Failed to send verification code to {phone_number}: {e}")
-                return JsonResponse({'error': str(e)}, status=429)  # Статус 429 Too Many Requests
+                return JsonResponse({'error': str(e)}, status=429)
         except json.JSONDecodeError:
             logger.error("JSON decode error in resend_verification_code")
             return JsonResponse({'error': 'Invalid JSON.'}, status=400)
@@ -300,4 +352,4 @@ def resend_verification_code(request):
 @require_http_methods(["GET", "POST"])
 def custom_logout_view(request):
     logout(request)
-    return redirect('/')  # Перенаправление на главную страницу после логаута
+    return redirect('/')
