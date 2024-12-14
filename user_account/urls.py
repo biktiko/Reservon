@@ -1,7 +1,9 @@
-# account/urls.py
+# user_account/urls.py
 
 from django.urls import path
 from . import views
+
+app_name = 'user_account'
 
 urlpatterns = [
     path('', views.account_dashboard, name='account_dashboard'),

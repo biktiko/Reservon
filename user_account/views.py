@@ -204,7 +204,7 @@ def manage_bookings(request):
     salons = user.administered_salons.all()
 
     if not salons.exists():
-        return render(request, 'account/no_salons.html')
+        return render(request, 'user_account/no_salons.html')
 
     # Получаем выбранный салон
     salon_id = request.GET.get('salon_id')
