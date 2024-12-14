@@ -233,10 +233,15 @@ function submitLogin() {
     })
     .then(response => response.json())
     .then(data => {
-        if (data.next_step) {
-            loadModalContent(data.next_step, data.phone_number);
-        } else if (data.error) {
-            document.getElementById('login-response').innerHTML = '<p>' + data.error + '</p>';
+        if (data.google_only) {
+            // Перенаправляем на Google логин
+            window.location.href = "/accounts/google/login/?process=login";
+        }{
+            if (data.next_step) {
+                loadModalContent(data.next_step, data.phone_number);
+            } else if (data.error) {
+                document.getElementById('login-response').innerHTML = '<p>' + data.error + '</p>';
+            }
         }
     })
     .catch(error => {
@@ -391,56 +396,6 @@ function submitVerifyCode() {
     });
 }
 
-
-// function submitVerifyCode() {
-//     var phone_number = document.getElementById('id_phone_number').value;
-//     var codeInputs = document.querySelectorAll('.code-input');
-//     var code = Array.from(codeInputs).map(input => input.value).join('');
-//     var submitButton = document.getElementById('submit-verify-btn');
-
-//     console.log('submitVerifyCode called with code:', code);
-
-//     var expectedLength = codeInputs.length;
-
-//     if (code.length !== expectedLength || !/^\d+$/.test(code)) {
-//         document.getElementById('verify-response').innerHTML = <p>Пожалуйста, введите корректный код из ${expectedLength} цифр.</p>;
-//         return;
-//     }
-
-//     // Отключаем кнопку, чтобы предотвратить повторные клики
-//     submitButton.disabled = true;
-//     submitButton.innerText = 'Подтверждение...';
-
-//     fetch('/auth/verify_code/', {  // Убедитесь, что URL правильный
-//         method: 'POST',
-//         headers: {
-//             'Content-Type': 'application/json',
-//             'X-CSRFToken': getCookie('csrftoken')
-//         },
-//         body: JSON.stringify({ 'phone_number': phone_number, 'code': code })
-//     })
-//     .then(response => response.json())
-//     .then(data => {
-//         if (data.next_step) {
-//             loadModalContent(data.next_step, data.phone_number);
-//         } else if (data.error) {
-//             document.getElementById('verify-response').innerHTML = '<p>' + data.error + '</p>';
-//         }
-//     })
-//     .catch(error => {
-//         console.error('Error:', error);
-//         document.getElementById('verify-response').innerHTML = '<p>Не удалось подтвердить код. Пожалуйста, попробуйте позже.</p>';
-//     })
-//     .finally(() => {
-//         // Включаем кнопку обратно
-//         submitButton.disabled = false;
-//         submitButton.innerText = 'Подтвердить';
-//     });
-// }
-
-/**
- * Отправляет запрос на установку пароля.
- */
 function submitSetPassword() {
     var phone_number = document.getElementById('id_phone_number').value;
     var first_name = document.getElementById('id_first_name').value;

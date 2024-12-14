@@ -15,11 +15,12 @@
   </button>
   <nav class="navigation" id="navigation">
     <ul>
-      <li><a href="/"><i class="fa-solid fa-house"></i> {% trans "Home" %}</a></li>
-      <li><a href="/salons/"><i class="fas fa-cut"></i> {% trans "Salons" %}</a></li>
-      <li><a href="/about/"><i class="fas fa-info-circle"></i> {% trans "About" %}</a></li>
-      <li><a href="/contact/"><i class="fas fa-envelope"></i> {% trans "Contact" %}</a></li>
+      <li><a href="{% url 'main:main' %}"><i class="fa-solid fa-house"></i> {% trans "Home" %}</a></a></li>
+      <li><a href="{% url 'salons:salons_main' %}"><i class="fas fa-cut"></i> {% trans "Salons" %}</a></li>
+      <li><a href="{% url 'main:about' %}"><i class="fas fa-info-circle"></i> {% trans "About" %}</a></li>
+      <li><a href="{% url 'main:contacts' %}"><i class="fas fa-envelope"></i> {% trans "Contact" %}</a></li>
     </ul>
+
     <!-- Обновляем блок auth-buttons -->
     <div class="auth-buttons">
       {% if user.is_authenticated %}

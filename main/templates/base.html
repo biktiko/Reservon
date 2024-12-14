@@ -7,6 +7,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+    <link rel="icon" type="image/x-icon" href="{% static 'favicon.ico' %}">
+
     <script src="https://kit.fontawesome.com/5efa530f7d.js" crossorigin="anonymous"></script>
     
     <link rel="stylesheet" href="{% static 'main/css/main.css' %}">
@@ -44,8 +46,7 @@
   </div>
   
     {% if request.path == "/salons/" %}
-      {% include "main/section.html" %}
-      {% include "main/search.html" %}
+      {% include "main/search.html" with q=q %}
     {% endif %}
 
     <main>

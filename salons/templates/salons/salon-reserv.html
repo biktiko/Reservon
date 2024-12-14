@@ -26,14 +26,7 @@
     <!-- Дополнительные данные о салоне -->
     <div id="salon-data" 
         data-salon-id="{{ salon.id }}" 
-        data-reserv-days="{{ salon.reservDays }}"
-        data-has-services="{{ salon.has_services|yesno:'true,false' }}"
-        data-has-barbers="{{ salon.has_barbers|yesno:'true,false' }}">
-    </div>
-
-    <!-- Рабочие часы салона -->
-    <div id="opening-hours" style="display: none;">
-        {{ salon.opening_hours|json_script:"opening-hours" }}
+        data-reserv-days="{{ salon.reservDays }}" >
     </div>
 
     <!-- Длительность услуги по умолчанию -->

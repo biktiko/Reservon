@@ -8,7 +8,7 @@ from django.contrib import admin
 urlpatterns = [
     path('grappelli/', include('grappelli.urls')),
     path('admin/', admin.site.urls),
-    path('', include('main.urls')),
+    path('', include(('main.urls', 'main'), namespace='main')),
     path('auth/', include(('authentication.urls', 'authentication'), namespace='authentication')),
     path('salons/', include(('salons.urls', 'salons'), namespace='salons')),
     path('user-account/', include('user_account.urls')),
