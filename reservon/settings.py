@@ -294,6 +294,8 @@ else:
     SESSION_COOKIE_DOMAIN = 'reservon.am'
     CSRF_COOKIE_SECURE = True
     CSRF_TRUSTED_ORIGINS = ['https://reservon.am', 'https://www.reservon.am']
+    SECURE_SSL_REDIRECT = True
+    SECURE_HSTS_SECONDS = 3600
 
 SOCIALACCOUNT_LOGIN_ON_GET = True
 ACCOUNT_EMAIL_REQUIRED = True
@@ -302,6 +304,9 @@ ACCOUNT_EMAIL_VERIFICATION = "optional"  # или " mandatory", в зависи�
 SOCIALACCOUNT_AUTO_SIGNUP = True
 SOCIALACCOUNT_QUERY_EMAIL = True
 SOCIALACCOUNT_ADAPTER = 'authentication.adapters.MySocialAccountAdapter'
+
+ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https'
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
@@ -324,7 +329,3 @@ LOGGING['loggers']['allauth'] = {
 
 
 TEMPLATES[0]['OPTIONS']['debug'] = True
-
-SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = env("GOOGLE_CLIENT_ID")
-SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = env("GOOGLE_CLIENT_SECRET")
-SOCIAL_AUTH_GOOGLE_REDIRECT_URI = 'http://127.0.0.1:8000/accounts/google/login/callback/'  # Callback URL
