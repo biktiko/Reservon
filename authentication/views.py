@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 from django.shortcuts import redirect
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth import get_backends
-from django.conf import settings
+from django.contrib.sites.models import Site
 import json
 import re
 import logging
@@ -59,6 +59,11 @@ def load_modal(request):
 
 @csrf_exempt
 def get_form(request):
+
+    current_site = Site.objects.filter(domain='localhost:8000').first()
+    if not current_site:
+        return JsonResponse({'error': 'Site not found.'}, status=404)
+
     # Возвращает нужную форму в зависимости от шага (verify_code, set_password, enter_password)
     if request.method == 'POST':
         try:
