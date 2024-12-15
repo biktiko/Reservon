@@ -1,3 +1,4 @@
+// C:\Reservon\Reservon\authentication\static\authentication\js\modal.js
 /**
  * Открывает модальное окно авторизации с заданным действием.
  * @param {string} action - Действие для загрузки соответствующего контента (например, 'login').
@@ -233,15 +234,22 @@ function submitLogin() {
     .then(data => {
         if (data.google_only) {
             // Перенаправляем на Google логин
-            // window.location.href = "/accounts/google/login/";
-        }{
+            console.log(window.googleLoginUrl)
+            window.location.href=window.googleLoginUrl
+            // window.location.href='/accounts/google/login/'
+            // console.log("Google Login URL:", data.google_login_url);
+
+            // window.location.href=data.google_login_url
+            
+        } else {
             if (data.next_step) {
                 loadModalContent(data.next_step, data.phone_number);
             } else if (data.error) {
                 document.getElementById('login-response').innerHTML = '<p>' + data.error + '</p>';
             }
         }
-    })
+    }
+)
     .catch(error => {
         console.error('Error:', error);
         document.getElementById('login-response').innerHTML = '<p>Не удалось отправить код верификации. Пожалуйста, попробуйте позже.</p>';
@@ -367,7 +375,7 @@ function submitVerifyCode() {
     submitButton.disabled = true;
     submitButton.innerText = 'Подтверждение...';
 
-    fetch('/auth/verify_code/', {  // Убедитесь, что URL правильный
+    fetch('/auth/verify_code/', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
