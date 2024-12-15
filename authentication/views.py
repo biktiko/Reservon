@@ -229,57 +229,84 @@ def verify_code(request):
     else:
         return JsonResponse({'error': 'Invalid request method.'}, status=400)
 
+@csrf_exempt
 def set_password(request):
     if request.method == 'POST':
-        data = json.loads(request.body)
-        phone_number = data.get('phone_number')
-        first_name = data.get('first_name')
-        password = data.get('password')
-        password_confirm = data.get('password_confirm')
-
-        if not all([phone_number, first_name, password, password_confirm]):
-            return JsonResponse({'error': 'Все поля обязательны.'}, status=400)
-
-        if password != password_confirm:
-            return JsonResponse({'error': 'Пароли не совпадают.'}, status=400)
-
-        if len(password) < 6:
-            return JsonResponse({'error': 'Пароль должен быть не менее 6 символов.'}, status=400)
-
-        phone_number = normalize_phone_number(phone_number)
-
         try:
-            user = User.objects.get(username=phone_number)
-            profile = user.main_profile
-            # Если уже google, то пароль ставить нельзя
+            data = json.loads(request.body)
+            phone_number = data.get('phone_number')
+            first_name = data.get('first_name')
+            password = data.get('password')
+            password_confirm = data.get('password_confirm')
+
+            logger.debug(f"set_password called with phone_number: {phone_number}, first_name: {first_name}")
+
+            if not all([phone_number, first_name, password, password_confirm]):
+                logger.error("set_password: Missing fields")
+                return JsonResponse({'error': 'Все поля обязательны.'}, status=400)
+
+            if password != password_confirm:
+                logger.error("set_password: Passwords do not match")
+                return JsonResponse({'error': 'Пароли не совпадают.'}, status=400)
+
+            if len(password) < 6:
+                logger.error("set_password: Password too short")
+                return JsonResponse({'error': 'Пароль должен быть не менее 6 символов.'}, status=400)
+
+            phone_number = normalize_phone_number(phone_number)
+
+            try:
+                user = User.objects.get(username=phone_number)
+                profile = user.main_profile
+            except User.DoesNotExist:
+                logger.error("set_password: User does not exist")
+                return JsonResponse({'error': 'Пользователь не найден.'}, status=404)
+            except Profile.DoesNotExist:
+                logger.error("set_password: Profile does not exist")
+                return JsonResponse({'error': 'Профиль пользователя не найден.'}, status=404)
+
+            # Проверка метода входа
             if profile.login_method == 'google':
+                logger.error("set_password: User login_method is google")
                 return JsonResponse({'error': 'Доступен только вход через Google.'}, status=400)
 
+            # Установка имени и пароля
             user.first_name = first_name
             user.set_password(password)
             user.save()
+            logger.debug("set_password: User password set")
 
+            # Установка метода входа
             profile.login_method = 'password'
             profile.save()
+            logger.debug("set_password: Profile login_method set to password")
 
-            # Явно указываем backend для логина
+            # Логин пользователя
             backend = get_backends()[0].__class__.__name__
             user.backend = f'django.contrib.auth.backends.{backend}'
             login(request, user)
+            logger.debug("set_password: User logged in")
 
-            # Redirect logic
+            # Логика перенаправления
             from_booking = request.session.get('from_booking', False)
             salon_id = request.session.get('salon_id', None)
             if from_booking and salon_id:
                 del request.session['from_booking']
                 del request.session['salon_id']
+                logger.debug("set_password: Redirect to booking")
                 return JsonResponse({'success': True, 'redirect_to_booking': True, 'salon_id': salon_id})
             else:
+                logger.debug("set_password: Redirect to home")
                 return JsonResponse({'success': True})
-        except User.DoesNotExist:
-            return JsonResponse({'error': 'Пользователь не найден.'}, status=404)
+        except json.JSONDecodeError:
+            logger.error("set_password: JSON decode error", exc_info=True)
+            return JsonResponse({'error': 'Invalid JSON.'}, status=400)
+        except Exception as e:
+            logger.error(f"set_password: Unexpected error: {e}", exc_info=True)
+            return JsonResponse({'error': 'Internal server error.'}, status=500)
 
     return JsonResponse({'error': 'Invalid request method.'}, status=400)
+
 
 @csrf_exempt
 def enter_password(request):
