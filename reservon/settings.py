@@ -265,7 +265,7 @@ LOGGING = {
 ADMIN_INTERFACE = {
     'HEADER': 'Reservon Admin',
     'TITLE': 'Reservon Administration',
-    'SHOW_THEMES': True,  # Включает возможность смены тем
+    'SHOW_THEMES': True,
 }
 
 # Default primary key field type
@@ -294,7 +294,7 @@ else:
     CSRF_COOKIE_SECURE = True
     CSRF_TRUSTED_ORIGINS = ['https://reservon.am', 'https://www.reservon.am']
 
-SOCIALACCOUNT_LOGIN_ON_GET = True
+# SOCIALACCOUNT_LOGIN_ON_GET = True
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_EMAIL_VERIFICATION = "optional"  # или " mandatory", в зависимости требований
 
