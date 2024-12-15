@@ -13,6 +13,8 @@ logger = logging.getLogger('myapp.adapter')
 class MySocialAccountAdapter(DefaultSocialAccountAdapter):
     def pre_social_login(self, request, sociallogin):
         logger.debug("pre_social_login вызван")
+        logger.debug(f"SocialLogin object: {sociallogin}")
+        logger.debug(f"Extra data from Google: {sociallogin.account.extra_data}")
         phone_number = request.session.get('phone_number')
         logger.debug(f"Номер телефона из сессии: {phone_number}")
 

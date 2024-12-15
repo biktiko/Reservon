@@ -1,5 +1,7 @@
 <!-- C:\Reservon\Reservon\main\templates\base.html -->
 {% load static %}
+{% load socialaccount %}
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -53,10 +55,16 @@
     <footer>
       {% include "main/footer.html" %}
     </footer>
-
+    
+    <script>
+      window.googleLoginUrl = "{% provider_login_url 'google' %}";
+    </script>
+    
     <script src="{% static 'main/js/main.js' %}"></script>
     <script src="{% static 'authentication/js/modal.js' %}"></script>
     <script src="{% static 'user_account/js/edit_booking.js' %}"></script>
+
+    
 
   </body>
 </html>

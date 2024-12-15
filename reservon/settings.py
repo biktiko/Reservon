@@ -275,12 +275,12 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGGING['handlers']['console'] = {
     'level': 'DEBUG',
     'class': 'logging.StreamHandler',
-    'stream': sys.stdout,
+    'stream': sys.stderr,
 }
 
 LOGGING['root'] = {
-    'handlers': ['console'],
-    'level': 'INFO',
+    'handlers': ['console', 'file'],
+    'level': 'DEBUG',
 }
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'  # Сохранять сессии в базе данных
@@ -295,7 +295,7 @@ else:
     CSRF_COOKIE_SECURE = True
     CSRF_TRUSTED_ORIGINS = ['https://reservon.am', 'https://www.reservon.am']
 
-# SOCIALACCOUNT_LOGIN_ON_GET = True
+SOCIALACCOUNT_LOGIN_ON_GET = True
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_EMAIL_VERIFICATION = "optional"  # или " mandatory", в зависимости требований
 
@@ -316,4 +316,15 @@ SOCIALACCOUNT_PROVIDERS = {
     }
 }
 
+LOGGING['loggers']['allauth'] = {
+    'handlers': ['console', 'file'],
+    'level': 'DEBUG',
+    'propagate': False,
+}
+
+
 TEMPLATES[0]['OPTIONS']['debug'] = True
+
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = env("GOOGLE_CLIENT_ID")
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = env("GOOGLE_CLIENT_SECRET")
+SOCIAL_AUTH_GOOGLE_REDIRECT_URI = 'http://127.0.0.1:8000/accounts/google/login/callback/'  # Callback URL
