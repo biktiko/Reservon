@@ -1,3 +1,4 @@
+// C:\Reservon\Reservon\authentication\static\authentication\js\modal.js
 /**
  * Открывает модальное окно авторизации с заданным действием.
  * @param {string} action - Действие для загрузки соответствующего контента (например, 'login').
@@ -99,7 +100,6 @@ function attachModalEventListeners() {
  * Закрывает модальное окно авторизации.
  */
 function closeModal() {
-    console.log('closeModal called');
     var modal = document.getElementById('auth-modal');
     modal.classList.remove('show');
     modal.style.display = 'none';
@@ -210,7 +210,6 @@ document.addEventListener('DOMContentLoaded', function() {
  * Отправляет запрос на вход пользователя с указанным номером телефона.
  */
 function submitLogin() {
-    console.log('submitLogin called');
     var phone_number = document.getElementById('id_phone_number').value;
     var submitButton = document.getElementById('submit-login-btn');
     
@@ -235,15 +234,18 @@ function submitLogin() {
     .then(data => {
         if (data.google_only) {
             // Перенаправляем на Google логин
-            window.location.href = "/accounts/google/login/?process=login";
-        }{
+            // window.location.href = window.googleURL;
+            window.location.href='/accounts/google/login/'
+            // window.location.href = data.google_login_url
+        } else {
             if (data.next_step) {
                 loadModalContent(data.next_step, data.phone_number);
             } else if (data.error) {
                 document.getElementById('login-response').innerHTML = '<p>' + data.error + '</p>';
             }
         }
-    })
+    }
+)
     .catch(error => {
         console.error('Error:', error);
         document.getElementById('login-response').innerHTML = '<p>Не удалось отправить код верификации. Пожалуйста, попробуйте позже.</p>';
@@ -369,7 +371,7 @@ function submitVerifyCode() {
     submitButton.disabled = true;
     submitButton.innerText = 'Подтверждение...';
 
-    fetch('/auth/verify_code/', {  // Убедитесь, что URL правильный
+    fetch('/auth/verify_code/', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

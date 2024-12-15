@@ -99,7 +99,6 @@ function attachModalEventListeners() {
  * Закрывает модальное окно авторизации.
  */
 function closeModal() {
-    console.log('closeModal called');
     var modal = document.getElementById('auth-modal');
     modal.classList.remove('show');
     modal.style.display = 'none';
@@ -210,7 +209,6 @@ document.addEventListener('DOMContentLoaded', function() {
  * Отправляет запрос на вход пользователя с указанным номером телефона.
  */
 function submitLogin() {
-    console.log('submitLogin called');
     var phone_number = document.getElementById('id_phone_number').value;
     var submitButton = document.getElementById('submit-login-btn');
     
@@ -235,7 +233,7 @@ function submitLogin() {
     .then(data => {
         if (data.google_only) {
             // Перенаправляем на Google логин
-            window.location.href = "/accounts/google/login/?process=login";
+            // window.location.href = "/accounts/google/login/";
         }{
             if (data.next_step) {
                 loadModalContent(data.next_step, data.phone_number);

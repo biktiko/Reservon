@@ -56,6 +56,7 @@ AUTHENTICATION_BACKENDS = (
     'allauth.account.auth_backends.AuthenticationBackend',
 )
 
+
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 
@@ -304,11 +305,6 @@ SOCIALACCOUNT_ADAPTER = 'authentication.adapters.MySocialAccountAdapter'
 
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
-        'APP': {
-            'client_id': env('GOOGLE_CLIENT_ID'),
-            'secret': env('GOOGLE_CLIENT_SECRET'),
-            'key': ''
-        },
         'SCOPE': [
             'profile',
             'email',
@@ -321,4 +317,3 @@ SOCIALACCOUNT_PROVIDERS = {
 }
 
 TEMPLATES[0]['OPTIONS']['debug'] = True
-

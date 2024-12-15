@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 from django.shortcuts import redirect
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth import get_backends
-from django.contrib.sites.models import Site
+from django.urls import reverse
 import json
 import re
 import logging
@@ -59,10 +59,6 @@ def load_modal(request):
 
 @csrf_exempt
 def get_form(request):
-
-    current_site = Site.objects.filter(domain='localhost:8000').first()
-    if not current_site:
-        return JsonResponse({'error': 'Site not found.'}, status=404)
 
     # Возвращает нужную форму в зависимости от шага (verify_code, set_password, enter_password)
     if request.method == 'POST':
@@ -166,7 +162,8 @@ def login_view(request):
                 # Фронт пусть делает редирект на /accounts/google/login (где LOGIN_ON_GET включен, сразу редирект на Google)
                 # Не показываем пароли
                 request.session['phone_number'] = phone_number
-                return JsonResponse({'google_only': True, 'phone_number': phone_number})
+                return JsonResponse({'google_only': True, 
+                                     'phone_number': phone_number})
             
             # Если login_method=password или login_method не установлен, но пользователь уже верифицирован
             # Проверяем, есть ли пароль

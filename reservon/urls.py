@@ -4,6 +4,7 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
+from allauth.socialaccount.views import LoginCancelledView, LoginErrorView
 
 urlpatterns = [
     path('grappelli/', include('grappelli.urls')),
@@ -14,7 +15,6 @@ urlpatterns = [
     path('user-account/', include('user_account.urls')),
     path('i18n/', include('django.conf.urls.i18n')), 
     path('accounts/', include('allauth.urls')),
-
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
 if settings.DEBUG:

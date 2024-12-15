@@ -89,17 +89,6 @@ document.addEventListener('DOMContentLoaded', function() {
     let selectedServicesByCategory = {};
     let selectedBarbersByCategory = {};
 
-    const hasServices = salonDataElement.dataset.hasServices === 'true';
-    const hasBarbers = salonDataElement.dataset.hasBarbers === 'true';
-
-    let workingHours;
-    try {
-        workingHours = JSON.parse(workingHoursElement.textContent);
-    } catch (error) {
-        console.error('Ошибка при парсинге JSON для "opening-hours":', error);
-        return;
-    }
-
     // Объявление bookingMessage до использования в функциях
     const bookingMessage = document.getElementById('booking-message');
 
