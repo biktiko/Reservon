@@ -1,7 +1,8 @@
 # authentication/adapters.py
+
 import logging
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
-from allauth.exceptions import ImmediateHttpResponse
+from allauth.core.exceptions import ImmediateHttpResponse
 from django.contrib.auth.models import User
 from django.shortcuts import redirect
 from .models import Profile
@@ -51,11 +52,9 @@ class MySocialAccountAdapter(DefaultSocialAccountAdapter):
             # Уже Google-пользователь, проверим UID
             if profile.google_uid and profile.google_uid != incoming_uid:
                 logger.warning("Google UID не совпадает")
-                # raise ImmediateHttpResponse(redirect('/auth/load_modal/?error=wrong_google_account'))
                 raise ImmediateHttpResponse(JsonResponse({
                     'error': 'Этот номер телефона привязан к другой учетной записи Google. Если у вас возникли сложности, свяжитесь по номеру +37443607244.'
                 }, status=400))
-
 
             # Если всё хорошо, просто подключаем аккаунт
             logger.debug("Google UID совпадает, подключаем социальный аккаунт")

@@ -70,7 +70,7 @@ def get_form(request):
 
             context = {
                 'phone_number': phone_number,
-                'from_booking': request.session.get('from_booking', False)
+                'from_booking': request.session.get('from_booking', False),
             }
 
             # Определяем пользователя
@@ -114,6 +114,7 @@ def get_form(request):
             return JsonResponse({'error': 'Internal server error.'}, status=500)
     else:
         return JsonResponse({'error': 'Invalid request method.'}, status=400)
+    
 @csrf_exempt
 def login_view(request):
     # Начало процесса логина по номеру телефона

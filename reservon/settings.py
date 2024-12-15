@@ -320,7 +320,5 @@ SOCIALACCOUNT_PROVIDERS = {
     }
 }
 
-
-
 TEMPLATES[0]['OPTIONS']['debug'] = True
 
