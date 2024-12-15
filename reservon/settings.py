@@ -305,9 +305,23 @@ SOCIALACCOUNT_ADAPTER = 'authentication.adapters.MySocialAccountAdapter'
 
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
-        'LOGIN_ON_GET': True,
+        'APP': {
+            'client_id': env('GOOGLE_CLIENT_ID'),
+            'secret': env('GOOGLE_CLIENT_SECRET'),
+            'key': ''
+        },
+        'SCOPE': [
+            'profile',
+            'email',
+        ],
+        'AUTH_PARAMS': {
+            'access_type': 'online',
+        },
+        'LOGIN_ON_GET': True, 
     }
 }
+
+
 
 TEMPLATES[0]['OPTIONS']['debug'] = True
 
