@@ -208,7 +208,6 @@ ALLOWED_HOSTS = [
     '127.0.0.1'
     ]
 
-# Logging Configuration
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -246,23 +245,18 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': False,
         },
-        'authentication': {  # Добавьте этот блок
-            'handlers': ['console', 'file'],
-            'level': 'DEBUG',
-            'propagate': False,
-        },
-        'myapp.adapter': {
+        'authentication.adapters': {  # Изменено для соответствия новому логгеру
             'handlers': ['console', 'file'],
             'level': 'DEBUG',
             'propagate': False,
         },
     },
-    'root': {  # Убедитесь, что root логгер настроен
+    'root': {
         'handlers': ['console'],
         'level': 'INFO',
     },
 }
-# Настройки django-admin-interface
+
 ADMIN_INTERFACE = {
     'HEADER': 'Reservon Admin',
     'TITLE': 'Reservon Administration',
@@ -305,8 +299,11 @@ SOCIALACCOUNT_AUTO_SIGNUP = True
 SOCIALACCOUNT_QUERY_EMAIL = True
 SOCIALACCOUNT_ADAPTER = 'authentication.adapters.MySocialAccountAdapter'
 
-ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https'
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+if DEBUG:
+    ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'http'
+else:
+    ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https'
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 SOCIALACCOUNT_PROVIDERS = {
     'google': {

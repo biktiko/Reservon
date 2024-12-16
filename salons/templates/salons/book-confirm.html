@@ -33,3 +33,13 @@
         </div>
     </div>
 </div>
+
+{% if show_confirmation and booking_salon_id %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const salonId = "{{ booking_salon_id }}";
+        // Вызовите функцию подтверждения бронирования с необходимыми данными
+        showBookingConfirmationModal({ salonId: salonId });
+    });
+</script>
+{% endif %}

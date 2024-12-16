@@ -8,7 +8,7 @@ from django.shortcuts import redirect
 from .models import Profile
 from django.http import JsonResponse
 
-logger = logging.getLogger('myapp.adapter')
+logger = logging.getLogger(__name__)
 
 class MySocialAccountAdapter(DefaultSocialAccountAdapter):
     def pre_social_login(self, request, sociallogin):
@@ -86,9 +86,10 @@ class MySocialAccountAdapter(DefaultSocialAccountAdapter):
         salon_id = request.session.get('salon_id', None)
         logger.debug(f"from_booking: {from_booking}, salon_id: {salon_id}")
         if from_booking and salon_id:
-            del request.session['from_booking']
-            del request.session['salon_id']
-            logger.debug(f"Перенаправление на /booking/finish/{salon_id}/")
-            return f'/booking/finish/{salon_id}/'
+            # Устанавливаем флаги для отображения модального окна
+            request.session['show_booking_confirmation'] = True
+            request.session['booking_salon_id'] = salon_id
+            # Перенаправляем на страницу бронирования
+            return '/booking/'
         logger.debug("Перенаправление на главную страницу")
         return '/'
