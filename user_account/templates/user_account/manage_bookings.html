@@ -52,7 +52,7 @@
     <!-- Список бронирований -->
     {% for appointment in appointments %}
         {% if appointment.id %} 
-    <div class="booking-card"  onclick="window.location.href=`{% url 'edit_booking' appointment.id %}`">
+    <div class="booking-card"  onclick="window.location.href=`{% url 'user_account:edit_booking' appointment.id %}`">
         <div class="booking-info">
            <!-- Внутри .booking-info -->
            <span class="booking-time">{{ appointment.start_datetime|format_date_localized }}, {{ appointment.start_datetime|time:"H:i" }} - {{ appointment.end_datetime|time:"H:i" }}</span>
@@ -94,8 +94,8 @@
     
         </div>
         <div class="booking-actions">
-            <a href="{% url 'edit_booking' appointment.id %}" class="action-button" title="Редактировать"><i class="fas fa-edit"></i></a>
-            <a href="{% url 'delete_booking' appointment.id %}" class="action-button" title="Удалить"><i class="fas fa-trash"></i></a>
+            <a href="{% url 'user_account:edit_booking' appointment.id %}" class="action-button" title="Редактировать"><i class="fas fa-edit"></i></a>
+            <a href="{% url 'user_account:delete_booking' appointment.id %}" class="action-button" title="Удалить"><i class="fas fa-trash"></i></a>
         </div>
         
     </div>
@@ -128,7 +128,7 @@
     </div>
 </div>
 
-<script src="{% static 'account/js/add_booking.js' %}"></script>
+<script src="{% static 'user_account/js/add_booking.js' %}"></script>
 
 {% endblock %}
 

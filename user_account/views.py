@@ -111,7 +111,7 @@ def edit_booking(request, booking_id):
                 appointment.save(update_fields=['start_datetime', 'end_datetime'])
 
                 messages.success(request, 'Бронирование успешно обновлено.')
-                return redirect('manage_bookings')
+                return redirect('user_account:manage_bookings')
         else:
             messages.error(request, 'Пожалуйста, исправьте ошибки ниже.')
     else:
@@ -159,7 +159,7 @@ def edit_booking(request, booking_id):
         'active_sidebar': 'salons',
         'LANGUAGE_CODE': request.LANGUAGE_CODE,
     }
-    return render(request, 'account/edit_booking.html', context)
+    return render(request, 'user_account/edit_booking.html', context)
 
 @login_required
 def account_dashboard(request):

@@ -188,7 +188,7 @@
     </form>
 
     <!-- Форма удаления бронирования -->
-    <form method="post" action="{% url 'delete_booking' appointment.id %}" id="delete-booking-form">
+    <form method="post" action="{% url 'user_account:delete_booking' appointment.id %}" id="delete-booking-form">
         {% csrf_token %}
         <button type="submit" class="delete-button">Удалить бронирование</button>
     </form>
@@ -215,7 +215,7 @@
 
     
     // Инициализация переменных из контекста
-    window.getServicesDurationAndPriceUrl = "{% url 'get_services_duration_and_price' %}";
+    window.getServicesDurationAndPriceUrl = "{% url 'user_account:get_services_duration_and_price' %}";
     window.bookingFormIndex = '{{ formset.total_form_count }}';
     window.totalDuration = '{{ total_duration }}';
     window.languageCode = '{{ LANGUAGE_CODE }}';

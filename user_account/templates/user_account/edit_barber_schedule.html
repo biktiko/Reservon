@@ -4,7 +4,7 @@
     <h5>Редактировать расписание для {{ day_display }}</h5>
   </div>
   <div class="modal-body">
-    <form method="post" id="edit-form" action="{% url 'edit_barber_schedule' barber.id %}?day={{ day }}">
+    <form method="post" id="edit-form" action="{% url 'user_account:edit_barber_schedule' barber.id %}?day={{ day }}">
       {% csrf_token %}
       <div id="form-errors"></div>
       {{ formset.management_form }}

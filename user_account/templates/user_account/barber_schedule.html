@@ -60,7 +60,7 @@
                 var action = this.classList.contains('edit-btn') ? 'edit' : 'delete';
                 
                 if(action === 'edit') {
-                    fetch(`/account/barbers/${barber.id}/edit_availability/${availabilityId}/`, {
+                    fetch(`/user_account/barbers/${barber.id}/edit_availability/${availabilityId}/`, {
                         headers: {
                             'X-Requested-With': 'XMLHttpRequest'
                         }
@@ -76,7 +76,7 @@
                     });
                 } else if(action === 'delete') {
                     if(confirm('Вы уверены, что хотите удалить этот интервал?')) {
-                        fetch(`/account/barbers/${barber.id}/delete_availability/${availabilityId}/`, {
+                        fetch(`/user_account/barbers/${barber.id}/delete_availability/${availabilityId}/`, {
                             method: 'POST',
                             headers: {
                                 'X-Requested-With': 'XMLHttpRequest',

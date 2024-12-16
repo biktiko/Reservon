@@ -6,7 +6,7 @@
       </button>
           </div>
     <div class="modal-body">
-      <form method="post" enctype="multipart/form-data" id="edit-form" action="{% url 'edit_barber_photo' barber.id %}">
+      <form method="post" enctype="multipart/form-data" id="edit-form" action="{% url 'user_account:edit_barber_photo' barber.id %}">
         {% csrf_token %}
         <div id="form-errors"></div>
         <div class="form-group">

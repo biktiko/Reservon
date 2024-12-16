@@ -9,7 +9,7 @@
     </button> -->
       </div>
   <div class="modal-body">
-    <form method="post" id="edit-form" action="{% url 'edit_barber_field' barber.id %}?field={{ field }}">
+    <form method="post" id="edit-form" action="{% url 'user_account:edit_barber_field' barber.id %}?field={{ field }}">
       {% csrf_token %}
       <div id="form-errors"></div>
       {{ form|crispy }}

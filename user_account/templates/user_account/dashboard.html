@@ -15,7 +15,7 @@
         </div>
 
         <!-- Карточка с мастерами (обернута в ссылку) -->
-        <a href="{% url 'salon_masters' %}" class="card card-link">
+        <a href="{% url 'user_account:salon_masters' %}" class="card card-link">
             <h2 class="card-subtitle"><i class="fas fa-user-friends"></i> Мастера</h2>
             <div class="card-body">
                 {% if selected_salon.barbers.all %}
