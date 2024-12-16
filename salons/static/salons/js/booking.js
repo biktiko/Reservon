@@ -387,7 +387,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         return salonDefaultDuration;
     }
-    
 
     function populateAvailableMinutes(availableMinutes, date, hour) {
         minuteSelect.innerHTML = '';
