@@ -22,29 +22,6 @@ import logging
 
 logger = logging.getLogger('booking')
 
-import hashlib
-
-def generate_cache_key(salon_id, date_str, hours, booking_details, cache_time_str):
-    key_string = f"available_minutes_{salon_id}_{date_str}_{json.dumps(hours, sort_keys=True)}_{json.dumps(booking_details, sort_keys=True)}_{cache_time_str}"
-    key_hash = hashlib.md5(key_string.encode('utf-8')).hexdigest()
-    return f"available_minutes_{salon_id}_{date_str}_{key_hash}"
-
-
-@cache_page(60 * 15)
-def main(request):
-    query = request.GET.get('q', '')
-    if query:
-        salons = Salon.objects.filter(
-            Q(name__icontains=query) | Q(address__icontains=query)
-        )
-    else:
-        salons = Salon.objects.filter(status='active')
-    context = {
-        'salons': salons,
-        'q': query,
-    }
-    logger.debug(f"Passing 'q' to context: '{query}'")
-    return render(request, 'salons/salons.html', context)
 
 def salon_detail(request, id):
     # salon = get_object_or_404(Salon, id=id)
@@ -629,6 +606,46 @@ def is_barber_available_in_memory(barber, request_start_time, request_end_time, 
 
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
+
+
+import hashlib
+
+def generate_cache_key(salon_id, date_str, hours, booking_details, cache_time_str):
+    key_string = f"available_minutes_{salon_id}_{date_str}_{json.dumps(hours, sort_keys=True)}_{json.dumps(booking_details, sort_keys=True)}_{cache_time_str}"
+    key_hash = hashlib.md5(key_string.encode('utf-8')).hexdigest()
+    return f"available_minutes_{salon_id}_{date_str}_{key_hash}"
+
+@cache_page(60 * 15)
+def main(request):
+    query = request.GET.get('q', '')
+    if query:
+        salons = Salon.objects.filter(
+            Q(name__icontains=query) | Q(address__icontains=query)
+        )
+    else:
+        salons = Salon.objects.filter(status='active')
+    context = {
+        'salons': salons,
+        'q': query,
+    }
+    logger.debug(f"Passing 'q' to context: '{query}'")
+    return render(request, 'salons/salons.html', context)
+
+
+def generate_safe_cache_key(salon_id, date_str, hours, booking_details, cache_time_str):
+    """
+    Генерирует безопасный ключ кэша, используя хеширование параметров запроса.
+
+    :param salon_id: ID салона
+    :param date_str: Дата бронирования в формате 'YYYY-MM-DD'
+    :param hours: Список часов (целые числа)
+    :param booking_details: Список деталей бронирования (словари)
+    :param cache_time_str: Строка округленного времени кэша (например, '45' для минут)
+    :return: Строка безопасного ключа кэша
+    """
+    key_string = f"available_minutes_{salon_id}_{date_str}_{json.dumps(hours, sort_keys=True)}_{json.dumps(booking_details, sort_keys=True)}_{cache_time_str}"
+    key_hash = hashlib.md5(key_string.encode('utf-8')).hexdigest()
+    return f"available_minutes_{salon_id}_{date_str}_{key_hash}"
 
 @receiver([post_save, post_delete], sender=BarberAvailability)
 def clear_available_minutes_cache(sender, instance, **kwargs):
