@@ -22,6 +22,14 @@ import logging
 
 logger = logging.getLogger('booking')
 
+import hashlib
+
+def generate_cache_key(salon_id, date_str, hours, booking_details, cache_time_str):
+    key_string = f"available_minutes_{salon_id}_{date_str}_{json.dumps(hours, sort_keys=True)}_{json.dumps(booking_details, sort_keys=True)}_{cache_time_str}"
+    key_hash = hashlib.md5(key_string.encode('utf-8')).hexdigest()
+    return f"available_minutes_{salon_id}_{date_str}_{key_hash}"
+
+
 @cache_page(60 * 15)
 def main(request):
     query = request.GET.get('q', '')
@@ -105,6 +113,8 @@ def get_barber_availability(request, barber_id):
     except Barber.DoesNotExist:
         return JsonResponse({'error': 'Barber not found'}, status=404)
     
+from django.utils import timezone
+
 @api_view(['POST'])
 def get_available_minutes(request):
     try:
@@ -339,15 +349,23 @@ def get_available_minutes(request):
         # Преобразуем set в отсортированные списки
         available_minutes_response = {hour: sorted(list(minutes)) for hour, minutes in available_minutes.items()}
 
-        # Кешируем результат
+        # Включение текущего времени в ключ кэша (округление до ближайших 5 минут)
+        current_time = timezone.now()
+        cache_time = current_time.replace(second=0, microsecond=0)
+        cache_key_time = (current_time.minute // 5) * 5  # Округление до ближайших 5 минут
+        cache_key_time_str = f"{cache_key_time}"
+
+        # Кешируем результат с учётом текущего времени
+        cache_key = f'available_minutes_{salon_id}_{date_str}_{json.dumps(hours, sort_keys=True)}_{json.dumps(booking_details, sort_keys=True)}_{cache_key_time_str}'
         response = {'available_minutes': available_minutes_response}
-        cache.set(f'available_minutes_{salon_id}_{date_str}_{json.dumps(hours, sort_keys=True)}_{json.dumps(booking_details, sort_keys=True)}', response, timeout=60)  # Кешировать на 1 минуту
-        logger.debug("Кеширование результатов успешно.")
+        cache.set(cache_key, response, timeout=30)  # Уменьшаем время кэша до 30 секунд
+        logger.debug(f"Кеширование результатов успешно. Ключ: {cache_key}")
         return Response(response)
 
     except Exception as e:
         logger.exception("Error in get_available_minutes")
         return Response({'available_minutes': {}, 'error': 'Internal server error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 @transaction.atomic
 def book_appointment(request, id):
@@ -607,3 +625,39 @@ def is_barber_available_in_memory(barber, request_start_time, request_end_time, 
                 return True
 
     return False
+
+
+from django.db.models.signals import post_save, post_delete
+from django.dispatch import receiver
+
+@receiver([post_save, post_delete], sender=BarberAvailability)
+def clear_available_minutes_cache(sender, instance, **kwargs):
+    salon_id = instance.barber.salon.id
+    # Генерация шаблонного ключа (без хеша)
+    key_pattern = f"available_minutes_{salon_id}_"
+    # Получение всех ключей, начинающихся с данного шаблона
+    # В зависимости от используемого бэкенда кэша, возможно, потребуется использовать отдельные методы
+    # Для Memcached можно использовать клиент напрямую
+    from django.core.cache import cache
+    mc = cache.client.get_client()
+    keys = mc.get_keys(f"*{key_pattern}*")
+    for key in keys:
+        mc.delete(key)
+    logger.debug(f"Кэш доступных минут очищен для салона {salon_id} из-за изменения расписания барбера.")  
+
+@receiver([post_save, post_delete], sender=AppointmentBarberService)
+def clear_available_minutes_cache_on_booking(sender, instance, **kwargs):
+    salon_id = instance.appointment.salon.id
+    date_str = instance.start_datetime.strftime('%Y-%m-%d')
+    hours = list(instance.start_datetime.hour for instance in AppointmentBarberService.objects.filter(
+        appointment__salon_id=salon_id,
+        start_datetime__date=date_str
+    ))
+    booking_details = []  # Здесь можно добавить логику для определения связанных booking_details
+
+    key_string = f"available_minutes_{salon_id}_{date_str}_{json.dumps(hours, sort_keys=True)}_{json.dumps(booking_details, sort_keys=True)}"
+    key_hash = hashlib.md5(key_string.encode('utf-8')).hexdigest()
+    cache_key = f"available_minutes_{salon_id}_{date_str}_{key_hash}"
+
+    cache.delete(cache_key)
+    logger.debug(f"Кэш доступных минут очищен для ключа {cache_key} из-за изменения бронирования.")
