@@ -13,11 +13,12 @@ from django.db.models import Q
 from django.db import transaction
 import pytz
 import json
-import logging
 from django.views.decorators.cache import cache_page
 from django.db.models import Prefetch
 from collections import defaultdict
 from django.core.cache import cache
+
+import logging
 
 logger = logging.getLogger('booking')
 
@@ -348,7 +349,6 @@ def get_available_minutes(request):
         logger.exception("Error in get_available_minutes")
         return Response({'available_minutes': {}, 'error': 'Internal server error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
 @transaction.atomic
 def book_appointment(request, id):
     logger.debug("Начало обработки запроса на бронирование")
@@ -363,18 +363,19 @@ def book_appointment(request, id):
     if request.headers.get('Content-Type') == 'application/json':
         try:
             data = json.loads(request.body)
+            logger.debug(f"Получены данные бронирования: {data}")
         except json.JSONDecodeError as e:
             logger.error(f"Ошибка декодирования JSON: {e}")
             return JsonResponse({'error': 'Некорректный формат данных.'}, status=400)
-
-        date_str = data.get("date")
-        time_str = data.get("time")
-        booking_details = data.get("booking_details", [])
-        total_service_duration = data.get("total_service_duration", salon.default_duration)
     else:
         # Если запрос не является JSON, возвращаем ошибку
         logger.error("Некорректный формат данных. Ожидается JSON.")
         return JsonResponse({'error': 'Некорректный формат данных.'}, status=400)
+
+    date_str = data.get("date")
+    time_str = data.get("time")
+    booking_details = data.get("booking_details", [])
+    total_service_duration = data.get("total_service_duration", salon.default_duration)
 
     # Валидация даты
     try:
@@ -392,7 +393,7 @@ def book_appointment(request, id):
 
     # Рассчитываем start_datetime и end_datetime
     start_datetime_naive = datetime.combine(date, start_time)
-    start_datetime = timezone.make_aware(start_datetime_naive, pytz.UTC)
+    start_datetime = timezone.make_aware(start_datetime_naive, timezone.get_current_timezone())
     initial_start_datetime = start_datetime  # Сохраняем начальное время
 
     if booking_details:
@@ -421,18 +422,23 @@ def book_appointment(request, id):
             start_datetime__lt=end_datetime,
             end_datetime__gt=start_datetime
         ).values_list('barber_id', flat=True)
+        logger.info(f"Busy barber IDs: {list(busy_barber_ids)}")
 
         available_barber = Barber.objects.select_for_update().filter(
-            salon=salon
+            salon=salon,
+            availabilities__day_of_week=start_datetime.strftime('%A').lower(),
+            availabilities__start_time__lte=start_datetime.time(),
+            availabilities__end_time__gte=end_datetime.time(),
+            availabilities__is_available=True
         ).exclude(
             id__in=busy_barber_ids
-        ).first()
+        ).distinct().first()
 
         if not available_barber:
             logger.warning("Нет доступных мастеров на выбранное время.")
             return JsonResponse({'error': 'Нет доступных мастеров на выбранное время.'}, status=400)
 
-        # Проверка доступности по расписанию
+        # Проверка доступности по расписанию (дополнительно)
         if not is_barber_available(available_barber, start_datetime, end_datetime):
             logger.info(f"Барбер {available_barber.name} недоступен по расписанию.")
             return JsonResponse({'error': f"Барбер {available_barber.name} недоступен по расписанию."}, status=400)
@@ -445,6 +451,7 @@ def book_appointment(request, id):
         )
         appointment_barber_service.save()
         appointments_to_create.append(appointment_barber_service)
+        logger.debug(f"Создано AppointmentBarberService для барбера {available_barber.name}")
 
     else:
         # Есть booking_details
@@ -459,6 +466,7 @@ def book_appointment(request, id):
             if barber_id != 'any':
                 try:
                     barber = Barber.objects.select_for_update().get(id=barber_id, salon=salon)
+                    logger.debug(f"Выбран барбер {barber.name} (ID: {barber.id}) для категории {category_id}")
                 except Barber.DoesNotExist:
                     logger.warning(f"Барбер с ID {barber_id} не найден в салоне {salon}")
                     return JsonResponse({'error': 'Выбранный барбер не найден.'}, status=400)
@@ -476,24 +484,39 @@ def book_appointment(request, id):
             else:
                 # barber_id = 'any', выбираем любого доступного барбера данной категории
                 busy_barber_ids = AppointmentBarberService.objects.filter(
+                    barber__categories__id=category_id,  # Фильтрация по категории
                     start_datetime__lt=interval_end,
                     end_datetime__gt=start_datetime
                 ).values_list('barber_id', flat=True)
+                logger.info(f"Busy barber IDs for category {category_id}: {list(busy_barber_ids)}")
+
+                # Логирование параметров фильтрации
+                logger.info(
+                    f"Selecting available barber in salon={salon.id}, category={category_id}, "
+                    f"day_of_week={start_datetime.strftime('%A').lower()}, "
+                    f"start_time={start_datetime.time()}, end_time={interval_end.time()}, "
+                    f"is_available=True"
+                )
 
                 available_barber = Barber.objects.select_for_update().filter(
                     salon=salon,
-                    categories__id=category_id
+                    categories__id=category_id,
+                    availabilities__day_of_week=start_datetime.strftime('%A').lower(),
+                    availabilities__start_time__lte=start_datetime.time(),
+                    availabilities__end_time__gte=interval_end.time(),
+                    availabilities__is_available=True
                 ).exclude(
                     id__in=busy_barber_ids
-                ).first()
+                ).distinct().first()
 
                 if available_barber:
                     barber = available_barber
+                    logger.debug(f"Автоматически выбран барбер {barber.name} (ID: {barber.id}) для категории {category_id}")
                 else:
                     logger.warning(f"Нет доступных барберов для категории {category_id}")
                     return JsonResponse({'error': 'Нет доступных барберов для одной из категорий.'}, status=400)
 
-            # Проверка доступности по расписанию
+            # Проверка доступности по расписанию (дополнительно)
             if not is_barber_available(barber, start_datetime, interval_end):
                 logger.info(f"Барбер {barber.name} недоступен по расписанию.")
                 return JsonResponse({'error': f"Барбер {barber.name} недоступен по расписанию."}, status=400)
@@ -506,17 +529,21 @@ def book_appointment(request, id):
                 end_datetime=interval_end
             )
             appointment_barber_service.save()
+            logger.debug(f"Создано AppointmentBarberService для барбера {barber.name}")
 
+            # Присваиваем услуги
             for service_info in services:
                 service_id = service_info.get('serviceId')
                 try:
                     service = Service.objects.get(id=service_id, salon=salon)
                     appointment_barber_service.services.add(service)
+                    logger.debug(f"Добавлена услуга {service.name} (ID: {service.id}) к AppointmentBarberService")
                 except Service.DoesNotExist:
                     logger.warning(f"Услуга с ID {service_id} не найдена в салоне {salon}")
                     return JsonResponse({'error': f"Услуга с ID {service_id} не найдена в салоне."}, status=400)
 
             appointments_to_create.append(appointment_barber_service)
+            logger.debug(f"Создано AppointmentBarberService для барбера {barber.name}")
 
             # Обновляем start_datetime для следующей услуги
             start_datetime = interval_end
@@ -524,6 +551,7 @@ def book_appointment(request, id):
     # Связываем созданные AppointmentBarberService с Appointment
     if appointments_to_create:
         appointment.barber_services.set(appointments_to_create)
+        logger.debug(f"Связаны AppointmentBarberService с Appointment ID: {appointment.id}")
 
     logger.info(f"Бронирование успешно создано для пользователя - {request.user if request.user.is_authenticated else 'Анонимный пользователь'}")
     return JsonResponse({'success': True, 'message': 'Бронирование успешно создано!'})

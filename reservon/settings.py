@@ -225,6 +225,7 @@ LOGGING = {
         'console': {  
             'level': 'DEBUG',
             'class': 'logging.StreamHandler',
+            'stream': sys.stdout,
             'formatter': 'verbose',
         },
         'file': {
@@ -232,6 +233,7 @@ LOGGING = {
             'class': 'logging.FileHandler',
             'filename': 'debug.log',
             'formatter': 'verbose',
+            'encoding': 'utf-8',
         },
     },
     'loggers': {
@@ -241,12 +243,17 @@ LOGGING = {
             'propagate': False,
         },
         'allauth': {
-            'handlers': ['console', 'file'],
+            'handlers': ['file'],
             'level': 'DEBUG',
             'propagate': False,
         },
-        'authentication.adapters': {  # Изменено для соответствия новому логгеру
-            'handlers': ['console', 'file'],
+        'booking': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'authentication.adapters': {
+            'handlers': ['file'],
             'level': 'DEBUG',
             'propagate': False,
         },
@@ -257,17 +264,8 @@ LOGGING = {
     },
 }
 
-ADMIN_INTERFACE = {
-    'HEADER': 'Reservon Admin',
-    'TITLE': 'Reservon Administration',
-    'SHOW_THEMES': True,
-}
-
-# Default primary key field type
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
 LOGGING['handlers']['console'] = {
-    'level': 'DEBUG',
+    'level': 'INFO',
     'class': 'logging.StreamHandler',
     'stream': sys.stderr,
 }
@@ -276,6 +274,15 @@ LOGGING['root'] = {
     'handlers': ['console', 'file'],
     'level': 'DEBUG',
 }
+
+ADMIN_INTERFACE = {
+    'HEADER': 'Reservon Admin',
+    'TITLE': 'Reservon Administration',
+    'SHOW_THEMES': True,
+}
+
+# Default primary key field type
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'  # Сохранять сессии в базе данных
 
