@@ -872,6 +872,7 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => {
             if (!response.ok) {
+                showBookingSErrorMessage(modal)
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             return response.json();
@@ -884,10 +885,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 // **Clear booking data from localStorage**
                 localStorage.removeItem('bookingFormData');
             } else if (data.error) {
+                showBookingSErrorMessage(modal)
                 alert(`Ошибка при бронировании: ${data.error}`);
             }
         })
         .catch(error => {
+            const modal = document.getElementById('booking-confirmation-modal');
+            showBookingSErrorMessage(modal)
             console.error('Ошибка при бронировании:', error);
         });
     }
@@ -901,6 +905,35 @@ document.addEventListener('DOMContentLoaded', function() {
         modalBody.innerHTML = 
             `<h2 id="modal-title">Бронирование подтверждено</h2>
             <p class="booking-success-message">Ваше бронирование успешно подтверждено!</p>
+            <div class="close-confirmation-container">
+                <button class="close-confirmation-button">Закрыть</button>
+            </div>`
+        ;
+
+        // Скрываем футер кнопок
+        const modalFooter = modal.querySelector('.modal-footer.booking-modal-footer');
+        if (modalFooter) {
+            modalFooter.style.display = 'none';
+        }
+
+        // Добавляем обработчик события для новой кнопки "Закрыть"
+        const closeConfirmationButton = modalBody.querySelector('.close-confirmation-button');
+        if (closeConfirmationButton) {
+            closeConfirmationButton.onclick = () => {
+                hideBookingConfirmationModal();
+            };
+        }
+    }
+
+    function showBookingSErrorMessage(modal) {
+        const modalBody = modal.querySelector('.modal-body.booking-modal-body');
+
+        // Очищаем содержимое модального окна
+        console.log(modalBody)
+        modalBody.innerHTML = 
+            `<h2 style="color: red" id="modal-title">Бронирование НЕ подтвердилось!</h2>
+            <p class="booking-success-message"> Вероятнее всего в это время забронировать не получится, пожалуйста, попробуйте в другое время или смените мастера </p>
+
             <div class="close-confirmation-container">
                 <button class="close-confirmation-button">Закрыть</button>
             </div>`

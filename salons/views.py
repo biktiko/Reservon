@@ -596,17 +596,20 @@ def is_barber_available_in_memory(barber, request_start_time, request_end_time, 
 
     # Проверяем, есть ли недоступные интервалы, пересекающие запрошенный интервал
     for interval in intervals:
-        if not interval['is_available']:
+        is_available = interval.get('is_available', True)  # Используем get с значением по умолчанию
+        if not is_available:
             if interval['start_time'] < request_end_time and interval['end_time'] > request_start_time:
                 return False
 
     # Проверяем доступные интервалы, должен быть хотя бы один, покрывающий весь [request_start_time, request_end_time]
     for interval in intervals:
-        if interval['is_available']:
+        is_available = interval.get('is_available', True)  # Используем get с значением по умолчанию
+        if is_available:
             if interval['start_time'] <= request_start_time and interval['end_time'] >= request_end_time:
                 return True
 
     return False
+
 
 
 from django.db.models.signals import post_save, post_delete

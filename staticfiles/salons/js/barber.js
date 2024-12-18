@@ -193,4 +193,8 @@ document.addEventListener('DOMContentLoaded', function() {
     if (categoryButtons.length > 0) {
         categoryButtons[0].click();
     }
+
+    
+
+
 });
