@@ -440,8 +440,10 @@ def book_appointment(request, id):
                 availabilities__is_available=True
             ).exclude(
                 id__in=busy_barber_ids
-            ).distinct().first()
-    
+            ).order_by('id').first()
+
+
+
             if not available_barber:
                 logger.warning("Нет доступных мастеров на выбранное время.")
                 return JsonResponse({'error': 'Нет доступных мастеров на выбранное время.'}, status=400)
