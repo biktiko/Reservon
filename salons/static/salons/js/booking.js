@@ -856,7 +856,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function submitBookingData(formData) {
         const salonIdForBooking = parseInt(salonDataElement.dataset.salonId, 10);
-    
+        console.log(formData)
         fetch(`/salons/${salonIdForBooking}/book/`, {
             method: 'POST',
             headers: {
@@ -875,7 +875,6 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(data => {
             const modal = document.getElementById('booking-confirmation-modal');
-            console.log(data)
             if (data.success) {
                 // Booking was successful
                 showBookingSuccessMessage(modal);

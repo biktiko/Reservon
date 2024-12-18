@@ -208,6 +208,8 @@ ALLOWED_HOSTS = [
     '127.0.0.1'
     ]
 
+import sys
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -238,31 +240,32 @@ LOGGING = {
     },
     'loggers': {
         'django': {
-            'handlers': ['file'],
+            'handlers': ['console', 'file'],
             'level': 'DEBUG',
             'propagate': False,
         },
         'allauth': {
-            'handlers': ['file'],
+            'handlers': ['console', 'file'], 
             'level': 'DEBUG',
             'propagate': False,
         },
         'booking': {
-            'handlers': ['file'],
+            'handlers': ['console', 'file'], 
             'level': 'DEBUG',
             'propagate': False,
         },
         'authentication.adapters': {
-            'handlers': ['file'],
+            'handlers': ['console', 'file'], 
             'level': 'DEBUG',
             'propagate': False,
         },
     },
     'root': {
-        'handlers': ['console'],
-        'level': 'INFO',
+        'handlers': ['console', 'file'], 
+        'level': 'DEBUG',
     },
 }
+
 
 LOGGING['handlers']['console'] = {
     'level': 'INFO',
