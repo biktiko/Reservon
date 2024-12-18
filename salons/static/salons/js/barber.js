@@ -38,8 +38,8 @@ document.addEventListener('DOMContentLoaded', function() {
     function showBarbersForCurrentCategory() {
         currentCategoryId = getCurrentCategoryId();
         barberList.innerHTML = ''; // Очищаем список барберов
-    
-        const barbers = barbersByCategory[`category_${currentCategoryId}`];
+        console.log(currentCategoryId)
+        const barbers = barbersByCategory[currentCategoryId];
         if (barbers && barbers.length > 0) {
             // Получаем выбранного барбера для текущей категории
             const selectedBarberId = selectedBarbers[currentCategoryId] || 'any';
@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const anyBarberCard = createBarberCard('any', 'Любой мастер', '/static/salons/img/default-avatar.png', 'Описание или слоган');
                 barberList.appendChild(anyBarberCard);
             }
-    
+
             // Добавляем барберов, исключая выбранного
             barbers.forEach(barber => {
                 if (barber.id !== selectedBarberId) {
@@ -62,10 +62,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     barberList.appendChild(barberCard);
                 }
             });
-    
+
             // Добавляем обработчики событий на новые карточки барберов
             addBarberCardEventListeners();
-    
         } else {
             barberList.innerHTML = '<p>Нет доступных мастеров для выбранной категории.</p>';
         }
@@ -76,31 +75,30 @@ document.addEventListener('DOMContentLoaded', function() {
         const card = document.createElement('div');
         card.classList.add('barber-card');
         card.setAttribute('data-barber-id', id);
-    
+
         const img = document.createElement('img');
         img.src = avatar;
         img.alt = name;
         img.classList.add('barber-avatar');
         card.appendChild(img);
-    
+
         const infoDiv = document.createElement('div');
         infoDiv.classList.add('barber-info');
-    
+
         const nameElement = document.createElement('h4');
         nameElement.classList.add('barber-name');
         nameElement.textContent = name;
         infoDiv.appendChild(nameElement);
-    
+
         const descElement = document.createElement('p');
         descElement.classList.add('barber-description');
         descElement.textContent = description;
         infoDiv.appendChild(descElement);
-    
+
         card.appendChild(infoDiv);
-    
+
         return card;
     }
-    
 
     // Функция для добавления обработчиков событий на карточки барберов
     function addBarberCardEventListeners() {
@@ -141,7 +139,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // Обновляем активную карточку барбера
-        const barbers = barbersByCategory[`category_${currentCategoryId}`];
+        const barbers = barbersByCategory[currentCategoryId];
         let barber = null;
         if (barberId !== 'any') {
             barber = barbers.find(b => b.id == barberId);
@@ -193,8 +191,4 @@ document.addEventListener('DOMContentLoaded', function() {
     if (categoryButtons.length > 0) {
         categoryButtons[0].click();
     }
-
-    
-
-
 });

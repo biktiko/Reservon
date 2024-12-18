@@ -1,3 +1,5 @@
+
+
 <!-- salon-detail.html -->
 {% extends 'base.html' %}
 {% load static %}
@@ -27,6 +29,7 @@
 {% include 'salons/book-confirm.html' %}
 
 <div class="salon-detail">
+    tesf
     <div class="salon-container">
         <!-- Левая часть -->
         <div class="info-sections">
@@ -57,7 +60,7 @@
             <div class="right-section">
                 <!-- Включение выбора услуг -->
 
-                {% include 'salons/salon-services.html' with service_categories=service_categories barbers_by_category=barbers_by_category barbers_by_category_json=barbers_by_category_json %}
+                {% include 'salons/salon-services.html' with categories_with_services=categories_with_services barbers_by_category=barbers_by_category barbers_by_category_json=barbers_by_category_json %}
              
                 {% include 'salons/barbers.html' with category=category barbers_by_category=barbers_by_category %}
 

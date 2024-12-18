@@ -15,6 +15,7 @@ urlpatterns = [
     path('user-account/', include('user_account.urls')),
     path('i18n/', include('django.conf.urls.i18n')), 
     path('accounts/', include('allauth.urls')),
+    path('__debug__/', include('debug_toolbar.urls')),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
 if settings.DEBUG:

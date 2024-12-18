@@ -23,21 +23,36 @@ import logging
 logger = logging.getLogger('booking')
 
 
-def salon_detail(request, id):
-    # salon = get_object_or_404(Salon, id=id)
-    salon = get_object_or_404(Salon.objects.prefetch_related(
-        'services__category',       # Предварительная загрузка услуг и их категорий
-        'barbers__categories'      # Предварительная загрузка барберов и их категорий
-    ), id=id)
+# salons/views.py
 
+def salon_detail(request, id):
+    # Получаем салон по ID
+    salon = get_object_or_404(Salon, id=id)
+
+    # Получаем категории услуг, имеющие активные услуги в данном салоне
     service_categories = ServiceCategory.objects.filter(
-        services__salon=salon, 
+        services__salon=salon,
         services__status='active'
     ).distinct()
 
+    # Создаем структуру данных: {category: [services]}
+    categories_with_services = []
+    for category in service_categories:
+        services = Service.objects.filter(
+            salon=salon,
+            status='active',
+            category=category
+        )
+        if services.exists():
+            categories_with_services.append({
+                'category': category,
+                'services': services
+            })
+
     # Собираем барберов по категориям
     barbers_by_category = {}
-    for category in service_categories:
+    for entry in categories_with_services:
+        category = entry['category']
         barbers = Barber.objects.filter(categories=category, salon=salon)
         barbers_list = []
         for barber in barbers:
@@ -47,36 +62,23 @@ def salon_detail(request, id):
                 'avatar': barber.get_avatar_url(),
                 'description': barber.description or ''
             })
-        barbers_by_category[f'category_{category.id}'] = barbers_list
+        barbers_by_category[category.id] = barbers_list
 
-    # Собираем услуги по категориям
-    services_by_category = {}
-    for category in service_categories:
-        services = Service.objects.filter(
-            category=category, 
-            salon=salon, 
-            status='active'
-        )
-        services_list = []
-        for service in services:
-            services_list.append({
-                'id': service.id,
-                'name': service.name,
-                'price': service.price,  # DecimalField, будет обработан DjangoJSONEncoder
-                'duration': int(service.duration.total_seconds() / 60),  # Преобразование timedelta в минуты
-                # Добавьте другие необходимые поля
-            })
-        services_by_category[f'category_{category.id}'] = services_list
-
-    # Сериализуем в JSON с использованием DjangoJSONEncoder
+    # Подготовка данных для передачи в JavaScript (если необходимо)
     barbers_by_category_json = json.dumps(barbers_by_category, cls=DjangoJSONEncoder)
-    services_by_category_json = json.dumps(services_by_category, cls=DjangoJSONEncoder)
+
+    # Добавим отладочные сообщения
+    print(f"Салон: {salon.name}")
+    print(f"Категорий с услугами: {len(categories_with_services)}")
+    for entry in categories_with_services:
+        print(f"Категория: {entry['category'].name}, Услуг: {entry['services'].count()}")
+    print(f"Барберов по категориям: {barbers_by_category}")
 
     context = {
         'salon': salon,
-        'service_categories': service_categories,
+        'categories_with_services': categories_with_services,
+        'barbers_by_category': barbers_by_category,
         'barbers_by_category_json': barbers_by_category_json,
-        'services_by_category_json': services_by_category_json,
     }
 
     return render(request, 'salons/salon-detail.html', context)
@@ -441,8 +443,6 @@ def book_appointment(request, id):
             ).exclude(
                 id__in=busy_barber_ids
             ).order_by('id').first()
-
-
 
             if not available_barber:
                 logger.warning("Нет доступных мастеров на выбранное время.")

@@ -1,37 +1,38 @@
 <!-- templates/salons/salon-services.html -->
 {% load static %}
 {% load i18n %}
-
+{% load custom_tags %}
 <link rel="stylesheet" href="{% static 'salons/css/services.css' %}">
-
 
 <div>
     <div class="service-selection">
         <div class="service-categories">
-            {% for category in service_categories %}
-                <button class="category-button" data-category-id="{{ category.id }}">{{ category.name }}</button>
+            {% for entry in categories_with_services %}
+                <button class="category-button" data-category-id="{{ entry.category.id }}">{{ entry.category.name }}</button>
             {% endfor %}
         </div>
 
+        <!-- Контейнер для услуг -->
         <div class="services-container">
-            {% if service_categories %}
+            {% if categories_with_services %}
                 <!-- Отображаем услуги по категориям -->
-                {% for category in service_categories %}
-                    <div class="category-section" data-category-id="{{ category.id }}">
+                {% for entry in categories_with_services %}
+                    <div class="category-section" data-category-id="{{ entry.category.id }}">
                         <div class="category-services services-grid">
-                            {% if not category.services %}
+                            {% if not entry.services %}
                                 <p>{% trans "Нет доступных услуг." %}</p>
                             {% else %}
-                                {% for service in category.services.all %}
-                                    {% include 'salons/service-card.html' %}
+                                {% for service in entry.services %}
+                                    {% include 'salons/service-card.html' with service=service %}
                                 {% endfor %}
                             {% endif %}
                         </div>
                     </div>
                 {% endfor %}
+            {% else %}
+                <p>{% trans "Нет доступных категорий услуг." %}</p>
             {% endif %}
         </div>
-
         <!-- Контейнер для пагинации -->
         <div class="pagination-container">
             <button class="pagination-button" data-page="1">1</button>
