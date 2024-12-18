@@ -63,7 +63,6 @@ document.addEventListener('DOMContentLoaded', function() {
             return cardName ? cardName.textContent.trim() : 'Любой мастер';
         }
         catch{
-            console.log(barberCards);
             return 'Любой мастер';
         }
     }
@@ -315,8 +314,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 uncachedHours.push(hour);
             }
         });
-
-        console.log(collectBookingFormData())
     
         if (uncachedHours.length > 0) {
             try {
@@ -712,12 +709,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     document.addEventListener('loginFromBookingSuccess', function() {
-        console.log('loginFromBookingSuccess')
         // Получаем данные из localStorage
         const formDataString = localStorage.getItem('bookingFormData');
         if (formDataString) {
             const formData = JSON.parse(formDataString);
-            // Показываем модальное окно подтверждения бронирования
             showBookingConfirmationModal(formData);
         } else {
             console.error('No booking data found in localStorage.');
@@ -872,6 +867,7 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => {
             if (!response.ok) {
+                const modal = document.getElementById('booking-confirmation-modal');
                 showBookingSErrorMessage(modal)
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
@@ -879,6 +875,7 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(data => {
             const modal = document.getElementById('booking-confirmation-modal');
+            console.log(data)
             if (data.success) {
                 // Booking was successful
                 showBookingSuccessMessage(modal);
@@ -901,7 +898,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const modalBody = modal.querySelector('.modal-body.booking-modal-body');
 
         // Очищаем содержимое модального окна
-        console.log(modalBody)
         modalBody.innerHTML = 
             `<h2 id="modal-title">Бронирование подтверждено</h2>
             <p class="booking-success-message">Ваше бронирование успешно подтверждено!</p>
@@ -928,8 +924,6 @@ document.addEventListener('DOMContentLoaded', function() {
     function showBookingSErrorMessage(modal) {
         const modalBody = modal.querySelector('.modal-body.booking-modal-body');
 
-        // Очищаем содержимое модального окна
-        console.log(modalBody)
         modalBody.innerHTML = 
             `<h2 style="color: red" id="modal-title">Бронирование НЕ подтвердилось!</h2>
             <p class="booking-success-message"> Вероятнее всего в это время забронировать не получится, пожалуйста, попробуйте в другое время или смените мастера </p>

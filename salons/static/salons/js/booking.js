@@ -893,7 +893,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-
     function showBookingSuccessMessage(modal) {
         const modalBody = modal.querySelector('.modal-body.booking-modal-body');
 
