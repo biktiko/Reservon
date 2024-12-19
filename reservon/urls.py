@@ -4,7 +4,7 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
-from allauth.socialaccount.views import LoginCancelledView, LoginErrorView
+from .views import ServiceWorkerView
 
 urlpatterns = [
     path('grappelli/', include('grappelli.urls')),
@@ -16,6 +16,7 @@ urlpatterns = [
     path('i18n/', include('django.conf.urls.i18n')), 
     path('accounts/', include('allauth.urls')),
     path('__debug__/', include('debug_toolbar.urls')),
+    path('service-worker.js', ServiceWorkerView.as_view(), name='service_worker'),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
 if settings.DEBUG:

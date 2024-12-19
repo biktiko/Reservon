@@ -1,4 +1,4 @@
-// static/main/js/service-worker.js
+// reservon/service-worker.js
 
 self.addEventListener('push', function(event) {
     if (event.data) {
