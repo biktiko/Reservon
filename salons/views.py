@@ -1,6 +1,5 @@
 # salons/views.py
 from django.shortcuts import render, get_object_or_404
-from django.urls import reverse
 from .models import Salon, Appointment, Barber, Service, ServiceCategory, AppointmentBarberService, BarberAvailability
 from django.core.serializers.json import DjangoJSONEncoder
 from django.http import JsonResponse
@@ -16,8 +15,7 @@ from django.views.decorators.cache import cache_page
 from django.db.models import Prefetch
 from collections import defaultdict
 from django.core.cache import cache
-from django.contrib.auth.decorators import login_required
-from webpush.models import SubscriptionInfo, PushInformation
+from webpush.models import PushInformation
 from pywebpush import webpush, WebPushException
 from django.conf import settings
 import logging
@@ -723,47 +721,3 @@ def increment_cache_version_on_appointment_change(sender, instance, **kwargs):
     current_version = cache.get(f"available_minutes_version_{salon_id}", 1)
     cache.set(f"available_minutes_version_{salon_id}", current_version + 1, None)
     logger.debug(f"Версия кэша для салона {salon_id} увеличена до {current_version + 1} из-за изменения бронирования.")
-
-@login_required
-def subscribe_push(request):
-    if request.method == "POST":
-        try:
-            data = json.loads(request.body)
-            endpoint = data.get("endpoint")
-            p256dh = data.get("keys", {}).get("p256dh")
-            auth = data.get("keys", {}).get("auth")
-            browser = data.get("browser", "")  # Опционально: можно получить из данных
-            user_agent = request.META.get('HTTP_USER_AGENT', '')  # Опционально
-
-            if not endpoint or not p256dh or not auth:
-                return JsonResponse({"error": "Invalid subscription data."}, status=400)
-
-            # Создание или обновление SubscriptionInfo
-            subscription, created = SubscriptionInfo.objects.get_or_create(
-                endpoint=endpoint,
-                defaults={
-                    "browser": browser,
-                    "user_agent": user_agent,
-                    "auth": auth,
-                    "p256dh": p256dh,
-                }
-            )
-            if not created:
-                subscription.browser = browser
-                subscription.user_agent = user_agent
-                subscription.auth = auth
-                subscription.p256dh = p256dh
-                subscription.save()
-
-            # Создание или обновление PushInformation
-            push_info, created = PushInformation.objects.get_or_create(
-                user=request.user,
-                subscription=subscription
-            )
-
-            return JsonResponse({"success": True}, status=201)
-
-        except json.JSONDecodeError:
-            return JsonResponse({"error": "Invalid JSON."}, status=400)
-
-    return JsonResponse({"error": "Invalid request method."}, status=405)
