@@ -37,8 +37,8 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
 
-    // Подписка пользователя на push-уведомления
-    function subscribeUser(registration) {
+      // Подписка пользователя на push-уведомления
+      function subscribeUser(registration) {
         const subscribeOptions = {
             userVisibleOnly: true,
             applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
@@ -60,7 +60,7 @@ document.addEventListener('DOMContentLoaded', function() {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRFToken': getCookie('csrftoken')
+                'X-CSRFToken': getCookie('csrftoken') // Убедитесь, что CSRF-токен передаётся корректно
             },
             body: JSON.stringify(subscription)
         })
