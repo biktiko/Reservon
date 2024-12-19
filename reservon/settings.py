@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'crispy_forms',
     'crispy_bootstrap4',
     'rest_framework',
+    'webpush',
     'storages',
     'authentication',
     'main',
@@ -302,6 +303,12 @@ LOGGING['root'] = {
     'level': 'DEBUG',
 }
 
+LOGGING['loggers']['allauth'] = {
+    'handlers': ['console', 'file'],
+    'level': 'DEBUG',
+    'propagate': False,
+}
+
 ADMIN_INTERFACE = {
     'HEADER': 'Reservon Admin',
     'TITLE': 'Reservon Administration',
@@ -352,11 +359,10 @@ SOCIALACCOUNT_PROVIDERS = {
     }
 }
 
-LOGGING['loggers']['allauth'] = {
-    'handlers': ['console', 'file'],
-    'level': 'DEBUG',
-    'propagate': False,
+WEBPUSH_SETTINGS = {
+    "VAPID_PUBLIC_KEY": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEf44JPNaxvnLQLEl_Qrctceu1_FNzKfzvvmdokHh4Yw5uw9EzuJEUcFll4gpE7e2aXi-GXOh2h-PC8qT1c-nDWA",
+    "VAPID_PRIVATE_KEY": "MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQg55plaSLS6EjoIlLLBYBmGW6fuTAFGqX9HH9H4FzBMkehRANCAAR_jgk81rG-ctAsSX9Cty1x67X8U3Mp_O--Z2iQeHhjDm7D0TO4kRRwWWXiCkTt7ZpeL4Zc6HaH48LypPVz6cNY",
+    "VAPID_ADMIN_EMAIL": "tsigma.team@gmail.com"
 }
-
 
 TEMPLATES[0]['OPTIONS']['debug'] = True

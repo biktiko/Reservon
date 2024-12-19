@@ -16,4 +16,5 @@ urlpatterns = [
     path('enter_password/', views.enter_password, name='enter_password'),
     path('resend_verification_code/', views.resend_verification_code, name='resend_verification_code'),
     path('logout/', views.custom_logout_view, name='logout'),
+    path('clear-cache/', views.clear_cache_view, name='clear_cache'),
 ]

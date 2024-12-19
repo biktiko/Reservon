@@ -1,5 +1,5 @@
 # salons/views.py
-from django.shortcuts import render, get_object_or_404, redirect
+from django.shortcuts import render, get_object_or_404
 from django.urls import reverse
 from .models import Salon, Appointment, Barber, Service, ServiceCategory, AppointmentBarberService, BarberAvailability
 from django.core.serializers.json import DjangoJSONEncoder
@@ -11,13 +11,15 @@ from datetime import datetime, timedelta, time, timezone as dt_timezone
 from django.utils import timezone
 from django.db.models import Q
 from django.db import transaction
-import pytz
 import json
 from django.views.decorators.cache import cache_page
 from django.db.models import Prefetch
 from collections import defaultdict
 from django.core.cache import cache
-
+from django.contrib.auth.decorators import login_required
+from webpush.models import SubscriptionInfo, PushInformation
+from pywebpush import webpush, WebPushException
+from django.conf import settings
 import logging
 
 logger = logging.getLogger('booking')
@@ -101,6 +103,7 @@ def get_available_minutes(request):
     booking_details = data.get('booking_details', [])
     date_str = data.get('date')
     hours = data.get('hours', [])  # Ожидаем список часов
+    selected_barber_id = data.get('selected_barber_id', 'any')  # Новый параметр
     total_service_duration = int(data.get('total_service_duration', 0))
 
     # Валидация обязательных полей
@@ -336,7 +339,8 @@ def get_available_minutes(request):
         date_str,
         hours,
         booking_details,
-        cache_time_str
+        cache_time_str,
+        selected_barber_id=selected_barber_id  # Включаем выбранного мастера
     )
 
     # Попытка получить данные из кэша
@@ -461,7 +465,6 @@ def book_appointment(request, id):
             )
             appointment_barber_service.save()
             appointments_to_create.append(appointment_barber_service)
-            logger.debug(f"Создано AppointmentBarberService для барбера {available_barber.name}")
     
         else:
             # Есть booking_details
@@ -545,7 +548,6 @@ def book_appointment(request, id):
                     end_datetime=interval_end
                 )
                 appointment_barber_service.save()
-                logger.debug(f"Создано AppointmentBarberService для барбера {barber.name}")
     
                 # Присваиваем услуги
                 for service_info in services:
@@ -555,11 +557,11 @@ def book_appointment(request, id):
                         appointment_barber_service.services.add(service)
                         logger.debug(f"Добавлена услуга {service.name} (ID: {service.id}) к AppointmentBarberService")
                     except Service.DoesNotExist:
+
                         logger.warning(f"Услуга с ID {service_id} не найдена в салоне {salon}")
                         return JsonResponse({'error': f"Услуга с ID {service_id} не найдена в салоне."}, status=400)
     
                 appointments_to_create.append(appointment_barber_service)
-                logger.debug(f"Создано AppointmentBarberService для барбера {barber.name}")
     
                 # Обновляем start_datetime для следующей услуги
                 start_datetime = interval_end
@@ -567,7 +569,37 @@ def book_appointment(request, id):
         # Связываем созданные AppointmentBarberService с Appointment
         if appointments_to_create:
             appointment.barber_services.set(appointments_to_create)
-            logger.debug(f"Связаны AppointmentBarberService с Appointment ID: {appointment.id}")
+
+        admins = salon.admins.all()
+
+        for admin in admins:
+            push_infos = PushInformation.objects.filter(user=admin)
+            for push_info in push_infos:
+                subscription = push_info.subscription
+                subscription_info = {
+                    "endpoint": subscription.endpoint,
+                    "keys": {
+                        "p256dh": subscription.p256dh,
+                        "auth": subscription.auth,
+                    }
+                }
+                payload = {
+                    "head": "Новое бронирование",
+                    "body": f"Пользователь {request.user.username} успешно забронировал услугу.",
+                    "icon": "/static/main/img/notification-icon.png",
+                    "url": "/user_account/bookings/"
+                }
+                try:
+                    webpush(
+                        subscription_info=subscription_info,
+                        data=json.dumps(payload),
+                        vapid_private_key=settings.WEBPUSH_SETTINGS["VAPID_PRIVATE_KEY"],
+                        vapid_claims={
+                            "sub": f"mailto:{settings.WEBPUSH_SETTINGS['VAPID_ADMIN_EMAIL']}",
+                        }
+                    )
+                except WebPushException as ex:
+                    logger.error(f"Ошибка при отправке уведомления пользователю {admin.username}: {ex}")
     
         logger.info(f"Бронирование успешно создано для пользователя - {request.user if request.user.is_authenticated else 'Анонимный пользователь'}")
         return JsonResponse({'success': True, 'message': 'Бронирование успешно создано!'})
@@ -636,10 +668,27 @@ from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 import hashlib
 
-def generate_cache_key(salon_id, date_str, hours, booking_details, cache_time_str):
-    key_string = f"available_minutes_{salon_id}_{date_str}_{json.dumps(hours, sort_keys=True)}_{json.dumps(booking_details, sort_keys=True)}_{cache_time_str}"
+def generate_safe_cache_key(salon_id, date_str, hours, booking_details, cache_time_str, selected_barber_id='any'):
+    """
+    Генерирует безопасный ключ кэша, используя хеширование параметров запроса.
+
+    :param salon_id: ID салона
+    :param date_str: Дата бронирования в формате 'YYYY-MM-DD'
+    :param hours: Список часов (целые числа)
+    :param booking_details: Список деталей бронирования (словари)
+    :param cache_time_str: Строка округленного времени кэша (например, '45' для минут)
+    :param selected_barber_id: ID выбранного барбера или 'any' для любого
+    :return: Строка безопасного ключа кэша
+    """
+    key_string = (
+        f"available_minutes_{salon_id}_v{get_cache_version(salon_id)}_"
+        f"{date_str}_{json.dumps(hours, sort_keys=True)}_"
+        f"{json.dumps(booking_details, sort_keys=True)}_"
+        f"{selected_barber_id}_{cache_time_str}"
+    )
     key_hash = hashlib.md5(key_string.encode('utf-8')).hexdigest()
-    return f"available_minutes_{salon_id}_{date_str}_{key_hash}"
+    return f"available_minutes_{salon_id}_v{get_cache_version(salon_id)}_{key_hash}"
+
 
 @cache_page(60 * 15)
 def main(request):
@@ -661,21 +710,6 @@ def get_cache_version(salon_id):
     version = cache.get(f"available_minutes_version_{salon_id}", 1)
     return version
 
-def generate_safe_cache_key(salon_id, date_str, hours, booking_details, cache_time_str):
-    """
-    Генерирует безопасный ключ кэша, используя хеширование параметров запроса.
-
-    :param salon_id: ID салона
-    :param date_str: Дата бронирования в формате 'YYYY-MM-DD'
-    :param hours: Список часов (целые числа)
-    :param booking_details: Список деталей бронирования (словари)
-    :param cache_time_str: Строка округленного времени кэша (например, '45' для минут)
-    :return: Строка безопасного ключа кэша
-    """
-    key_string = f"available_minutes_{salon_id}_v{get_cache_version(salon_id)}_{date_str}_{json.dumps(hours, sort_keys=True)}_{json.dumps(booking_details, sort_keys=True)}_{cache_time_str}"
-    key_hash = hashlib.md5(key_string.encode('utf-8')).hexdigest()
-    return f"available_minutes_{salon_id}_v{get_cache_version(salon_id)}_{key_hash}"
-
 @receiver([post_save, post_delete], sender=BarberAvailability)
 def increment_cache_version_on_availability_change(sender, instance, **kwargs):
     salon_id = instance.barber.salon.id
@@ -690,3 +724,46 @@ def increment_cache_version_on_appointment_change(sender, instance, **kwargs):
     cache.set(f"available_minutes_version_{salon_id}", current_version + 1, None)
     logger.debug(f"Версия кэша для салона {salon_id} увеличена до {current_version + 1} из-за изменения бронирования.")
 
+@login_required
+def subscribe_push(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            endpoint = data.get("endpoint")
+            p256dh = data.get("keys", {}).get("p256dh")
+            auth = data.get("keys", {}).get("auth")
+            browser = data.get("browser", "")  # Опционально: можно получить из данных
+            user_agent = request.META.get('HTTP_USER_AGENT', '')  # Опционально
+
+            if not endpoint or not p256dh or not auth:
+                return JsonResponse({"error": "Invalid subscription data."}, status=400)
+
+            # Создание или обновление SubscriptionInfo
+            subscription, created = SubscriptionInfo.objects.get_or_create(
+                endpoint=endpoint,
+                defaults={
+                    "browser": browser,
+                    "user_agent": user_agent,
+                    "auth": auth,
+                    "p256dh": p256dh,
+                }
+            )
+            if not created:
+                subscription.browser = browser
+                subscription.user_agent = user_agent
+                subscription.auth = auth
+                subscription.p256dh = p256dh
+                subscription.save()
+
+            # Создание или обновление PushInformation
+            push_info, created = PushInformation.objects.get_or_create(
+                user=request.user,
+                subscription=subscription
+            )
+
+            return JsonResponse({"success": True}, status=201)
+
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON."}, status=400)
+
+    return JsonResponse({"error": "Invalid request method."}, status=405)

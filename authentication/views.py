@@ -380,3 +380,12 @@ def resend_verification_code(request):
 def custom_logout_view(request):
     logout(request)
     return redirect('/')
+
+from django.core.cache import cache
+from django.contrib.auth.decorators import user_passes_test
+from django.http import HttpResponse
+
+@user_passes_test(lambda u: u.is_superuser)
+def clear_cache_view(request):
+    cache.clear()
+    return HttpResponse("Кэш успешно очищен.")
