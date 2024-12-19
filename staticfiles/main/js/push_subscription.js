@@ -1,7 +1,7 @@
 // static/main/js/push_subscription.js
 
 document.addEventListener('DOMContentLoaded', function() {
-    const publicVapidKey = 'MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEf44JPNaxvnLQLEl_Qrctceu1_FNzKfzvvmdokHh4Yw5uw9EzuJEUcFll4gpE7e2aXi-GXOh2h-PC8qT1c-nDWA';
+    const publicVapidKey = 'LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUZrd0V3WUhLb1pJemowQ0FRWUlLb1pJemowREFRY0RRZ0FFU2pXOXNSaXhDcllDK2JuOEJtd2MybnJ1bkwrMQo0MHRSR2VGalBOOVVOd0E3NnNiUTFRUWdXeFA4NHd2cW1xNXZ4R1plaFJVQnA4QnhFWmY4TlNwYW1nPT0KLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0tCg';
 
     // Функция для конвертации ключа из base64 в Uint8Array
     function urlBase64ToUint8Array(base64String) {
@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function registerServiceWorker() {
-        navigator.serviceWorker.register('/static/main/js/service-worker.js')
+        navigator.serviceWorker.register('/service-worker.js')
             .then(function(registration) {
                 console.log('Service Worker зарегистрирован с областью:', registration.scope);
                 subscribeUser(registration);
@@ -37,8 +37,8 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
 
-    // Подписка пользователя на push-уведомления
-    function subscribeUser(registration) {
+      // Подписка пользователя на push-уведомления
+      function subscribeUser(registration) {
         const subscribeOptions = {
             userVisibleOnly: true,
             applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
@@ -60,7 +60,7 @@ document.addEventListener('DOMContentLoaded', function() {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRFToken': getCookie('csrftoken')
+                'X-CSRFToken': getCookie('csrftoken') // Убедитесь, что CSRF-токен передаётся корректно
             },
             body: JSON.stringify(subscription)
         })

@@ -1,8 +1,7 @@
 # C:\Reservon\Reservon\main\models.py
 from django.db import models
-from django.contrib.auth.models import User
-from django.contrib.auth.models import AbstractUser
-# from webpush.models import WebPushDevice
+# from django.contrib.auth.models import User
+# from django.contrib.auth.models import AbstractUser
 
 class VerificationCode(models.Model):
     phone_number = models.CharField(max_length=20)
