@@ -377,14 +377,13 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'UTC'
 
-if CELERY_BROKER_URL and CELERY_BROKER_URL.startswith('rediss://'):
-    CELERY_BROKER_USE_SSL = {
-        'ssl_cert_reqs': 'CERT_NONE'
+if not DEBUG and CELERY_BROKER_URL and CELERY_BROKER_URL.startswith('rediss://'):
+    import ssl
+    BROKER_USE_SSL = {
+        'ssl_cert_reqs': ssl.CERT_NONE
     }
-
-if CELERY_RESULT_BACKEND and CELERY_RESULT_BACKEND.startswith('rediss://'):
-    CELERY_RESULT_BACKEND_USE_SSL = {
-        'ssl_cert_reqs': 'CERT_NONE'
+    RESULT_BACKEND_USE_SSL = {
+        'ssl_cert_reqs': ssl.CERT_NONE
     }
 
 WEBPUSH_SETTINGS = {
