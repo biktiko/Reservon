@@ -363,7 +363,6 @@ SOCIALACCOUNT_PROVIDERS = {
 }
 TEMPLATES[0]['OPTIONS']['debug'] = True
 
-
 if DEBUG:
     CELERY_BROKER_URL = 'redis://redis:6379/0'
     CELERY_RESULT_BACKEND = 'redis://redis:6379/0'
@@ -377,20 +376,20 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'UTC'
 
-import ssl
 
-if not DEBUG and CELERY_BROKER_URL and CELERY_BROKER_URL.startswith('rediss://'):
+if not DEBUG and CELERY_BROKER_URL.startswith('rediss://'):
+    # Аналогично логике из документации для кэша: ssl_cert_reqs=None
+    # Уберём все попытки использовать ssl.CERT_NONE или строки,
+    # и попробуем None, как в примере для CACHES
     BROKER_USE_SSL = {
-        'ssl': True,
-        'ssl_cert_reqs': 'CERT_NONE'
+        'ssl_cert_reqs': None
     }
-    REDIS_BACKEND_USE_SSL = {
-        'ssl': True,
-        'ssl_cert_reqs': 'CERT_NONE'
+    RESULT_BACKEND_USE_SSL = {
+        'ssl_cert_reqs': None
     }
 
     CELERY_BROKER_USE_SSL = BROKER_USE_SSL
-    CELERY_REDIS_BACKEND_USE_SSL = REDIS_BACKEND_USE_SSL
+    CELERY_REDIS_BACKEND_USE_SSL = RESULT_BACKEND_USE_SSL
 
 
 
