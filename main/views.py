@@ -8,6 +8,11 @@ from authentication.models import PushSubscription
 from django.conf import settings
 from pywebpush import webpush, WebPushException
 
+
+import logging
+
+logger = logging.getLogger('main')
+
 def main(request):
     return redirect('salons:salons_main')
 
@@ -60,28 +65,10 @@ def send_push_notification(subscription_info, message_body):
                 "sub": f"mailto:{settings.WEBPUSH_SETTINGS['VAPID_ADMIN_EMAIL']}",
             }
         )
+        logger.info(f"Уведомление успешно отправлено: {response}")
         return response
     except WebPushException as ex:
-        print("Ошибка при отправке push уведомления:", ex)
-        # Дополнительная обработка ошибок
+        logger.error(f"Ошибка при отправке push уведомления: {ex}")
         if ex.response and ex.response.json():
-            print("Детали ошибки:", ex.response.json())
+            logger.error(f"Детали ошибки: {ex.response.json()}")
         return None
-
-def notify_admin_of_new_booking(booking):
-    # Предположим, что вы вызываете это при создании нового бронирования
-    message = json.dumps({
-        "title": "Новое бронирование!",
-        "body": f"Был создано новое бронирование: {booking.details}"
-    })
-
-    subscriptions = PushSubscription.objects.all()
-    for subscription in subscriptions:
-        subscription_info = {
-            "endpoint": subscription.endpoint,
-            "keys": {
-                "p256dh": subscription.p256dh,
-                "auth": subscription.auth
-            }
-        }
-        send_push_notification(subscription_info, message)

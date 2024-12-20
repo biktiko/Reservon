@@ -279,6 +279,11 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': False,
         },
+        'main': {
+            'handlers': ['console', 'file'], 
+            'level': 'DEBUG',
+            'propagate': False,
+        },
         'authentication.adapters': {
             'handlers': ['console', 'file'], 
             'level': 'DEBUG',
@@ -290,7 +295,6 @@ LOGGING = {
         'level': 'DEBUG',
     },
 }
-
 
 LOGGING['handlers']['console'] = {
     'level': 'INFO',
@@ -358,6 +362,16 @@ SOCIALACCOUNT_PROVIDERS = {
         'LOGIN_ON_GET': True, 
     }
 }
+TEMPLATES[0]['OPTIONS']['debug'] = True
+
+# Добавьте настройки Celery
+CELERY_WORKER_POOL = 'solo'
+CELERY_BROKER_URL = 'redis://redis:6379/0'
+CELERY_RESULT_BACKEND = 'redis://redis:6379/0'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'UTC'
 
 WEBPUSH_SETTINGS = {
     "VAPID_PUBLIC_KEY": "BFTnI0-japfr3vyHgVnVWcX3OY4ErYXVrNhY9Xxe1KmJ_qXfUspPGxjX7gbg3XJ21BpktlYiPfouzwYjRWRi2A8",
@@ -370,5 +384,3 @@ KyF5ReXThL3jdiq7wwIdZt1cVcChRANCAARU5yNPo2qX6978h4FZ1VnF9zmOBK2F
 """,
     "VAPID_ADMIN_EMAIL": "tsigma.team@gmail.com"
 }
-
-TEMPLATES[0]['OPTIONS']['debug'] = True

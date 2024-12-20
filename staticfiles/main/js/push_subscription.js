@@ -1,9 +1,9 @@
 // static/main/js/push_subscription.js
 
 document.addEventListener('DOMContentLoaded', function() {
-    const publicVapidKey = 'LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUZrd0V3WUhLb1pJemowQ0FRWUlLb1pJemowREFRY0RRZ0FFU2pXOXNSaXhDcllDK2JuOEJtd2MybnJ1bkwrMQo0MHRSR2VGalBOOVVOd0E3NnNiUTFRUWdXeFA4NHd2cW1xNXZ4R1plaFJVQnA4QnhFWmY4TlNwYW1nPT0KLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0tCg';
+    const publicVapidKey = "BFTnI0-japfr3vyHgVnVWcX3OY4ErYXVrNhY9Xxe1KmJ_qXfUspPGxjX7gbg3XJ21BpktlYiPfouzwYjRWRi2A8"; //?
 
-    // Функция для конвертации ключа из base64 в Uint8Array
+    // Функция для конвертации ключа из base64url в Uint8Array
     function urlBase64ToUint8Array(base64String) {
         const padding = '='.repeat((4 - base64String.length % 4) % 4);
         const base64 = (base64String + padding)
@@ -19,7 +19,6 @@ document.addEventListener('DOMContentLoaded', function() {
         return outputArray;
     }
 
-    // Регистрация Service Worker
     if ('serviceWorker' in navigator) {
         registerServiceWorker();
     } else {
@@ -37,12 +36,13 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
 
-      // Подписка пользователя на push-уведомления
-      function subscribeUser(registration) {
+    function subscribeUser(registration) {
         const subscribeOptions = {
             userVisibleOnly: true,
             applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
         };
+
+        console.log(subscribeOptions)
 
         registration.pushManager.subscribe(subscribeOptions)
             .then(function(pushSubscription) {
@@ -54,21 +54,23 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
 
-    // Отправка подписки на сервер
     function sendSubscriptionToServer(subscription) {
-        fetch('/salons/subscribe_push/', {
+        fetch('/subscribe_push/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRFToken': getCookie('csrftoken') // Убедитесь, что CSRF-токен передаётся корректно
+                'X-CSRFToken': getCookie('csrftoken')
             },
+            credentials: 'same-origin',  // для включения cookies
             body: JSON.stringify(subscription)
         })
         .then(function(response) {
             if (response.ok) {
                 console.log('Подписка успешно зарегистрирована на сервере.');
             } else {
-                console.error('Ошибка при отправке подписки на сервер.');
+                response.json().then(data => {
+                    console.error('Ошибка при отправке подписки на сервер:', data);
+                });
             }
         })
         .catch(function(error) {
@@ -76,14 +78,13 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Функция для получения CSRF-токена
     function getCookie(name) {
         let cookieValue = null;
         if (document.cookie && document.cookie !== '') {
             const cookies = document.cookie.split(';');
             for (let i = 0; i < cookies.length; i++) {
                 const cookie = cookies[i].trim();
-                // Проверяем, начинается ли куки с нужного имени
+
                 if (cookie.substring(0, name.length + 1) === (name + '=')) {
                     cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
                     break;

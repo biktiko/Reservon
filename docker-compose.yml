@@ -1,0 +1,57 @@
+# docker-compose.yml
+
+services:
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    networks:
+      - app-network
+    restart: always
+
+  web:
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/code
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+    networks:
+      - app-network
+    restart: always
+    env_file:
+      - .env
+
+  worker:
+    build: .
+    command: celery -A reservon.celery_app worker -l info -P solo
+    volumes:
+      - .:/code
+    depends_on:
+      - redis
+    networks:
+      - app-network
+    restart: always
+    env_file:
+      - .env
+
+  flower:
+    build: .
+    command: celery -A reservon.celery_app flower --port=5555
+    volumes:
+      - .:/code
+    ports:
+      - "5555:5555"
+    depends_on:
+      - redis
+    networks:
+      - app-network
+    restart: always
+    env_file:
+      - .env
+
+networks:
+  app-network:
+    driver: bridge
