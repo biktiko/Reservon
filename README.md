@@ -1,2 +1,2 @@
 # Reservon
- Web-app for reserv salons in Yerevah
+ Web-app for reserv salons in Armenia

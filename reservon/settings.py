@@ -378,12 +378,16 @@ CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'UTC'
 
 if not DEBUG and CELERY_BROKER_URL and CELERY_BROKER_URL.startswith('rediss://'):
-    BROKER_USE_SSL = {
+    broker_use_ssl = {
         'ssl_cert_reqs': 'CERT_NONE'
     }
-    RESULT_BACKEND_USE_SSL = {
+
+    redis_backend_use_ssl = {
         'ssl_cert_reqs': 'CERT_NONE'
     }
+
+    CELERY_BROKER_USE_SSL = broker_use_ssl
+    CELERY_REDIS_BACKEND_USE_SSL = redis_backend_use_ssl
 
 WEBPUSH_SETTINGS = {
     "VAPID_PUBLIC_KEY": "BFTnI0-japfr3vyHgVnVWcX3OY4ErYXVrNhY9Xxe1KmJ_qXfUspPGxjX7gbg3XJ21BpktlYiPfouzwYjRWRi2A8",
