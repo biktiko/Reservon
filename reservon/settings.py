@@ -378,12 +378,11 @@ CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'UTC'
 
 if not DEBUG and CELERY_BROKER_URL and CELERY_BROKER_URL.startswith('rediss://'):
-    import ssl
     BROKER_USE_SSL = {
-        'ssl_cert_reqs': ssl.CERT_NONE
+        'ssl_cert_reqs': 'CERT_NONE'
     }
     RESULT_BACKEND_USE_SSL = {
-        'ssl_cert_reqs': ssl.CERT_NONE
+        'ssl_cert_reqs': 'CERT_NONE'
     }
 
 WEBPUSH_SETTINGS = {
