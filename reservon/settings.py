@@ -233,8 +233,6 @@ ALLOWED_HOSTS = [
     '127.0.0.1'
     ]
 
-import sys
-
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -365,9 +363,15 @@ SOCIALACCOUNT_PROVIDERS = {
 TEMPLATES[0]['OPTIONS']['debug'] = True
 
 # Добавьте настройки Celery
+
+if DEBUG:
+    CELERY_BROKER_URL = 'redis://redis:6379/0'
+    CELERY_RESULT_BACKEND = 'redis://redis:6379/0'
+else:
+    CELERY_BROKER_URL = os.environ.get('REDIS_URL')
+    CELERY_RESULT_BACKEND = os.environ.get('REDIS_URL')
+
 CELERY_WORKER_POOL = 'solo'
-CELERY_BROKER_URL = 'redis://redis:6379/0'
-CELERY_RESULT_BACKEND = 'redis://redis:6379/0'
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
