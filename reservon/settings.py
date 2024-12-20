@@ -377,19 +377,18 @@ CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'UTC'
 
 
-if not DEBUG and CELERY_BROKER_URL.startswith('rediss://'):
-    # Аналогично логике из документации для кэша: ssl_cert_reqs=None
-    # Уберём все попытки использовать ssl.CERT_NONE или строки,
-    # и попробуем None, как в примере для CACHES
+if not DEBUG:
+
     BROKER_USE_SSL = {
-        'ssl_cert_reqs': None
+        'ssl_cert_reqs': ssl.CERT_NONE
     }
     RESULT_BACKEND_USE_SSL = {
-        'ssl_cert_reqs': None
+        'ssl_cert_reqs': ssl.CERT_NONE
     }
 
     CELERY_BROKER_USE_SSL = BROKER_USE_SSL
     CELERY_REDIS_BACKEND_USE_SSL = RESULT_BACKEND_USE_SSL
+
 
 
 
