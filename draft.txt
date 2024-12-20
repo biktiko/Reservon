@@ -10,9 +10,24 @@ C:\Reservon\Reservon\
 Запустите Docker Compose на Сервере:
 docker-compose up -d --build
 
-
 Flower
 http://localhost:5555
+
+
+ручная отписка с консоли браузера
+navigator.serviceWorker.ready.then(registration => {
+    registration.pushManager.getSubscription().then(subscription => {
+        if (subscription) {
+            subscription.unsubscribe().then(success => {
+                console.log('Подписка успешно отписана:', success);
+            }).catch(error => {
+                console.error('Ошибка при отписке:', error);
+            });
+        } else {
+            console.log('Нет активных подписок.');
+        }
+    });
+});
 
 // static/main/js/push_subscription.js
 

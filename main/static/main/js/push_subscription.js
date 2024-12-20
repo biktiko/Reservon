@@ -1,7 +1,7 @@
 // static/main/js/push_subscription.js
 
 document.addEventListener('DOMContentLoaded', function() {
-    const publicVapidKey = "BFTnI0-japfr3vyHgVnVWcX3OY4ErYXVrNhY9Xxe1KmJ_qXfUspPGxjX7gbg3XJ21BpktlYiPfouzwYjRWRi2A8"; //?
+    const publicVapidKey = "BP-1Jkn85ndvrY2m0_F2KArCKEBmw0vPp9BjPPjreL-WORMW3GUjTLPbQ1teQT5A_-sgu2Lfn59Gtb5S69X_Dho"; 
 
     // Функция для конвертации ключа из base64url в Uint8Array
     function urlBase64ToUint8Array(base64String) {
