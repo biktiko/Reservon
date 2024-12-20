@@ -377,13 +377,18 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'UTC'
 
+import ssl
+
 if not DEBUG and CELERY_BROKER_URL and CELERY_BROKER_URL.startswith('rediss://'):
     BROKER_USE_SSL = {
-        'ssl_cert_reqs': None
+        'ssl': True,
+        'ssl_cert_reqs': ssl.CERT_NONE
     }
     RESULT_BACKEND_USE_SSL = {
-        'ssl_cert_reqs': None
+        'ssl': True,
+        'ssl_cert_reqs': ssl.CERT_NONE
     }
+
 
 WEBPUSH_SETTINGS = {
     "VAPID_PUBLIC_KEY": "BFTnI0-japfr3vyHgVnVWcX3OY4ErYXVrNhY9Xxe1KmJ_qXfUspPGxjX7gbg3XJ21BpktlYiPfouzwYjRWRi2A8",
