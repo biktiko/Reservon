@@ -104,7 +104,7 @@ ROOT_URLCONF = 'reservon.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')],  # You can add template directories here if needed
+        'DIRS': [os.path.join(BASE_DIR, 'reservon', 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -360,12 +360,12 @@ SOCIALACCOUNT_PROVIDERS = {
 }
 
 WEBPUSH_SETTINGS = {
-    "VAPID_PUBLIC_KEY": "LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUZrd0V3WUhLb1pJemowQ0FRWUlLb1pJemowREFRY0RRZ0FFU2pXOXNSaXhDcllDK2JuOEJtd2MybnJ1bkwrMQo0MHRSR2VGalBOOVVOd0E3NnNiUTFRUWdXeFA4NHd2cW1xNXZ4R1plaFJVQnA4QnhFWmY4TlNwYW1nPT0KLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0tCg",
+    "VAPID_PUBLIC_KEY": "BFTnI0-japfr3vyHgVnVWcX3OY4ErYXVrNhY9Xxe1KmJ_qXfUspPGxjX7gbg3XJ21BpktlYiPfouzwYjRWRi2A8",
     "VAPID_PRIVATE_KEY": """
 -----BEGIN PRIVATE KEY-----
-MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgQpJ2lBgUMTFaFnpt
-FImYNLXY7o8xfdIhZ9h4EdYOsC+hRANCAARKNb2xGLEKtgL5ufwGbBzaeu6cv7Xj
-S1EZ4WM831Q3ADvqxtDVBCBbE/zjC+qarm/EZl6FFQGnwHERl/w1Klqa
+MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgvNdm62CO8dVwbN2C
+KyF5ReXThL3jdiq7wwIdZt1cVcChRANCAARU5yNPo2qX6978h4FZ1VnF9zmOBK2F
+1azYWPV8XtSpif6l31LKTxsY1+4G4N1ydtQaZLZWIj36Ls8GI0VkYtgP
 -----END PRIVATE KEY-----
 """,
     "VAPID_ADMIN_EMAIL": "tsigma.team@gmail.com"

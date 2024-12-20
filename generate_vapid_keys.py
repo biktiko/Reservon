@@ -16,16 +16,16 @@ def generate_vapid_keys():
         encryption_algorithm=serialization.NoEncryption()
     )
 
-    # Сериализация публичного ключа в PEM формат
-    public_pem = public_key.public_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PublicFormat.SubjectPublicKeyInfo
+    # Сериализация публичного ключа в uncompressed point формате
+    public_bytes = public_key.public_bytes(
+        encoding=serialization.Encoding.X962,
+        format=serialization.PublicFormat.UncompressedPoint
     )
 
     # Кодирование публичного ключа в base64url без заполнителей
-    public_b64 = base64.urlsafe_b64encode(public_pem).rstrip(b'=').decode('utf-8')
+    public_b64url = base64.urlsafe_b64encode(public_bytes).rstrip(b'=').decode('utf-8')
 
-    return private_pem.decode('utf-8'), public_b64
+    return private_pem.decode('utf-8'), public_b64url
 
 if __name__ == "__main__":
     private_key, public_key = generate_vapid_keys()

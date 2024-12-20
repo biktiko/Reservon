@@ -15,9 +15,7 @@ from django.views.decorators.cache import cache_page
 from django.db.models import Prefetch
 from collections import defaultdict
 from django.core.cache import cache
-from webpush.models import PushInformation
-from pywebpush import webpush, WebPushException
-from django.conf import settings
+
 import logging
 
 logger = logging.getLogger('booking')
@@ -568,37 +566,6 @@ def book_appointment(request, id):
         if appointments_to_create:
             appointment.barber_services.set(appointments_to_create)
 
-        admins = salon.admins.all()
-
-        for admin in admins:
-            push_infos = PushInformation.objects.filter(user=admin)
-            for push_info in push_infos:
-                subscription = push_info.subscription
-                subscription_info = {
-                    "endpoint": subscription.endpoint,
-                    "keys": {
-                        "p256dh": subscription.p256dh,
-                        "auth": subscription.auth,
-                    }
-                }
-                payload = {
-                    "head": "Новое бронирование",
-                    "body": f"Пользователь {request.user.username} успешно забронировал услугу.",
-                    "icon": "/static/main/img/notification-icon.png",
-                    "url": "/user_account/bookings/"
-                }
-                try:
-                    webpush(
-                        subscription_info=subscription_info,
-                        data=json.dumps(payload),
-                        vapid_private_key=settings.WEBPUSH_SETTINGS["VAPID_PRIVATE_KEY"],
-                        vapid_claims={
-                            "sub": f"mailto:{settings.WEBPUSH_SETTINGS['VAPID_ADMIN_EMAIL']}",
-                        }
-                    )
-                except WebPushException as ex:
-                    logger.error(f"Ошибка при отправке уведомления пользователю {admin.username}: {ex}")
-    
         logger.info(f"Бронирование успешно создано для пользователя - {request.user if request.user.is_authenticated else 'Анонимный пользователь'}")
         return JsonResponse({'success': True, 'message': 'Бронирование успешно создано!'})
     

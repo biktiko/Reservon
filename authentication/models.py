@@ -19,4 +19,14 @@ class Profile(models.Model):
 
     def __str__(self):
         return f"{self.user.first_name} ({self.phone_number})"
+
+class PushSubscription(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='push_subscriptions', null=True, blank=True)
+    endpoint = models.URLField(unique=True)
+    p256dh = models.CharField(max_length=255)
+    auth = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.endpoint
         
