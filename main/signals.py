@@ -1,5 +1,5 @@
 from authentication.models import PushSubscription
-from salons.models import Appointment
+from salons.models import Appointment, AppointmentBarberService
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from .tasks import send_push_notification_task
@@ -9,7 +9,7 @@ import logging
 
 logger = logging.getLogger('main')
 
-@receiver(post_save, sender=Appointment)
+@receiver(post_save, sender=AppointmentBarberService)
 def notify_admins_on_new_booking(sender, instance, created, **kwargs):
     if created:
         salon = instance.salon
