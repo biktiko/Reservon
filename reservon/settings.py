@@ -363,7 +363,6 @@ SOCIALACCOUNT_PROVIDERS = {
 }
 TEMPLATES[0]['OPTIONS']['debug'] = True
 
-# Добавьте настройки Celery
 
 if DEBUG:
     CELERY_BROKER_URL = 'redis://redis:6379/0'
@@ -379,16 +378,14 @@ CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'UTC'
 
 if CELERY_BROKER_URL and CELERY_BROKER_URL.startswith('rediss://'):
-    # Отключаем проверку сертификатов
     CELERY_BROKER_USE_SSL = {
-        'ssl_cert_reqs': ssl.CERT_NONE
+        'ssl_cert_reqs': 'CERT_NONE'
     }
 
-    # Аналогично для результата, если также rediss://
-    if CELERY_RESULT_BACKEND and CELERY_RESULT_BACKEND.startswith('rediss://'):
-        CELERY_RESULT_BACKEND_USE_SSL = {
-            'ssl_cert_reqs': ssl.CERT_NONE
-        }
+if CELERY_RESULT_BACKEND and CELERY_RESULT_BACKEND.startswith('rediss://'):
+    CELERY_RESULT_BACKEND_USE_SSL = {
+        'ssl_cert_reqs': 'CERT_NONE'
+    }
 
 WEBPUSH_SETTINGS = {
     "VAPID_PUBLIC_KEY": "BFTnI0-japfr3vyHgVnVWcX3OY4ErYXVrNhY9Xxe1KmJ_qXfUspPGxjX7gbg3XJ21BpktlYiPfouzwYjRWRi2A8",
