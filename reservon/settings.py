@@ -382,12 +382,16 @@ import ssl
 if not DEBUG and CELERY_BROKER_URL and CELERY_BROKER_URL.startswith('rediss://'):
     BROKER_USE_SSL = {
         'ssl': True,
-        'ssl_cert_reqs': ssl.CERT_NONE
+        'ssl_cert_reqs': 'CERT_NONE'
     }
-    RESULT_BACKEND_USE_SSL = {
+    REDIS_BACKEND_USE_SSL = {
         'ssl': True,
-        'ssl_cert_reqs': ssl.CERT_NONE
+        'ssl_cert_reqs': 'CERT_NONE'
     }
+
+    CELERY_BROKER_USE_SSL = BROKER_USE_SSL
+    CELERY_REDIS_BACKEND_USE_SSL = REDIS_BACKEND_USE_SSL
+
 
 
 WEBPUSH_SETTINGS = {
