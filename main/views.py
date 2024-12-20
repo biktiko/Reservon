@@ -25,9 +25,8 @@ def contacts(request):
 def search_salons(request):
     return redirect('salons:salons_main')
 
-
 @csrf_exempt
-@login_required  # Убедитесь, что только аутентифицированные пользователи могут подписываться
+@login_required
 def subscribe_push(request):
     if request.method == 'POST':
         try:

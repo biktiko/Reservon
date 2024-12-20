@@ -15,6 +15,9 @@ from django.views.decorators.cache import cache_page
 from django.db.models import Prefetch
 from collections import defaultdict
 from django.core.cache import cache
+from django.dispatch import receiver
+from main.tasks import send_push_notification_task
+from authentication.models import PushSubscription
 
 import logging
 
@@ -565,6 +568,26 @@ def book_appointment(request, id):
         # Связываем созданные AppointmentBarberService с Appointment
         if appointments_to_create:
             appointment.barber_services.set(appointments_to_create)
+
+        admins = salon.admins.all()
+        for admin in admins:
+            push_subscriptions = PushSubscription.objects.filter(user=admin)
+            for subscription in push_subscriptions:
+                subscription_info = {
+                    "endpoint": subscription.endpoint,
+                    "keys": {
+                        "p256dh": subscription.p256dh,
+                        "auth": subscription.auth,
+                    }
+                }
+                payload = {
+                    "head": "Новое бронирование",
+                    "body": f"Пользователь успешно забронировал услугу.",
+                    "icon": "/static/main/img/notification-icon.png",
+                    "url": "/user_account/bookings/"
+                }
+                send_push_notification_task.delay(subscription_info, json.dumps(payload))
+                logger.info(f"Задача на отправку уведомления создана для {admin.username}.")
 
         logger.info(f"Бронирование успешно создано для пользователя - {request.user if request.user.is_authenticated else 'Анонимный пользователь'}")
         return JsonResponse({'success': True, 'message': 'Бронирование успешно создано!'})
