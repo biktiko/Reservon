@@ -3,11 +3,20 @@
 document.addEventListener('DOMContentLoaded', function() {
     const publicVapidKey = "BP-1Jkn85ndvrY2m0_F2KArCKEBmw0vPp9BjPPjreL-WORMW3GUjTLPbQ1teQT5A_-sgu2Lfn59Gtb5S69X_Dho"; 
 
+    // Для сравнения двух Uint8Array
+    function arraysAreEqual(a1, a2) {
+        if (!a1 || !a2 || a1.length !== a2.length) return false;
+        for (let i = 0; i < a1.length; i++) {
+            if (a1[i] !== a2[i]) return false;
+        }
+        return true;
+    }
+
     // Функция для конвертации ключа из base64url в Uint8Array
     function urlBase64ToUint8Array(base64String) {
         const padding = '='.repeat((4 - base64String.length % 4) % 4);
         const base64 = (base64String + padding)
-            .replace(/\-/g, '+')
+            .replace(/-/g, '+')
             .replace(/_/g, '/');
 
         const rawData = window.atob(base64);
@@ -36,22 +45,41 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
 
-    function subscribeUser(registration) {
-        const subscribeOptions = {
-            userVisibleOnly: true,
-            applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
-        };
+    async function subscribeUser(registration) {
+        try {
+            const newKey = urlBase64ToUint8Array(publicVapidKey);
 
-        console.log(subscribeOptions)
+            // Проверяем, нет ли уже подписки в браузере
+            const existingSubscription = await registration.pushManager.getSubscription();
+            if (existingSubscription) {
+                const oldKey = existingSubscription.options.applicationServerKey;
+                // Если ключи совпадают, переиспользуем существующую подписку
+                if (arraysAreEqual(oldKey, newKey)) {
+                    console.log('Уже есть подписка с тем же ключом, отправим её на сервер...');
+                    sendSubscriptionToServer(existingSubscription);
+                    return;
+                } else {
+                    // Ключи не совпадают, значит отписываемся и подписываемся заново
+                    await existingSubscription.unsubscribe();
+                    console.log('Старая подписка отписана, ключи различались.');
+                }
+            }
 
-        registration.pushManager.subscribe(subscribeOptions)
-            .then(function(pushSubscription) {
-                console.log('Получена подписка на push:', pushSubscription);
-                sendSubscriptionToServer(pushSubscription);
-            })
-            .catch(function(error) {
-                console.error('Ошибка при подписке на push:', error);
-            });
+            // Создаём новую подписку
+            const subscribeOptions = {
+                userVisibleOnly: true,
+                applicationServerKey: newKey
+            };
+            console.log('Подписываемся с новым ключом:', subscribeOptions);
+
+            const pushSubscription = await registration.pushManager.subscribe(subscribeOptions);
+            console.log('Получена новая подписка на push:', pushSubscription);
+
+            // Отправляем подписку на сервер
+            sendSubscriptionToServer(pushSubscription);
+        } catch (error) {
+            console.error('Ошибка при подписке на push:', error);
+        }
     }
 
     function sendSubscriptionToServer(subscription) {
@@ -78,6 +106,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // ручное отписывания пользователя
     async function unsubscribeUser() {
         try {
             const registration = await navigator.serviceWorker.ready;
@@ -87,7 +116,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 const success = await subscription.unsubscribe();
                 if (success) {
                     console.log('Подписка успешно отписана.');
-                    // Опционально: отправьте информацию об отписке на сервер для удаления записи
+
+                    // Запрос на сервер для удаления записи из БД
                     await fetch('/unsubscribe/', {
                         method: 'POST',
                         body: JSON.stringify({ endpoint: subscription.endpoint }),
@@ -105,22 +135,6 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Ошибка при отписке:', error);
         }
     }
-
-    function urlBase64ToUint8Array(base64String) {
-        const padding = '='.repeat((4 - base64String.length % 4) % 4);
-        const base64 = (base64String + padding)
-            .replace(/\-/g, '+')
-            .replace(/_/g, '/');
-
-        const rawData = window.atob(base64);
-        const outputArray = new Uint8Array(rawData.length);
-
-        for (let i = 0; i < rawData.length; ++i) {
-            outputArray[i] = rawData.charCodeAt(i);
-        }
-        return outputArray;
-    }
-
 
     function getCookie(name) {
         let cookieValue = null;
