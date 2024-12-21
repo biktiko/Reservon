@@ -54,6 +54,27 @@ def subscribe_push(request):
             return JsonResponse({"success": False, "error": str(e)}, status=500)
     return JsonResponse({"error": "Invalid request method"}, status=400)
 
+
+
+@csrf_exempt
+def unsubscribe_push(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            endpoint = data.get('endpoint')
+
+            if not endpoint:
+                return JsonResponse({"success": False, "error": "Invalid subscription data"}, status=400)
+
+            # Удаление подписки из базы данных
+            PushSubscription.objects.filter(endpoint=endpoint).delete()
+
+            return JsonResponse({'status': 'unsubscribed'}, status=200)
+        except json.JSONDecodeError:
+            return JsonResponse({"success": False, "error": "Invalid JSON"}, status=400)
+        except Exception as e:
+            return JsonResponse({"success": False, "error": str(e)}, status=500)
+    return JsonResponse({'error': 'Invalid method'}, status=400)
 # def send_push_notification(subscription_info, message_body):
 #     try:
 #         response = webpush(
