@@ -78,6 +78,50 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    async function unsubscribeUser() {
+        try {
+            const registration = await navigator.serviceWorker.ready;
+            const subscription = await registration.pushManager.getSubscription();
+    
+            if (subscription) {
+                const success = await subscription.unsubscribe();
+                if (success) {
+                    console.log('Подписка успешно отписана.');
+                    // Опционально: отправьте информацию об отписке на сервер для удаления записи
+                    await fetch('/unsubscribe/', {
+                        method: 'POST',
+                        body: JSON.stringify({ endpoint: subscription.endpoint }),
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                } else {
+                    console.log('Не удалось отписаться от подписки.');
+                }
+            } else {
+                console.log('Нет активных подписок для отписки.');
+            }
+        } catch (error) {
+            console.error('Ошибка при отписке:', error);
+        }
+    }
+
+    function urlBase64ToUint8Array(base64String) {
+        const padding = '='.repeat((4 - base64String.length % 4) % 4);
+        const base64 = (base64String + padding)
+            .replace(/\-/g, '+')
+            .replace(/_/g, '/');
+
+        const rawData = window.atob(base64);
+        const outputArray = new Uint8Array(rawData.length);
+
+        for (let i = 0; i < rawData.length; ++i) {
+            outputArray[i] = rawData.charCodeAt(i);
+        }
+        return outputArray;
+    }
+
+
     function getCookie(name) {
         let cookieValue = null;
         if (document.cookie && document.cookie !== '') {

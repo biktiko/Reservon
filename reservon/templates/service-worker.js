@@ -1,4 +1,4 @@
-// C:\Reservon\Reservon\reservon\templates\service-worker.js
+// C:\Reservon\reservon\reservon\templates\service-worker.js
 self.addEventListener('push', function(event) {
     if (event.data) {
         const data = event.data.json();

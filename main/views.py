@@ -54,20 +54,20 @@ def subscribe_push(request):
             return JsonResponse({"success": False, "error": str(e)}, status=500)
     return JsonResponse({"error": "Invalid request method"}, status=400)
 
-def send_push_notification(subscription_info, message_body):
-    try:
-        response = webpush(
-            subscription_info=subscription_info,
-            data=message_body,
-            vapid_private_key=settings.WEBPUSH_SETTINGS["VAPID_PRIVATE_KEY"],
-            vapid_claims={
-                "sub": f"mailto:{settings.WEBPUSH_SETTINGS['VAPID_ADMIN_EMAIL']}",
-            }
-        )
-        logger.info(f"Уведомление успешно отправлено: {response}")
-        return response
-    except WebPushException as ex:
-        logger.error(f"Ошибка при отправке push уведомления: {ex}")
-        if ex.response and ex.response.json():
-            logger.error(f"Детали ошибки: {ex.response.json()}")
-        return None
+# def send_push_notification(subscription_info, message_body):
+#     try:
+#         response = webpush(
+#             subscription_info=subscription_info,
+#             data=message_body,
+#             vapid_private_key=settings.WEBPUSH_SETTINGS["VAPID_PRIVATE_KEY"],
+#             vapid_claims={
+#                 "sub": f"mailto:{settings.WEBPUSH_SETTINGS['VAPID_ADMIN_EMAIL']}",
+#             }
+#         )
+#         logger.info(f"Уведомление успешно отправлено: {response}")
+#         return response
+#     except WebPushException as ex:
+#         logger.error(f"Ошибка при отправке push уведомления: {ex}")
+#         if ex.response and ex.response.json():
+#             logger.error(f"Детали ошибки: {ex.response.json()}")
+#         return None
