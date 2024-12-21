@@ -1,7 +1,7 @@
 // static/main/js/push_subscription.js
 
 document.addEventListener('DOMContentLoaded', function() {
-    const publicVapidKey = "BFTnI0-japfr3vyHgVnVWcX3OY4ErYXVrNhY9Xxe1KmJ_qXfUspPGxjX7gbg3XJ21BpktlYiPfouzwYjRWRi2A8"; //?
+    const publicVapidKey = "BP-1Jkn85ndvrY2m0_F2KArCKEBmw0vPp9BjPPjreL-WORMW3GUjTLPbQ1teQT5A_-sgu2Lfn59Gtb5S69X_Dho"; 
 
     // Функция для конвертации ключа из base64url в Uint8Array
     function urlBase64ToUint8Array(base64String) {
@@ -77,6 +77,50 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Ошибка при отправке подписки на сервер:', error);
         });
     }
+
+    async function unsubscribeUser() {
+        try {
+            const registration = await navigator.serviceWorker.ready;
+            const subscription = await registration.pushManager.getSubscription();
+    
+            if (subscription) {
+                const success = await subscription.unsubscribe();
+                if (success) {
+                    console.log('Подписка успешно отписана.');
+                    // Опционально: отправьте информацию об отписке на сервер для удаления записи
+                    await fetch('/unsubscribe/', {
+                        method: 'POST',
+                        body: JSON.stringify({ endpoint: subscription.endpoint }),
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                } else {
+                    console.log('Не удалось отписаться от подписки.');
+                }
+            } else {
+                console.log('Нет активных подписок для отписки.');
+            }
+        } catch (error) {
+            console.error('Ошибка при отписке:', error);
+        }
+    }
+
+    function urlBase64ToUint8Array(base64String) {
+        const padding = '='.repeat((4 - base64String.length % 4) % 4);
+        const base64 = (base64String + padding)
+            .replace(/\-/g, '+')
+            .replace(/_/g, '/');
+
+        const rawData = window.atob(base64);
+        const outputArray = new Uint8Array(rawData.length);
+
+        for (let i = 0; i < rawData.length; ++i) {
+            outputArray[i] = rawData.charCodeAt(i);
+        }
+        return outputArray;
+    }
+
 
     function getCookie(name) {
         let cookieValue = null;
