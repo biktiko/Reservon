@@ -584,8 +584,7 @@ def book_appointment(request, id):
                     "head": "Новое бронирование",
                     "body": f"Пользователь успешно забронировал услугу.",
                     "icon": "/static/main/img/notification-icon.png",
-                    "url": "/user_account/bookings/"
-                }
+                    "url": "/user-account/bookings/"                }
                 send_push_notification_task.delay(subscription_info, json.dumps(payload))
                 logger.info(f"Задача на отправку уведомления создана для {admin.username}.")
 

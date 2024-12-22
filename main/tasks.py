@@ -20,7 +20,7 @@ def send_push_notification_task(subscription_info, payload):
             }
         )
         logger.info(f"Уведомление успешно отправлено: {response}")
-        return response
+        return {"status": response.status_code, "reason": response.reason}
     except WebPushException as ex:
         logger.error(f"Ошибка при отправке push уведомления: {ex}")
         if ex.response and ex.response.json():
