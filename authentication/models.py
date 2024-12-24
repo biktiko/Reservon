@@ -21,7 +21,7 @@ class Profile(models.Model):
         return f"{self.user.first_name} ({self.phone_number})"
 
 class PushSubscription(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='push_subscriptions', null=True, blank=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='push_subscriptions', null=True, blank=True, unique=True)
     endpoint = models.URLField(unique=True, max_length=1000)  # Увеличьте длину поля
     p256dh = models.CharField(max_length=255)
     auth = models.CharField(max_length=255)

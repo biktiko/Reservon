@@ -8,7 +8,6 @@ from authentication.models import PushSubscription
 from django.conf import settings
 from pywebpush import webpush, WebPushException
 
-
 import logging
 
 logger = logging.getLogger('main')
@@ -43,7 +42,8 @@ def subscribe_push(request):
 
             # Сохранение подписки в базе данных
             PushSubscription.objects.update_or_create(
-                endpoint=endpoint,
+                # endpoint=endpoint, # чтобы разрешить дубликаты
+                user=user,
                 defaults={'p256dh': p256dh, 'auth': auth, 'user': user}
             )
 
@@ -75,20 +75,3 @@ def unsubscribe_push(request):
         except Exception as e:
             return JsonResponse({"success": False, "error": str(e)}, status=500)
     return JsonResponse({'error': 'Invalid method'}, status=400)
-# def send_push_notification(subscription_info, message_body):
-#     try:
-#         response = webpush(
-#             subscription_info=subscription_info,
-#             data=message_body,
-#             vapid_private_key=settings.WEBPUSH_SETTINGS["VAPID_PRIVATE_KEY"],
-#             vapid_claims={
-#                 "sub": f"mailto:{settings.WEBPUSH_SETTINGS['VAPID_ADMIN_EMAIL']}",
-#             }
-#         )
-#         logger.info(f"Уведомление успешно отправлено: {response}")
-#         return response
-#     except WebPushException as ex:
-#         logger.error(f"Ошибка при отправке push уведомления: {ex}")
-#         if ex.response and ex.response.json():
-#             logger.error(f"Детали ошибки: {ex.response.json()}")
-#         return None
