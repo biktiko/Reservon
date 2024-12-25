@@ -296,6 +296,18 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': False,
         },
+                'boto3': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+        },
+        'botocore': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+        },
+        'django_storages': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+        }
     },
     'root': {
         'handlers': ['console', 'file'], 
