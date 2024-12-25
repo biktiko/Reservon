@@ -202,6 +202,7 @@ else:
     # AWS_SECRET_ACCESS_KEY = env('CLOUDFLARE_R2_SECRET_ACCESS_KEY')
     # AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.{env("CLOUDFLARE_R2_ACCOUNT_ID")}.r2.cloudflarestorage.com'
     # MEDIA_URL = f'https://reservon-media.{env("CLOUDFLARE_R2_ACCOUNT_ID")}.r2.cloudflarestorage.com/media/'
+    # DEFAULT_FILE_STORAGE = 'reservon.custom_storages.MediaStorage' 
 
     AWS_ACCESS_KEY_ID = env('AWS_ACCESS_KEY_ID')
     AWS_SECRET_ACCESS_KEY = env('AWS_SECRET_ACCESS_KEY')
@@ -212,16 +213,16 @@ else:
     AWS_S3_OBJECT_PARAMETERS = {
         'CacheControl': 'max-age=86400',
     }
-    AWS_DEFAULT_ACL = "private"
 
-    # Дополнительные настройки для совместимости с Cloudflare R2
-    AWS_S3_SIGNATURE_VERSION = 's3v4'
-    AWS_S3_ADDRESSING_STYLE = 'virtual'  #  'path' если 'virtual' не работает
-    AWS_QUERYSTRING_AUTH = False  # Для публичного доступа без подписей
+    # AWS_S3_SIGNATURE_VERSION = 's3v4'
+    AWS_S3_SIGNATURE_NAME = 's3v4'
+    AWS_S3_ADDRESSING_STYLE = 'virtual' 
+    # AWS_QUERYSTRING_AUTH = False
+    AWS_s3_FILE_OVERWRITE = False
+    AWS_DEFAULT_ACL = None
     AWS_S3_VERIFY = True 
 
     DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-    # DEFAULT_FILE_STORAGE = 'reservon.custom_storages.MediaStorage' 
 
     MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/'
 
