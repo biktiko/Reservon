@@ -198,12 +198,17 @@ if DEBUG:
     
 else:
     # Настройки Cloudflare R2
-    AWS_ACCESS_KEY_ID = env('CLOUDFLARE_R2_ACCESS_KEY_ID')
-    AWS_SECRET_ACCESS_KEY = env('CLOUDFLARE_R2_SECRET_ACCESS_KEY')
-    AWS_STORAGE_BUCKET_NAME = env('CLOUDFLARE_R2_BUCKET_NAME')
-    AWS_S3_REGION_NAME = 'auto'
-    AWS_S3_ENDPOINT_URL = f'https://{env("CLOUDFLARE_R2_ACCOUNT_ID")}.r2.cloudflarestorage.com'
-    AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.{env("CLOUDFLARE_R2_ACCOUNT_ID")}.r2.cloudflarestorage.com'
+    # AWS_ACCESS_KEY_ID = env('CLOUDFLARE_R2_ACCESS_KEY_ID')
+    # AWS_SECRET_ACCESS_KEY = env('CLOUDFLARE_R2_SECRET_ACCESS_KEY')
+    # AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.{env("CLOUDFLARE_R2_ACCOUNT_ID")}.r2.cloudflarestorage.com'
+    # AWS_S3_ENDPOINT_URL = f'https://{env("CLOUDFLARE_R2_ACCOUNT_ID")}.r2.cloudflarestorage.com'
+
+    AWS_ACCESS_KEY_ID = env('AWS_ACCESS_KEY_ID')
+    AWS_SECRET_ACCESS_KEY = env('AWS_SECRET_ACCESS_KEY')
+    AWS_STORAGE_BUCKET_NAME =  "reservon-media"
+    AWS_S3_REGION_NAME = 'eu-north-1'
+    AWS_S3_CUSTOM_DOMAIN = f"{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com"
+
     AWS_S3_OBJECT_PARAMETERS = {
         'CacheControl': 'max-age=86400',
     }
@@ -212,11 +217,11 @@ else:
     # Дополнительные настройки для совместимости с Cloudflare R2
     AWS_S3_SIGNATURE_VERSION = 's3v4'
     AWS_S3_ADDRESSING_STYLE = 'virtual'  #  'path' если 'virtual' не работает
-    AWS_QUERYSTRING_AUTH = True  # Для публичного доступа без подписей
+    AWS_QUERYSTRING_AUTH = False  # Для публичного доступа без подписей
     AWS_S3_VERIFY = True 
 
-    # DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-    DEFAULT_FILE_STORAGE = 'reservon.custom_storages.MediaStorage' 
+    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+    # DEFAULT_FILE_STORAGE = 'reservon.custom_storages.MediaStorage' 
 
     # MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
     MEDIA_URL = f'https://reservon-media.{env("CLOUDFLARE_R2_ACCOUNT_ID")}.r2.cloudflarestorage.com/media/'
