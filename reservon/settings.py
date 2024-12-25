@@ -212,7 +212,7 @@ else:
     AWS_S3_OBJECT_PARAMETERS = {
         'CacheControl': 'max-age=86400',
     }
-    AWS_DEFAULT_ACL = None
+    AWS_DEFAULT_ACL = "private"
 
     # Дополнительные настройки для совместимости с Cloudflare R2
     AWS_S3_SIGNATURE_VERSION = 's3v4'
