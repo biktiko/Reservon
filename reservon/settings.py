@@ -210,7 +210,7 @@ AWS_S3_VERIFY = True
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-AWS_LOCATION = 'static'
+AWS_LOCATION = 'media'
 if DEBUG:
     # Локальная разработка: используем FileSystemStorage для медиа файлов
     DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
