@@ -214,12 +214,11 @@ else:
         'CacheControl': 'max-age=86400',
     }
 
-    # AWS_S3_SIGNATURE_VERSION = 's3v4'
-    AWS_S3_SIGNATURE_NAME = 's3v4'
+    AWS_S3_SIGNATURE_VERSION = 's3v4'
     AWS_S3_ADDRESSING_STYLE = 'virtual' 
     # AWS_QUERYSTRING_AUTH = False
-    AWS_s3_FILE_OVERWRITE = False
-    AWS_DEFAULT_ACL = None
+    AWS_S3_FILE_OVERWRITE = False
+    AWS_DEFAULT_ACL = 'private'
     AWS_S3_VERIFY = True 
 
     DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
