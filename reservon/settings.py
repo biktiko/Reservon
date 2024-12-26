@@ -177,26 +177,58 @@ TIME_FORMAT = _('H:i')
 SHORT_DATE_FORMAT = DATE_FORMAT
 SHORT_TIME_FORMAT = TIME_FORMAT
 
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-STATIC_URL = '/static/'
 
+
+
+
+# Static files (CSS, JavaScript, Images)
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [
     BASE_DIR / "main/static/",
     BASE_DIR / "salons/static/",
     BASE_DIR / "authentication/static/",
 ]
 
-if DEBUG:
-    STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
-else:
-    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# AWS S3 Settings
+AWS_ACCESS_KEY_ID = env('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = env('AWS_SECRET_ACCESS_KEY')
+AWS_STORAGE_BUCKET_NAME = "media-reservon"
+AWS_S3_REGION_NAME = 'eu-north-1'
+AWS_S3_CUSTOM_DOMAIN = f"{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com"
 
+AWS_S3_OBJECT_PARAMETERS = {
+    'CacheControl': 'max-age=86400',
+}
+
+AWS_DEFAULT_ACL = 'private'
+AWS_S3_SIGNATURE_VERSION = 's3v4'
+AWS_S3_ADDRESSING_STYLE = 'virtual' 
+AWS_S3_FILE_OVERWRITE = False
+AWS_S3_VERIFY = True 
+
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+AWS_LOCATION = 'static'
 if DEBUG:
+    # Локальная разработка: используем FileSystemStorage для медиа файлов
+    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
     MEDIA_URL = '/media/'
     MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
-    
+    STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
 else:
+    # Продакшен: используем S3Boto3Storage для медиа файлов
+    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+    MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
+    STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/static/'
+    STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+
+# if DEBUG:
+#     MEDIA_URL = '/media/'
+#     MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+#     DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+    
+# else:
     # Настройки Cloudflare R2
     # AWS_ACCESS_KEY_ID = env('CLOUDFLARE_R2_ACCESS_KEY_ID')
     # AWS_SECRET_ACCESS_KEY = env('CLOUDFLARE_R2_SECRET_ACCESS_KEY')
@@ -204,29 +236,8 @@ else:
     # MEDIA_URL = f'https://reservon-media.{env("CLOUDFLARE_R2_ACCOUNT_ID")}.r2.cloudflarestorage.com/media/'
     # DEFAULT_FILE_STORAGE = 'reservon.custom_storages.MediaStorage' 
 
-    AWS_ACCESS_KEY_ID = env('AWS_ACCESS_KEY_ID')
-    AWS_SECRET_ACCESS_KEY = env('AWS_SECRET_ACCESS_KEY')
-    AWS_STORAGE_BUCKET_NAME =  "media-reservon" 
-    AWS_S3_REGION_NAME = 'eu-north-1'
-    AWS_S3_CUSTOM_DOMAIN = f"{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com"
+# AWS_S3_CUSTOM_DOMAIN = f"{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com"
 
-    AWS_S3_OBJECT_PARAMETERS = {
-        'CacheControl': 'max-age=86400',
-    }
-
-    AWS_S3_SIGNATURE_VERSION = 's3v4'
-    AWS_S3_ADDRESSING_STYLE = 'virtual' 
-    # AWS_QUERYSTRING_AUTH = False
-    AWS_S3_FILE_OVERWRITE = False
-    AWS_DEFAULT_ACL = 'private'
-    AWS_S3_VERIFY = True 
-
-    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-
-    MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/'
-
-
-    
 # Twilio Settings
 TWILIO_ACCOUNT_SID = env('TWILIO_ACCOUNT_SID')
 TWILIO_AUTH_TOKEN = env('TWILIO_AUTH_TOKEN')
@@ -295,7 +306,7 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': False,
         },
-                'boto3': {
+        'boto3': {
             'handlers': ['console'],
             'level': 'DEBUG',
         },
