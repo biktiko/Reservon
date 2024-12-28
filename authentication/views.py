@@ -6,7 +6,6 @@ from django.contrib.auth.models import User
 from django.shortcuts import redirect
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth import get_backends
-from django.urls import reverse
 import json
 import re
 import logging

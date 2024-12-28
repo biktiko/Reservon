@@ -45,9 +45,9 @@ INSTALLED_APPS = [
     'authentication',
     'main',
     'user_account.apps.UserAccountConfig',
-    'salons',
-    'debug_toolbar'
-]
+    'salons' 
+] # return debug_toolbar after test 
+
 
 DEBUG_TOOLBAR_PANELS = [
     'debug_toolbar.panels.history.HistoryPanel',
@@ -92,8 +92,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware',
     'debug_toolbar.middleware.DebugToolbarMiddleware',
-
-]
+]  # return debug_toolbar after test 
 
 INTERNAL_IPS = [
     '127.0.0.1',
@@ -178,9 +177,6 @@ SHORT_DATE_FORMAT = DATE_FORMAT
 SHORT_TIME_FORMAT = TIME_FORMAT
 
 
-
-
-
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
@@ -219,7 +215,8 @@ if DEBUG:
 else:
     # Продакшен: используем S3Boto3Storage для медиа файлов
     DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-    MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
+    MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_LOCATION}/'
+
     # STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/static/'
     # STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 
@@ -426,3 +423,13 @@ WEBPUSH_SETTINGS = {
     "VAPID_ADMIN_EMAIL": "tsigma.team@gmail.com"
 }
 
+# for test
+from django.core.files.storage import default_storage
+print("DEBUG =", DEBUG)
+print("DEFAULT_FILE_STORAGE =", DEFAULT_FILE_STORAGE)
+print("Before unwrapping default_storage:", default_storage.__class__)
+
+# Попытка ручной перезагрузки после settings
+default_storage._wrapped = None
+
+print("After unwrapping default_storage:", default_storage.__class__)
