@@ -4,3 +4,4 @@ todolist.txt
 .cpanel.yml
 debug.log
 .readthedocs.yaml
+copy_heroku_env.py
