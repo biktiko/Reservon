@@ -91,7 +91,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware',
-    'debug_toolbar.middleware.DebugToolbarMiddleware',
+    # 'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]  # return debug_toolbar after test 
 
 INTERNAL_IPS = [
@@ -187,26 +187,7 @@ STATICFILES_DIRS = [
 ]
 STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
 
-# AWS S3 Settings
-AWS_ACCESS_KEY_ID = env('AWS_ACCESS_KEY_ID')
-AWS_SECRET_ACCESS_KEY = env('AWS_SECRET_ACCESS_KEY')
-AWS_STORAGE_BUCKET_NAME = "media-reservon"
-AWS_S3_REGION_NAME = 'eu-north-1'
-AWS_S3_CUSTOM_DOMAIN = f"{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com"
 
-AWS_S3_OBJECT_PARAMETERS = {
-    'CacheControl': 'max-age=86400',
-}
-
-AWS_DEFAULT_ACL = 'private'
-AWS_S3_SIGNATURE_VERSION = 's3v4'
-AWS_S3_ADDRESSING_STYLE = 'virtual' 
-AWS_S3_FILE_OVERWRITE = False
-AWS_S3_VERIFY = True 
-
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
-AWS_LOCATION = 'media'
 if DEBUG:
     # Локальная разработка: используем FileSystemStorage для медиа файлов
     DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
@@ -214,6 +195,27 @@ if DEBUG:
     MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 else:
     # Продакшен: используем S3Boto3Storage для медиа файлов
+    # AWS S3 Settings
+    AWS_ACCESS_KEY_ID = env('AWS_ACCESS_KEY_ID')
+    AWS_SECRET_ACCESS_KEY = env('AWS_SECRET_ACCESS_KEY')
+    AWS_STORAGE_BUCKET_NAME = "media-reservon"
+    AWS_S3_REGION_NAME = 'eu-north-1'
+    AWS_S3_CUSTOM_DOMAIN = f"{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com"
+
+    AWS_S3_OBJECT_PARAMETERS = {
+        'CacheControl': 'max-age=86400',
+    }
+
+    AWS_DEFAULT_ACL = 'private'
+    AWS_S3_SIGNATURE_VERSION = 's3v4'
+    AWS_S3_ADDRESSING_STYLE = 'virtual' 
+    AWS_S3_FILE_OVERWRITE = False
+    AWS_S3_VERIFY = True 
+
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+    AWS_LOCATION = 'media'
+
     DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
     MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_LOCATION}/'
 
