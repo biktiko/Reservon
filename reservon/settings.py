@@ -432,6 +432,6 @@ print("DEFAULT_FILE_STORAGE =", DEFAULT_FILE_STORAGE)
 print("Before unwrapping default_storage:", default_storage.__class__)
 
 # Попытка ручной перезагрузки после settings
-default_storage._wrapped = None
+# default_storage._wrapped = None
 
-print("After unwrapping default_storage:", default_storage.__class__)
+# print("After unwrapping default_storage:", default_storage.__class__)
