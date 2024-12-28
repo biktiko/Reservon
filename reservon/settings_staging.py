@@ -1,5 +1,4 @@
-# reservon/settings.py
-
+# C:\Reservon\Reservon\reservon\settings_staging.py
 from pathlib import Path
 from django.utils.translation import gettext_lazy as _
 import os
