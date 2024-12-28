@@ -22,6 +22,7 @@ SECRET_KEY = env('SECRET_KEY')
 DEBUG = env('DEBUG')
 
 INSTALLED_APPS = [
+    'storages',
     'grappelli',
     'colorfield',
     'import_export',
@@ -41,7 +42,6 @@ INSTALLED_APPS = [
     'crispy_bootstrap4',
     'rest_framework',
     'webpush',
-    'storages',
     'authentication',
     'main',
     'user_account.apps.UserAccountConfig',
@@ -426,10 +426,10 @@ WEBPUSH_SETTINGS = {
 }
 
 # for test
-from django.core.files.storage import default_storage
-print("DEBUG =", DEBUG)
-print("DEFAULT_FILE_STORAGE =", DEFAULT_FILE_STORAGE)
-print("Before unwrapping default_storage:", default_storage.__class__)
+# from django.core.files.storage import default_storage
+# print("DEBUG =", DEBUG)
+# print("DEFAULT_FILE_STORAGE =", DEFAULT_FILE_STORAGE)
+# print("Before unwrapping default_storage:", default_storage.__class__)
 
 # Попытка ручной перезагрузки после settings
 # default_storage._wrapped = None
