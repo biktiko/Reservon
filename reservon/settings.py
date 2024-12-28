@@ -435,3 +435,10 @@ WEBPUSH_SETTINGS = {
 # default_storage._wrapped = None
 
 # print("After unwrapping default_storage:", default_storage.__class__)
+
+if not DEBUG:
+    from django.core.files.storage import default_storage
+    from storages.backends.s3boto3 import S3Boto3Storage
+
+    if not isinstance(default_storage._wrapped, S3Boto3Storage):
+        default_storage._wrapped = S3Boto3Storage()
