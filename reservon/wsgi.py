@@ -14,6 +14,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'reservon.settings')
+settings_module = os.getenv('DJANGO_SETTINGS_MODULE', 'reservon.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', settings_module)
 
 application = get_wsgi_application()
