@@ -301,9 +301,6 @@ def get_available_minutes(request):
                 minute_start_datetime = start_datetime + timedelta(minutes=minute)
                 minute_end_datetime = minute_start_datetime + timedelta(minutes=duration)
 
-                if minute_end_datetime > end_datetime:
-                    continue
-
                 # Проверяем, есть ли барбер, доступный в это время
                 barber_available = False
                 for barber in barbers:
