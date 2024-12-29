@@ -39,12 +39,6 @@ def subscribe_push(request):
 
             # Сохранение подписки в базе данных
             PushSubscription.objects.update_or_create(
-                # endpoint=endpoint, # чтобы разрешить дубликаты
-                user=user,
-                defaults={'p256dh': p256dh, 'auth': auth, 'user': user}
-            )
-
-            PushSubscription.objects.update_or_create(
                 user=user,
                 endpoint=endpoint,
                 defaults={
