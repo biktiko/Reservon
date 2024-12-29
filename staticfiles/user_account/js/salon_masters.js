@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', function(){
             event.stopPropagation();
             var barberId = this.dataset.barberId;
             var field = this.dataset.field;
-            fetch(`/user_account/barbers/${barberId}/edit_field/?field=${field}`,{
+            fetch(`/user-account/barbers/${barberId}/edit_field/?field=${field}`,{
                 headers: {'X-Requested-With':'XMLHttpRequest'}
             })
             .then(r => r.json())
@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', function(){
         element.addEventListener('click', function(e){
             e.stopPropagation();
             var barberId = this.dataset.barberId;
-            fetch(`/user_account/barbers/${barberId}/edit_photo/`,{
+            fetch(`/user-account/barbers/${barberId}/edit_photo/`,{
                 headers: {'X-Requested-With':'XMLHttpRequest'}
             })
             .then(r => r.json())
@@ -71,7 +71,7 @@ document.addEventListener('DOMContentLoaded', function(){
             e.stopPropagation();
             var barberId = this.dataset.barberId;
             var day = this.dataset.day;
-            fetch(`/user_account/barbers/${barberId}/edit_schedule/?day=${day}`,{
+            fetch(`/user-account/barbers/${barberId}/edit_schedule/?day=${day}`,{
                 headers: {'X-Requested-With':'XMLHttpRequest'}
             })
             .then(r => r.json())

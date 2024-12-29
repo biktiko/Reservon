@@ -1,4 +1,4 @@
-# account/views.py
+# user_account/views.py
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.db import models
@@ -66,7 +66,7 @@ def add_booking(request):
                 return JsonResponse({'success': False, 'errors': form.errors.as_json()}, status=400)
     else:
         form = AdminBookingForm()
-    return render(request, 'account/add_booking.html', {'form': form})
+    return render(request, 'user_account/add_booking.html', {'form': form})
 
 @login_required
 def edit_booking(request, booking_id):
@@ -545,8 +545,8 @@ def my_account_view(request):
     context = {
         'user_form': user_form,
         'profile_form': profile_form,
-        'phone_number': profile.phone_number,  # просто для отображения
-        'email': user.email,  # для отображения
+        'phone_number': profile.phone_number,
+        'email': user.email,
         'active_sidebar': 'account'
     }
     return render(request, 'user_account/my_account.html', context)
