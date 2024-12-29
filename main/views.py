@@ -2,11 +2,8 @@ from django.shortcuts import render, redirect
 import json
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
-from webpush.models import PushInformation, SubscriptionInfo
 from django.contrib.auth.decorators import login_required
 from authentication.models import PushSubscription
-from django.conf import settings
-from pywebpush import webpush, WebPushException
 
 import logging
 
@@ -46,6 +43,16 @@ def subscribe_push(request):
                 user=user,
                 defaults={'p256dh': p256dh, 'auth': auth, 'user': user}
             )
+
+            PushSubscription.objects.update_or_create(
+                user=user,
+                endpoint=endpoint,
+                defaults={
+                    'p256dh': p256dh,
+                    'auth': auth,
+                }
+            )
+
 
             return JsonResponse({"success": True})
         except json.JSONDecodeError:

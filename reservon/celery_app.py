@@ -3,8 +3,9 @@
 import os
 from celery import Celery
 
-# Установите переменную окружения Django settings
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'reservon.settings')  # Обратите внимание на регистр
+# переменную окружения Django settings
+settings_module = os.getenv('DJANGO_SETTINGS_MODULE', 'reservon.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', settings_module)
 
 app = Celery('reservon')
 
