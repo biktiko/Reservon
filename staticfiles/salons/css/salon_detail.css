@@ -161,12 +161,17 @@
     text-align: center;
 }
 
+.hours-info, .minutes-info{
+    margin-bottom: 0px;
+    margin-left: 12px;
+}
+
 .date-row, .hour-row, .minute-row {
     display: flex;
     flex-wrap: wrap; /* Позволяет перенос на новую строку */
     gap: 10px;
     justify-content: center;
-    margin-top: 10px;
+    margin-top: 0px;
     padding: 10px; /* Отступ внутри для центрирования */
 }
 
