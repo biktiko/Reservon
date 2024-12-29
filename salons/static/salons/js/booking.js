@@ -206,16 +206,6 @@ document.addEventListener('DOMContentLoaded', function() {
             totalServiceDuration = salonDefaultDuration;
         }
 
-        // Обновляем доступные минуты для выбранного часа, не сбрасывая выбор
-        const selectedDay = daySelect.querySelector('.selected');
-        const selectedHour = hourSelect.querySelector('.selected');
-        if (selectedDay && selectedHour) {
-            const date = selectedDay.dataset.date;
-            const hour = parseInt(selectedHour.innerText.split(':')[0], 10);
-            // Здесь мы уже получили доступные минуты через батч-запрос, поэтому дополнительный запрос не нужен
-            // Убедитесь, что функция `populateAvailableMinutes` правильно обрабатывает данные
-        }
-
         // Обновляем итоговую информацию
         const totalPriceElem = document.getElementById('total-price');
         const totalDurationElem = document.getElementById('total-duration');
@@ -257,6 +247,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     async function populateHours(dateString) {
+        hoursInfo = document.querySelector('.hours-info')
+        hoursInfo.style.display = 'block'
         hourSelect.innerHTML = '';
         minuteSelect.innerHTML = '';
         summaryText.innerText = 'Час и минута не выбраны';
@@ -289,7 +281,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const availableMinutes = availableMinutesData[hour];
             if (availableMinutes && availableMinutes.length > 0) {
                 const hourOption = document.createElement('div');
-                hourOption.innerText = `${hour}:00`;
+                hourOption.innerText = `≈ ${hour}:00`;
                 hourOption.classList.add('hour-option');
                 hourOption.onclick = () => handleHourClick(hourOption, chosenDate, hour, availableMinutes);
                 hourSelect.appendChild(hourOption);
@@ -357,9 +349,6 @@ document.addEventListener('DOMContentLoaded', function() {
         return result;
     }
     
-    // Удаление функции getAvailableMinutesFromBackend, так как мы используем батч-запросы
-    // Если она всё ещё нужна, убедитесь, что она правильно обрабатывает запросы
-    
     function handleHourClick(hourOption, date, hour, availableMinutes) {
         clearSelection(hourSelect);
         hourOption.classList.add('selected');
@@ -386,28 +375,47 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function populateAvailableMinutes(availableMinutes, date, hour) {
+        const minutesInfo = document.querySelector('.minutes-info');
+        minutesInfo.style.display = 'block';
+        const minuteSelect = document.getElementById('minute-select'); // Ensure you have this element
+        const summaryText = document.getElementById('summary-text'); // Ensure you have this element
         minuteSelect.innerHTML = '';
         summaryText.innerText = 'Дата и час выбраны, выберите минуту';
-
+    
+        const totalDurationElem = parseInt(document.getElementById('total-duration').innerHTML);
+    
         if (availableMinutes.length === 0) {
             minuteSelect.innerHTML = '<div>Нет доступных минут</div>';
             hideHourOption(hour);
             return;
         }
-
+    
         availableMinutes.forEach(minute => {
             // Проверяем, что minute является числом
             if (typeof minute !== 'number' || isNaN(minute) || minute < 0 || minute > 59) {
                 console.error(`Invalid minute value received: ${minute}`);
                 return;
             }
-
+    
             // Форматируем час и минуту с ведущим нулём
             const formattedHour = hour.toString().padStart(2, '0');
             const formattedMinute = minute.toString().padStart(2, '0');
-
+    
+            // Calculate end time
+            let endMinute = minute + totalDurationElem;
+            let endHour = hour;
+    
+            if (endMinute >= 60) {
+                endMinute -= 60;
+                endHour += 1;
+            }
+    
+            const formattedEndHour = endHour.toString().padStart(2, '0');
+            const formattedEndMinute = endMinute.toString().padStart(2, '0');
+    
             const minuteOption = document.createElement('div');
-            minuteOption.innerText = `${formattedHour}:${formattedMinute}`;
+            minuteOption.innerHTML = `<b>${formattedHour}:${formattedMinute}</b> - ${formattedEndHour}:${formattedEndMinute}`;
+
             minuteOption.classList.add('minute-option'); // Добавьте класс для стилизации
             minuteOption.onclick = () => handleMinuteClick(minuteOption, minute);
             minuteSelect.appendChild(minuteOption);
