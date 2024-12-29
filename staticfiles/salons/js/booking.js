@@ -2,17 +2,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Сначала объявляем salonDataElement, а затем salonId
     const salonDataElement = document.getElementById('salon-data');
-    if (!salonDataElement) {
-        console.error('Element with id "salon-data" not found.');
-        return;
-    }
+ 
     const salonId = parseInt(salonDataElement.dataset.salonId, 10);
 
     const serviceDurationElement = document.getElementById('service-duration');
     const salonDefaultDuration = parseInt(serviceDurationElement.dataset.duration, 10) || 0; // В минутах
     
-    let totalServiceDuration = salonDefaultDuration;
-
     const daySelect = document.getElementById('day-select');
     const hourSelect = document.getElementById('hour-select');
     const minuteSelect = document.getElementById('minute-select');
@@ -429,8 +424,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const selectedHour = hourSelect.querySelector('.selected');
         if (selectedDay && selectedHour) {
             const date = selectedDay.dataset.date;
-            const hour = parseInt(selectedHour.innerText.split(':')[0], 10);
-
+            console.log(selectedHour);
+            
+            // const hour = parseInt(selectedHour.innerText.split(':')[0], 10);
+            const hourText = selectedHour.innerText.replace('≈', '').trim();
+            const hour = parseInt(hourText.split(':')[0], 10);
+            
             const formattedHour = hour.toString().padStart(2, '0');
             const formattedMinute = minute.toString().padStart(2, '0');
 
@@ -525,7 +524,6 @@ document.addEventListener('DOMContentLoaded', function() {
             booking_details: [],
             total_service_duration: 0
         };
-    
         const categories = new Set([...Object.keys(selectedServicesByCategory), ...Object.keys(selectedBarbersByCategory)]);
     
         categories.forEach(categoryId => {
@@ -787,7 +785,6 @@ document.addEventListener('DOMContentLoaded', function() {
         // Генерируем детали бронирования
         generateBookingDetailsHTML(formData)
 
-    
         // Показать модальное окно
         modal.classList.add('show');
 
