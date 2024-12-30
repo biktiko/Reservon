@@ -1,33 +1,35 @@
-// user-account/static/user-account/js/account.js
-
 function toggleSidebar() {
     const sidebar = document.querySelector('.sidebar');
     if (!sidebar) return;
     sidebar.classList.toggle('open');
+    console.log('toggleSidebar: ', sidebar.classList.contains('open') ? 'Opened' : 'Closed');
 }
 
 function closeSidebar() {
     const sidebar = document.querySelector('.sidebar');
     if (!sidebar) return;
     sidebar.classList.remove('open');
+    console.log('closeSidebar: Closed');
 }
 
-// Обработчик для кнопки закрытия Sidebar
 document.addEventListener('DOMContentLoaded', function() {
     const menuButton = document.querySelector('.menu-button');
-    console.log(menuButton)
+    const closeButton = document.getElementById('close-sidebar-button');
+
+    // Обработчик для кнопки открытия Sidebar
     if (menuButton) {
-        closeButton.addEventListener('click', function(e) {
-            console.log('click menuButton')
-            // e.preventDefault(); // Предотвращаем переход по ссылке
+        menuButton.addEventListener('click', function(e) {
+            e.preventDefault(); // Предотвращаем переход по ссылке, если используется <a>
+            console.log('Кнопка "Меню" нажата');
             toggleSidebar();
         });
     }
 
-    const closeButton = document.getElementById('close-sidebar-button');
+    // Обработчик для кнопки закрытия Sidebar
     if (closeButton) {
         closeButton.addEventListener('click', function(e) {
             e.preventDefault(); // Предотвращаем переход по ссылке
+            console.log('Кнопка "Закрыть" нажата');
             closeSidebar();
         });
     }
@@ -40,8 +42,14 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
-});
 
+    // Опционально: Закрытие Sidebar при нажатии на клавишу ESC
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeSidebar();
+        }
+    });
+});
 
 // Скрипт для открытия и закрытия модального окна
 document.addEventListener('DOMContentLoaded', function() {

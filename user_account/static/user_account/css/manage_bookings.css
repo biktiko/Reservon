@@ -239,11 +239,19 @@
     background-color: rgb(70, 70, 70);
 }
 
+#close-sidebar-button{
+    display: none;
+}
+
 /* Кнопка закрытия на мобильных */
 @media screen and (max-width: 768px) {
     /* Делаем кнопку меню видимой на мобильных */
+    #close-sidebar-button{
+        display: block;
+    }
+
     .menu-button {
-        display: block; /* А не none */
+        display: block;
         background-color: #333;
         color: #fff;
         padding: 10px 15px;

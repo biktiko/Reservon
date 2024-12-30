@@ -1,12 +1,15 @@
-/* account/static/account/css/account.css */
+/* ---------------------------------------------- */
+/* account/static/user_account/css/account.css    */
+/* ---------------------------------------------- */
 
+/* Главный контейнер */
 .dashboard-container {
     display: flex;
-    flex-wrap: nowrap; /* Prevents items from wrapping */
+    flex-wrap: nowrap; /* Предотвращает перенос */
     min-height: 80vh;
 }
 
-/* Модальное окно */
+/* Модальное окно (если используется где-то в base) */
 .modal {
     display: none;
     position: fixed;
@@ -19,9 +22,9 @@
     background-color: rgba(0, 0, 0, 0.5);
 }
 
-/* Верхнее меню */
-.menu-button{
-    display: none;
+/* Верхнее меню (top-menu) */
+.menu-button {
+    display: none; /* Скрыта на десктопе, появится на мобильных */
 }
 
 .top-menu {
@@ -45,29 +48,21 @@
     color: white;
     text-decoration: none;
     font-weight: bold;
-}
-
-.top-menu ul li.active a,
-.top-menu ul li a:hover {
-    color: rgb(240, 165, 0);
-}
-
-.top-menu ul li a {
     padding: 5px 10px;
 }
-
-.top-menu ul li.active a {
-    color: rgb(240, 165, 0);
-    border-bottom: 2px solid rgb(240, 165, 0);
-}
-
 
 .top-menu ul li a i {
     margin-right: 5px;
 }
 
+/* Подсветка активных пунктов меню */
+.top-menu ul li.active a,
+.top-menu ul li a:hover {
+    color: rgb(240, 165, 0);
+    border-bottom: 2px solid rgb(240, 165, 0);
+}
 
-/* Левое боковое меню */
+/* Левое боковое меню (sidebar) */
 .sidebar {
     flex: 0 0 200px;
     width: 200px;
@@ -104,34 +99,40 @@
     margin-right: 10px;
 }
 
+/* Основная область (main-content) */
 .main-content {
     flex-grow: 1;
     background-color: rgb(70, 70, 70); /* Темный фон */
     padding: 20px;
 }
 
+/* ---------------------------------------------- */
+/* Настройки адаптивности под мобильные устройства */
+/* ---------------------------------------------- */
+
 @media screen and (max-width: 768px) {
     /* Делаем кнопку меню видимой на мобильных */
     .menu-button {
-        display: block; /* А не none */
+        display: block; /* Показываем кнопку на мобильных */
         background-color: #333;
         color: #fff;
         padding: 10px 15px;
         cursor: pointer;
         position: relative;
+        z-index: 1001; /* Чтобы кнопка была поверх сайдбара */
     }
 
-    /* Делаем sidebar блочным и фиксируем его слева за пределами экрана */
+    /* Делаем sidebar фиксированным и скрытым за пределами экрана */
     .sidebar {
         display: block; /* Вместо none */
         position: fixed;
         top: 0;
-        left: -250px; /* Спрятано за левой границей */
+        left: -250px; /* Прячем за левый край */
         width: 250px;
         height: 100%;
         background-color: rgb(51, 51, 51);
         transition: left 0.3s ease-in-out;
-        z-index: 1000; /* Ниже, чем кнопка */
+        z-index: 1000; /* Ниже, чем кнопка меню */
         overflow-y: auto; /* Прокрутка, если меню длинное */
     }
 
@@ -140,12 +141,12 @@
         left: 0;
     }
 
-    /* Основной контент на мобильном оставим без отступа слева */
+    /* Основной контент на мобильном сдвигаем/убираем отступ */
     .main-content {
         padding: 10px;
     }
 
-    /* Оверлей для затемнения */
+    /* Оверлей для затемнения (при открытом меню) */
     .overlay {
         display: none; /* По умолчанию скрыт */
         position: fixed;
@@ -154,17 +155,57 @@
         width: 100%;
         height: 100%;
         background-color: rgba(0, 0, 0, 0.5);
-        z-index: 999; /* Меньше, чем меню-кнопка, но выше main-content */
+        z-index: 999; /* Ниже кнопки меню, но выше контента */
     }
     .overlay.active {
-        display: block;
+        display: block; /* Показываем оверлей при активном меню */
     }
     
-    /* Чтобы sidebar был поверх main-content, убираем display:flex в .dashboard-container на мобильных */
+    /* Чтобы sidebar был поверх main-content, убираем display:flex у .dashboard-container */
     .dashboard-container {
         display: block;
     }
 
-    /* Скрываем sidebar (в теге nav) по умолчанию, показываем только при open */
-    /* У Вас уже есть display:none, но мы корректируем под класс open. */
+    /* Кнопка закрытия ("Закрыть") внутри sidebar */
+    .close-button-item {
+        display: block;
+        margin-top: 10px; /* Отступ сверху */
+    }
+    /* Стилизация самой ссылки "Закрыть" */
+    .close-button-item a {
+        background-color: rgb(240, 165, 0);
+        color: white;
+        text-decoration: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        display: block;
+        font-weight: bold;
+        transition: background-color 0.3s, transform 0.3s;
+        margin-top: 5px;
+    }
+    .close-button-item a:hover {
+        background-color: rgb(220, 145, 0);
+        transform: translateY(-2px);
+        cursor: pointer;
+    }
+
+    /* Анимированная иконка гамбургера при открытии меню */
+    .menu-button i {
+        transition: transform 0.3s ease;
+    }
+    .sidebar.open ~ .menu-button i {
+        transform: rotate(90deg);
+    }
+
+    /* Ссылки внутри sidebar (мобильная версия) */
+    .sidebar ul li a {
+        display: block;
+        padding: 10px 20px;
+        border-bottom: 1px solid #444;
+    }
+    .sidebar ul li a:hover,
+    .sidebar ul li.active a {
+        background-color: rgb(70, 70, 70);
+        color: rgb(240, 165, 0);
+    }
 }
