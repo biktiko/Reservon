@@ -2,54 +2,34 @@ function toggleSidebar() {
     const sidebar = document.querySelector('.sidebar');
     if (!sidebar) return;
     sidebar.classList.toggle('open');
-    console.log('toggleSidebar: ', sidebar.classList.contains('open') ? 'Opened' : 'Closed');
 }
 
 function closeSidebar() {
     const sidebar = document.querySelector('.sidebar');
     if (!sidebar) return;
     sidebar.classList.remove('open');
-    console.log('closeSidebar: Closed');
 }
 
-document.addEventListener('DOMContentLoaded', function() {
+// Пример использования:
+document.addEventListener('DOMContentLoaded', () => {
     const menuButton = document.querySelector('.menu-button');
     const closeButton = document.getElementById('close-sidebar-button');
 
-    // Обработчик для кнопки открытия Sidebar
+    // Открыть/закрыть
     if (menuButton) {
-        menuButton.addEventListener('click', function(e) {
-            e.preventDefault(); // Предотвращаем переход по ссылке, если используется <a>
-            console.log('Кнопка "Меню" нажата');
+        menuButton.addEventListener('click', () => {
             toggleSidebar();
         });
     }
 
-    // Обработчик для кнопки закрытия Sidebar
+    // Закрыть
     if (closeButton) {
-        closeButton.addEventListener('click', function(e) {
-            e.preventDefault(); // Предотвращаем переход по ссылке
-            console.log('Кнопка "Закрыть" нажата');
+        closeButton.addEventListener('click', () => {
             closeSidebar();
         });
     }
-
-    // Закрытие sidebar при нажатии на ссылку внутри меню (только на мобильных)
-    document.querySelectorAll('.sidebar ul li a').forEach(function(link) {
-        link.addEventListener('click', function() {
-            if (window.innerWidth <= 768) {
-                closeSidebar();
-            }
-        });
-    });
-
-    // Опционально: Закрытие Sidebar при нажатии на клавишу ESC
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-            closeSidebar();
-        }
-    });
 });
+
 
 // Скрипт для открытия и закрытия модального окна
 document.addEventListener('DOMContentLoaded', function() {

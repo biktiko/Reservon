@@ -119,7 +119,7 @@
         padding: 10px 15px;
         cursor: pointer;
         position: relative;
-        z-index: 1001; /* Чтобы кнопка была поверх сайдбара */
+        text-align: center;        
     }
 
     /* Делаем sidebar фиксированным и скрытым за пределами экрана */
@@ -136,6 +136,22 @@
         overflow-y: auto; /* Прокрутка, если меню длинное */
     }
 
+    .overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 500; /* Ниже, чем сайдбар, если у сайдбара z-index > 500 */
+        pointer-events: none; /* Клики проходят насквозь */
+    }
+    .overlay.active {
+        display: block;
+    }
+    
+
     /* Класс .open будет сдвигать sidebar в область экрана */
     .sidebar.open {
         left: 0;
@@ -144,21 +160,6 @@
     /* Основной контент на мобильном сдвигаем/убираем отступ */
     .main-content {
         padding: 10px;
-    }
-
-    /* Оверлей для затемнения (при открытом меню) */
-    .overlay {
-        display: none; /* По умолчанию скрыт */
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.5);
-        z-index: 999; /* Ниже кнопки меню, но выше контента */
-    }
-    .overlay.active {
-        display: block; /* Показываем оверлей при активном меню */
     }
     
     /* Чтобы sidebar был поверх main-content, убираем display:flex у .dashboard-container */
