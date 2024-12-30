@@ -243,8 +243,18 @@
     display: none;
 }
 
-/* Кнопка закрытия на мобильных */
 @media screen and (max-width: 768px) {
+
+    .filter-form button {
+        display: block;
+    }
+
+    
+    .filter-form button{
+        width: 94%;
+        margin-top: 7px;
+    }
+
     /* Делаем кнопку меню видимой на мобильных */
     #close-sidebar-button{
         display: block;

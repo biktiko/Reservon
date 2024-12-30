@@ -5,6 +5,7 @@ from django.forms import ModelForm
 from django.forms.models import inlineformset_factory
 from salons.models import Appointment, AppointmentBarberService, Barber, Service, BarberAvailability
 from django.forms.widgets import DateTimeInput
+from datetime import timedelta
 
 class CustomDateTimeInput(forms.DateTimeInput):
     input_type = 'text'  # Используем текстовый ввод для совместимости с Flatpickr
@@ -28,18 +29,39 @@ class AdminBookingForm(forms.ModelForm):
         required=False,
         label='Услуги'
     )
+    # Вместо end_datetime:
+    DURATION_CHOICES = [(i, f'{i} мин') for i in range(10, 100, 10)]  # 10,20..90
+    duration = forms.ChoiceField(
+        choices=DURATION_CHOICES,
+        initial=20,          # дефолт 20
+        label='Длительность'
+    )
 
     class Meta:
         model = Appointment
-        fields = ['start_datetime', 'end_datetime', 'barber', 'services']
+        fields = ['start_datetime', 'duration', 'barber', 'services']
+        # end_datetime выпилили из fields
         labels = {
             'start_datetime': 'Начало бронирования',
-            'end_datetime': 'Конец бронирования',
         }
         widgets = {
             'start_datetime': DateTimeInput(attrs={'type': 'datetime-local'}),
-            'end_datetime': DateTimeInput(attrs={'type': 'datetime-local'}),
         }
+
+    def save(self, commit=True):
+        # Переопределяем логику сохранения
+        instance = super().save(commit=False)
+        # Считываем start_datetime и duration
+        start_dt = self.cleaned_data['start_datetime']
+        duration_minutes = int(self.cleaned_data['duration'])  # строка -> int
+        end_dt = start_dt + timedelta(minutes=duration_minutes)
+        instance.end_datetime = end_dt
+
+        if commit:
+            instance.save()
+            # many-to-many
+            self.save_m2m()
+        return instance
 class BarberSelectMultiple(forms.SelectMultiple):
     def create_option(self, name, value, label, selected, index, subindex=None, attrs=None):
         option = super().create_option(
