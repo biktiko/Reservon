@@ -239,62 +239,74 @@
     background-color: rgb(70, 70, 70);
 }
 
-/* Отображение кнопки закрытия только на мобильных */
+/* Кнопка закрытия на мобильных */
 @media screen and (max-width: 768px) {
-    .close-button-container {
-        display: block;
-    }
-
-    /* Дополнительные стили для sidebar на мобильных */
-    .sidebar {
-        /* Существующие стили */
-        display: block;
-        position: fixed;
-        top: 0;
-        left: -250px;
-        width: 250px;
-        height: 100%;
-        background-color: rgb(51, 51, 51);
-        transition: left 0.3s ease-in-out;
-        z-index: 1000;
-        overflow-y: auto;
-    }
-
-    .sidebar.open {
-        left: 0;
-    }
-
-    .main-content {
-        padding: 10px;
-    }
-
-    /* Обновление стилей меню-кнопки */
+    /* Делаем кнопку меню видимой на мобильных */
     .menu-button {
-        display: block;
+        display: block; /* А не none */
         background-color: #333;
         color: #fff;
         padding: 10px 15px;
         cursor: pointer;
         position: relative;
-        z-index: 1001; /* Чтобы кнопка была поверх sidebar */
     }
 
-      /* Кнопка закрытия видна только на мобильных */
-      .close-button-item {
+    /* Кнопка закрытия видна только на мобильных */
+    .close-button-item {
         display: block;
+        margin-top: 10px; /* Чуть ниже остальных элементов */
     }
-    
-    /* Стилизация кнопки закрытия для мобильных */
+
+    /* Стилизация кнопки закрытия */
     .close-button-item a {
-        background-color: rgba(240, 165, 0, 0.1); /* Легкий акцентный фон */
-        border-radius: 4px;
-    }
-    
-    .close-button-item a:hover,
-    .close-button-item a.active {
-        background-color: rgb(240, 165, 0);
+        background-color: rgb(240, 165, 0); /* Яркий фон */
         color: white;
+        text-decoration: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        display: block;
+        font-weight: bold; /* Сделать текст чуть более жирным */
+        transition: background-color 0.3s, transform 0.3s;
     }
+
+    .close-button-item a:hover {
+        background-color: rgb(220, 145, 0); /* Более темный оттенок при наведении */
+        transform: translateY(-2px); /* Небольшое поднятие при наведении */
+    }
+
+    /* Делаем sidebar фиксированным и скрытым за пределами экрана */
+    .sidebar {
+        position: fixed;
+        top: 0;
+        left: -250px; /* Спрятано за левой границей */
+        width: 250px;
+        height: 100%;
+        background-color: rgb(51, 51, 51);
+        transition: left 0.3s ease-in-out;
+        z-index: 1000; /* Ниже, чем кнопка */
+        overflow-y: auto; /* Прокрутка, если меню длинное */
+    }
+
+    /* Класс .open будет сдвигать sidebar в область экрана */
+    .sidebar.open {
+        left: 0;
+    }
+
+    /* Основной контент на мобильном оставим без отступа слева */
+    .main-content {
+        padding: 10px;
+    }
+
+    /* Изменение иконки меню на анимированную */
+    .menu-button i {
+        transition: transform 0.3s ease;
+    }
+
+    .sidebar.open ~ .menu-button i {
+        transform: rotate(90deg);
+    }
+
+    /* Дополнительные стили для ссылок в Sidebar */
     .sidebar ul li a {
         display: block;
         padding: 10px 20px;
@@ -307,8 +319,13 @@
         color: rgb(240, 165, 0);
     }
 
+    /* Удаление иконок для кнопки закрытия, если необходимо */
+    .close-button-item a i {
+        display: none; /* Скрыть иконку, если нужно */
+    }
+
+    /* Удаление отображения иконки "X" в других местах, если необходимо */
     .fa-edit{
         display: none;
     }
-    
 }
