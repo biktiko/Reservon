@@ -1,4 +1,4 @@
-Staging test
+Staing test 2
 
 celery -A reservon.celery_app worker -l info
 celery -A reservon.celery_app worker -l info -P solo
@@ -7,7 +7,7 @@ Load new file
 aws s3 cp testfile.txt s3://media-reservon/salon_logos/testfile-cli.txt --acl private --region eu-north-1
 
 print settings
-heroku run python manage.py diffsettings
+heroku run python manage.py diffsettings --app reservon-staging
 cmd
 C:\nssm\nssm\win64>.\nssm.exe install CeleryWorker
 C:\Reservon\Reservon\venv\Scripts\python.exe

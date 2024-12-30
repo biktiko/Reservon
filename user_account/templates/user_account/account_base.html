@@ -1,17 +1,17 @@
-<!-- C:\Reservon\Reservon\user_account\templates\user_account\account_base.html -->
+<!-- C:\Reservon\Reservon\user-account\templates\user-account\account_base.html -->
 {% extends "base.html" %}
 {% load static %}
 
 {% block content %}
-<link rel="stylesheet" href="{% static 'user_account/css/unified.css' %}">
 <link rel="stylesheet" href="{% static 'user_account/css/my_account.css' %}">
 <link rel="stylesheet" href="{% static 'user_account/css/account.css' %}">
 <link rel="stylesheet" href="{% static 'user_account/css/manage_bookings.css' %}">
 <link rel="stylesheet" href="{% static 'user_account/css/dashboard.css' %}">
 <link rel="stylesheet" href="{% static 'user_account/css/edit_booking.css' %}">
+<link rel="stylesheet" href="{% static 'user_account/css/unified.css' %}">
 
 <div class="dashboard-container">
-    <div class="menu-button" onclick="toggleSidebar()">
+    <div class="menu-button">
         <i class="fas fa-bars"></i> Меню
     </div>
 
@@ -20,6 +20,12 @@
             <li class="{% if active_sidebar == 'account' %}active{% endif %}"><a href="{% url 'user_account:my_account' %}"><i class="fas fa-user"></i> Мой аккаунт</a></li>
             <!-- <li class="{% if active_sidebar == 'my_bookings' %}active{% endif %}"><a href="#"><i class="fas fa-calendar-alt"></i> Мои бронирования</a></li> -->
             <li class="{% if active_sidebar == 'salons' %}active{% endif %}"><a href="{% url 'user_account:account_dashboard' %}"><i class="fas fa-store"></i> Мои салоны</a></li>
+
+             <!-- Кнопка закрытия как элемент списка без иконки "X" -->
+            <li class="close-button-item">
+                <a href="#" id="close-sidebar-button">Закрыть</a>
+            </li>
+            
         </ul>
     </nav>
 
@@ -32,6 +38,8 @@
                 {% if salons|length > 1 %}
                     <li><a href="#" id="change-salon-button">Сменить салон</a></li>
                 {% endif %}
+
+
             </ul>
         </div>
         <div class="page-content">
@@ -60,6 +68,9 @@
         <!-- Содержимое модалки будет подгружаться динамически -->
     </div>
 </div>
+
+<div id="sidebarOverlay" class="overlay" onclick="closeSidebar()"></div>
+
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 

@@ -1,10 +1,46 @@
+// user-account/static/user-account/js/account.js
 
 function toggleSidebar() {
-    var sidebar = document.querySelector('.sidebar');
-    var overlay = document.querySelector('.overlay');
-    sidebar.classList.toggle('active');
-    overlay.classList.toggle('active');
+    const sidebar = document.querySelector('.sidebar');
+    if (!sidebar) return;
+    sidebar.classList.toggle('open');
 }
+
+function closeSidebar() {
+    const sidebar = document.querySelector('.sidebar');
+    if (!sidebar) return;
+    sidebar.classList.remove('open');
+}
+
+// Обработчик для кнопки закрытия Sidebar
+document.addEventListener('DOMContentLoaded', function() {
+    const menuButton = document.querySelector('.menu-button');
+    console.log(menuButton)
+    if (menuButton) {
+        closeButton.addEventListener('click', function(e) {
+            console.log('click menuButton')
+            // e.preventDefault(); // Предотвращаем переход по ссылке
+            toggleSidebar();
+        });
+    }
+
+    const closeButton = document.getElementById('close-sidebar-button');
+    if (closeButton) {
+        closeButton.addEventListener('click', function(e) {
+            e.preventDefault(); // Предотвращаем переход по ссылке
+            closeSidebar();
+        });
+    }
+
+    // Закрытие sidebar при нажатии на ссылку внутри меню (только на мобильных)
+    document.querySelectorAll('.sidebar ul li a').forEach(function(link) {
+        link.addEventListener('click', function() {
+            if (window.innerWidth <= 768) {
+                closeSidebar();
+            }
+        });
+    });
+});
 
 
 // Скрипт для открытия и закрытия модального окна

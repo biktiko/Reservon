@@ -110,62 +110,61 @@
     padding: 20px;
 }
 
-
-/* Адаптивность */
 @media screen and (max-width: 768px) {
-    .dashboard-container {
+    /* Делаем кнопку меню видимой на мобильных */
+    .menu-button {
+        display: block; /* А не none */
+        background-color: #333;
+        color: #fff;
+        padding: 10px 15px;
+        cursor: pointer;
         position: relative;
-        /* flex-direction: column; */
     }
 
-    /* Скрываем sidebar по умолчанию */
+    /* Делаем sidebar блочным и фиксируем его слева за пределами экрана */
     .sidebar {
+        display: block; /* Вместо none */
         position: fixed;
         top: 0;
-        left: -250px; /* Прячем сайдбар за левым краем */
+        left: -250px; /* Спрятано за левой границей */
         width: 250px;
         height: 100%;
         background-color: rgb(51, 51, 51);
-        transition: left 0.3s ease;
-        z-index: 1000;
+        transition: left 0.3s ease-in-out;
+        z-index: 1000; /* Ниже, чем кнопка */
+        overflow-y: auto; /* Прокрутка, если меню длинное */
     }
-    .sidebar.active {
+
+    /* Класс .open будет сдвигать sidebar в область экрана */
+    .sidebar.open {
         left: 0;
     }
 
-    /* Добавляем кнопку для открытия меню */
-    .menu-button {
-        display: block;
-        background-color: rgb(51, 51, 51);
-        color: white;
-        padding: 15px;
-        text-align: center;
-        cursor: pointer;
-    }
-
-    /* Убираем отступы у main-content */
+    /* Основной контент на мобильном оставим без отступа слева */
     .main-content {
-        padding: 0;
+        padding: 10px;
     }
 
-    .top-menu ul li {
-        margin-right: 0;
-        margin-bottom: 10px;
-    }
-
-      /* Затемнение основного контента при открытом сайдбаре */
-      .overlay {
-        display: none;
+    /* Оверлей для затемнения */
+    .overlay {
+        display: none; /* По умолчанию скрыт */
         position: fixed;
         top: 0;
         left: 0;
         width: 100%;
         height: 100%;
         background-color: rgba(0, 0, 0, 0.5);
-        z-index: 999;
+        z-index: 999; /* Меньше, чем меню-кнопка, но выше main-content */
     }
-
     .overlay.active {
         display: block;
     }
+    
+    /* Чтобы sidebar был поверх main-content, убираем display:flex в .dashboard-container на мобильных */
+    .dashboard-container {
+        display: block;
+    }
+
+    /* Скрываем sidebar (в теге nav) по умолчанию, показываем только при open */
+    /* У Вас уже есть display:none, но мы корректируем под класс open. */
 }

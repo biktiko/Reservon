@@ -239,36 +239,93 @@
     background-color: rgb(70, 70, 70);
 }
 
-/* Адаптивность формы фильтров */
+/* Кнопка закрытия на мобильных */
 @media screen and (max-width: 768px) {
-    .filter-fields {
-        display: flex;
-        /* flex-wrap: wrap; */
-        width: 100%;
+    /* Делаем кнопку меню видимой на мобильных */
+    .menu-button {
+        display: block; /* А не none */
+        background-color: #333;
+        color: #fff;
+        padding: 10px 15px;
+        cursor: pointer;
+        position: relative;
     }
 
-    .filter-fields label,
-    .filter-fields select {
-        margin-right: 10px;
-        margin-bottom: 10px;
-        display: inline-block;
+    /* Кнопка закрытия видна только на мобильных */
+    .close-button-item {
+        display: block;
+        margin-top: 10px; /* Чуть ниже остальных элементов */
     }
 
-    .filter-fields label {
-        width: auto;
+    /* Стилизация кнопки закрытия */
+    .close-button-item a {
+        background-color: rgb(240, 165, 0); /* Яркий фон */
+        color: white;
+        text-decoration: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        display: block;
+        font-weight: bold; /* Сделать текст чуть более жирным */
+        transition: background-color 0.3s, transform 0.3s;
     }
 
-    .filter-buttons {
-        width: 100%;
-        margin-top: 10px;
+    .close-button-item a:hover {
+        background-color: rgb(220, 145, 0); /* Более темный оттенок при наведении */
+        transform: translateY(-2px); /* Небольшое поднятие при наведении */
     }
 
-    .add-booking-button {
-        width: 100%;
-        text-align: center;
+    /* Делаем sidebar фиксированным и скрытым за пределами экрана */
+    .sidebar {
+        position: fixed;
+        top: 0;
+        left: -250px; /* Спрятано за левой границей */
+        width: 250px;
+        height: 100%;
+        background-color: rgb(51, 51, 51);
+        transition: left 0.3s ease-in-out;
+        z-index: 1000; /* Ниже, чем кнопка */
+        overflow-y: auto; /* Прокрутка, если меню длинное */
     }
 
-    .filter-form button{
-        width: 100%;
+    /* Класс .open будет сдвигать sidebar в область экрана */
+    .sidebar.open {
+        left: 0;
+    }
+
+    /* Основной контент на мобильном оставим без отступа слева */
+    .main-content {
+        padding: 10px;
+    }
+
+    /* Изменение иконки меню на анимированную */
+    .menu-button i {
+        transition: transform 0.3s ease;
+    }
+
+    .sidebar.open ~ .menu-button i {
+        transform: rotate(90deg);
+    }
+
+    /* Дополнительные стили для ссылок в Sidebar */
+    .sidebar ul li a {
+        display: block;
+        padding: 10px 20px;
+        border-bottom: 1px solid #444;
+    }
+
+    .sidebar ul li a:hover,
+    .sidebar ul li.active a {
+        background-color: rgb(70, 70, 70);
+        color: rgb(240, 165, 0);
+    }
+
+    /* Удаление иконок для кнопки закрытия, если необходимо */
+    .close-button-item a i {
+        display: none; /* Скрыть иконку, если нужно */
+    }
+
+    /* Удаление отображения иконки "X" в других местах, если необходимо */
+    .fa-edit{
+        display: none;
     }
 }

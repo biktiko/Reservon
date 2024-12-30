@@ -239,36 +239,76 @@
     background-color: rgb(70, 70, 70);
 }
 
-/* Адаптивность формы фильтров */
+/* Отображение кнопки закрытия только на мобильных */
 @media screen and (max-width: 768px) {
-    .filter-fields {
-        display: flex;
-        /* flex-wrap: wrap; */
-        width: 100%;
+    .close-button-container {
+        display: block;
     }
 
-    .filter-fields label,
-    .filter-fields select {
-        margin-right: 10px;
-        margin-bottom: 10px;
-        display: inline-block;
+    /* Дополнительные стили для sidebar на мобильных */
+    .sidebar {
+        /* Существующие стили */
+        display: block;
+        position: fixed;
+        top: 0;
+        left: -250px;
+        width: 250px;
+        height: 100%;
+        background-color: rgb(51, 51, 51);
+        transition: left 0.3s ease-in-out;
+        z-index: 1000;
+        overflow-y: auto;
     }
 
-    .filter-fields label {
-        width: auto;
+    .sidebar.open {
+        left: 0;
     }
 
-    .filter-buttons {
-        width: 100%;
-        margin-top: 10px;
+    .main-content {
+        padding: 10px;
     }
 
-    .add-booking-button {
-        width: 100%;
-        text-align: center;
+    /* Обновление стилей меню-кнопки */
+    .menu-button {
+        display: block;
+        background-color: #333;
+        color: #fff;
+        padding: 10px 15px;
+        cursor: pointer;
+        position: relative;
+        z-index: 1001; /* Чтобы кнопка была поверх sidebar */
     }
 
-    .filter-form button{
-        width: 100%;
+      /* Кнопка закрытия видна только на мобильных */
+      .close-button-item {
+        display: block;
     }
+    
+    /* Стилизация кнопки закрытия для мобильных */
+    .close-button-item a {
+        background-color: rgba(240, 165, 0, 0.1); /* Легкий акцентный фон */
+        border-radius: 4px;
+    }
+    
+    .close-button-item a:hover,
+    .close-button-item a.active {
+        background-color: rgb(240, 165, 0);
+        color: white;
+    }
+    .sidebar ul li a {
+        display: block;
+        padding: 10px 20px;
+        border-bottom: 1px solid #444;
+    }
+
+    .sidebar ul li a:hover,
+    .sidebar ul li.active a {
+        background-color: rgb(70, 70, 70);
+        color: rgb(240, 165, 0);
+    }
+
+    .fa-edit{
+        display: none;
+    }
+    
 }
