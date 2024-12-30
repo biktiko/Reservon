@@ -131,14 +131,3 @@
 <script src="{% static 'user_account/js/add_booking.js' %}"></script>
 
 {% endblock %}
-
-{% block extra_js %}
-<script>
-    function toggleSidebar() {
-        var sidebar = document.querySelector('.sidebar');
-        var overlay = document.querySelector('.overlay');
-        sidebar.classList.toggle('active');
-        overlay.classList.toggle('active');
-    }
-</script>
-{% endblock %}

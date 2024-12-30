@@ -1,23 +1,24 @@
 function toggleSidebar() {
     const sidebar = document.querySelector('.sidebar');
-    if (!sidebar) return;
+    const overlay = document.querySelector('.overlay');
+
     sidebar.classList.toggle('open');
+    overlay.classList.toggle('active');
 }
+
 
 function closeSidebar() {
     const sidebar = document.querySelector('.sidebar');
-    if (!sidebar) return;
     sidebar.classList.remove('open');
 }
 
-// Пример использования:
 document.addEventListener('DOMContentLoaded', () => {
     const menuButton = document.querySelector('.menu-button');
     const closeButton = document.getElementById('close-sidebar-button');
-
     // Открыть/закрыть
     if (menuButton) {
         menuButton.addEventListener('click', () => {
+            console.log('click');
             toggleSidebar();
         });
     }
