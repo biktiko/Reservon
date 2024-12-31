@@ -1,3 +1,4 @@
+// C:\Reservon\Reservon\salons\static\salons\js\booking.js
 document.addEventListener('DOMContentLoaded', function() {
 
     // Сначала объявляем salonDataElement, а затем salonId
