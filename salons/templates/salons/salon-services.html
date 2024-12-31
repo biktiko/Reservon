@@ -23,7 +23,7 @@
                                 <p>{% trans "Нет доступных услуг." %}</p>
                             {% else %}
                                 {% for service in entry.services %}
-                                    {% include 'salons/service-card.html' with service=service %}
+                                    {% include 'salons/service-card.html' with service=service category=entry.category %}
                                 {% endfor %}
                             {% endif %}
                         </div>
