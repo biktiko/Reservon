@@ -131,8 +131,18 @@ GRAPPELLI_ADMIN_TITLE = "Reservon Admin"
 
 WSGI_APPLICATION = 'reservon.wsgi.application'
 
+# DATABASES = {
+#     'default': dj_database_url.config(default='sqlite:///db.sqlite3')
+# }
+
 DATABASES = {
-    'default': dj_database_url.config(default='sqlite:///db.sqlite3')
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+        'OPTIONS': {
+            'timeout': 20,  # Увеличение таймаута до 20 секунд
+        }
+    }
 }
 
 LOGOUT_REDIRECT_URL = '/'

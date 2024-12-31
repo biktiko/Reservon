@@ -1,3 +1,4 @@
+# C:\Reservon\Reservon\authentication\views.py
 from django.http import JsonResponse
 from django.template.loader import render_to_string
 from django.contrib.auth import login, authenticate, logout
@@ -6,6 +7,7 @@ from django.contrib.auth.models import User
 from django.shortcuts import redirect
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth import get_backends
+from django.views.decorators.cache import never_cache
 import json
 import re
 import logging
@@ -23,6 +25,7 @@ def normalize_phone_number(phone_number):
     return phone_number
 
 @csrf_exempt
+@never_cache
 def load_modal(request):
     # Возвращает html модалки логина или регистрации
     if request.method == 'POST':
@@ -57,6 +60,7 @@ def load_modal(request):
         return JsonResponse({'error': 'Invalid request method.'}, status=400)
 
 @csrf_exempt
+@never_cache
 def get_form(request):
 
     # Возвращает нужную форму в зависимости от шага (verify_code, set_password, enter_password)
@@ -116,6 +120,7 @@ def get_form(request):
         return JsonResponse({'error': 'Invalid request method.'}, status=400)
     
 @csrf_exempt
+@never_cache
 def login_view(request):
     # Начало процесса логина по номеру телефона
     if request.method == 'POST':
@@ -232,6 +237,7 @@ def verify_code(request):
         return JsonResponse({'error': 'Invalid request method.'}, status=400)
 
 @csrf_exempt
+@never_cache
 def set_password(request):
     if request.method == 'POST':
         try:
@@ -311,6 +317,7 @@ def set_password(request):
 
 
 @csrf_exempt
+@never_cache
 def enter_password(request):
     # Вход по паролю
     if request.method == 'POST':
@@ -376,6 +383,7 @@ def resend_verification_code(request):
         return JsonResponse({'error': 'Invalid request method.'}, status=400)
 
 @require_http_methods(["GET", "POST"])
+@never_cache
 def custom_logout_view(request):
     logout(request)
     return redirect('/')

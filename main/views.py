@@ -4,11 +4,13 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from authentication.models import PushSubscription
+from django.views.decorators.cache import never_cache
 
 import logging
 
 logger = logging.getLogger('main')
 
+@never_cache
 def main(request):
     return redirect('salons:salons_main')
 
@@ -54,8 +56,6 @@ def subscribe_push(request):
         except Exception as e:
             return JsonResponse({"success": False, "error": str(e)}, status=500)
     return JsonResponse({"error": "Invalid request method"}, status=400)
-
-
 
 @csrf_exempt
 def unsubscribe_push(request):

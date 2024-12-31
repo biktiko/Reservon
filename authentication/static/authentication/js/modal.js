@@ -236,11 +236,6 @@ function submitLogin() {
             // Перенаправляем на Google логин
             console.log(window.googleLoginUrl)
             window.location.href=window.googleLoginUrl
-            // window.location.href='/accounts/google/login/'
-            // console.log("Google Login URL:", data.google_login_url);
-
-            // window.location.href=data.google_login_url
-            
         } else {
             if (data.next_step) {
                 loadModalContent(data.next_step, data.phone_number);

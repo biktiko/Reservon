@@ -18,6 +18,7 @@ from django.core.cache import cache
 from django.dispatch import receiver
 from main.tasks import send_push_notification_task
 from authentication.models import PushSubscription
+from django.views.decorators.cache import never_cache
 
 import logging
 
@@ -674,7 +675,8 @@ def generate_safe_cache_key(salon_id, date_str, hours, booking_details, cache_ti
     return f"available_minutes_{salon_id}_v{get_cache_version(salon_id)}_{key_hash}"
 
 
-@cache_page(60 * 15)
+# @cache_page(60 * 15)
+@never_cache
 def main(request):
     query = request.GET.get('q', '')
     if query:
