@@ -131,21 +131,15 @@ GRAPPELLI_ADMIN_TITLE = "Reservon Admin"
 
 WSGI_APPLICATION = 'reservon.wsgi.application'
 
-# DATABASES = {
-#     'default': dj_database_url.config(default='sqlite:///db.sqlite3')
-# }
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
         'OPTIONS': {
-            'timeout': 20,  # Увеличение таймаута до 20 секунд
+            'timeout': 20,
         }
     }
 }
-
-LOGOUT_REDIRECT_URL = '/'
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -169,8 +163,6 @@ TIME_ZONE = 'UTC'
 
 LANGUAGE_CODE = 'en'
 
-# AUTH_USER_MODEL = 'authentication.CustomUser'
-
 LANGUAGES = [
     ('en', _('English')),
     ('ru', _('Russian')),
@@ -187,7 +179,6 @@ TIME_FORMAT = _('H:i')
 SHORT_DATE_FORMAT = DATE_FORMAT
 SHORT_TIME_FORMAT = TIME_FORMAT
 
-
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
@@ -197,7 +188,6 @@ STATICFILES_DIRS = [
     BASE_DIR / "authentication/static/",
 ]
 STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
-
 
 if DEBUG:
     # Локальная разработка: используем FileSystemStorage для медиа файлов
