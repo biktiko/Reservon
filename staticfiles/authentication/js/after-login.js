@@ -36,8 +36,6 @@ function restoreBookingFormData(formData) {
     console.log('Booking form data restored:', formData);
 }
 
-// after_login.js
-
 document.addEventListener('DOMContentLoaded', function() {
     // Проверяем, есть ли флаг перенаправления на бронирование
     const params = new URLSearchParams(window.location.search);
@@ -48,10 +46,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function confirmBooking() {
-    // Реализуйте логику подтверждения бронирования
-    // Например, показать уведомление пользователю
     alert('Ваше бронирование подтверждено!');
     // Или перенаправить на страницу бронирования
     window.location.href = `/salons/${data.salon_id}/book/`;
-
 }
