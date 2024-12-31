@@ -1,3 +1,4 @@
+// C:\Reservon\Reservon\salons\static\salons\js\booking.js
 document.addEventListener('DOMContentLoaded', function() {
 
     // Сначала объявляем salonDataElement, а затем salonId
@@ -29,8 +30,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function getCategoryNameById(categoryId) {
         const categoriesCards = Array.from(document.querySelectorAll('.category-button'));
+        console.log(categoriesCards)
         const card = categoriesCards.find(card => 
-            parseInt(card.getAttribute('data-category-id'), 10) === categoryId
+            parseInt(card.getAttribute('data-category-id'), 10) == categoryId
         );
       
         return card ? card.textContent.trim() : 'Неизвестная категория';
@@ -39,7 +41,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function getServiceNameById(serviceId) {
         const serviceCards = Array.from(document.querySelectorAll('.service-card'));
         const card = serviceCards.find(card => 
-            parseInt(card.getAttribute('data-service-id'), 10) === serviceId
+            parseInt(card.getAttribute('data-service-id'), 10) == serviceId
         );
         
         const serviceNameElement = card ? card.querySelector('.service-name') : null;
@@ -47,19 +49,51 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function getBarberNameById(barberId) {
-        const barberCards = Array.from(document.querySelectorAll('.barber-card'));
-
-        const card = barberCards.find(card => 
-            parseInt(card.getAttribute('data-barber-id'), 10) === barberId
-        );
-        
-        try{
-            const cardName = card.querySelector('.barber-name');
-            return cardName ? cardName.textContent.trim() : 'Любой мастер';
-        }
-        catch{
+        // Обработка случая "any"
+        if (barberId === 'any') {
             return 'Любой мастер';
         }
+    
+        // Преобразование barberId к числу
+        const numericBarberId = Number(barberId);
+        if (isNaN(numericBarberId)) {
+            // console.log('barberId is not a number:', barberId);
+            return 'Любой мастер';
+        }
+    
+        // Получение всех элементов с классом 'barber-card' внутри 'barber-list'
+        const barberCards = Array.from(document.querySelectorAll('#barber-list .barber-card'));
+        console.log('Найденные барберы:', barberCards);
+    
+        // Поиск карточки барбера с соответствующим ID
+        const card = barberCards.find(card => {
+            return Number(card.getAttribute('data-barber-id')) == numericBarberId        
+        } 
+        );
+        console.log('finded card', card)
+    
+        if (card) {
+            const cardName = card.querySelector('.barber-name');
+            if (cardName) {
+                console.log('Найден барбер:', cardName.textContent.trim());
+                return cardName.textContent.trim();
+            } else {
+                console.log('Имя барбера не найдено в карточке.');
+                return 'Любой мастер';
+            }
+        } else {
+            console.log(`Барбер с id ${numericBarberId} не найден.`);
+            return 'Любой мастер';
+        }
+    }
+    
+
+    function getCategoryDefaultDuration(categoryId) {
+        const categoryElement = document.querySelector(`.category[data-category-id="${categoryId}"]`);
+        if (categoryElement) {
+            return parseInt(categoryElement.dataset.defaultDuration, 10) || salonDefaultDuration;
+        }
+        return salonDefaultDuration;
     }
     
 
@@ -361,14 +395,6 @@ document.addEventListener('DOMContentLoaded', function() {
         populateAvailableMinutes(availableMinutes, date, hour);
     }
 
-    function getCategoryDefaultDuration(categoryId) {
-        const categoryElement = document.querySelector(`.category[data-category-id="${categoryId}"]`);
-        if (categoryElement) {
-            return parseInt(categoryElement.dataset.defaultDuration, 10) || salonDefaultDuration;
-        }
-        return salonDefaultDuration;
-    }
-
     function populateAvailableMinutes(availableMinutes, date, hour) {
         const minutesInfo = document.querySelector('.minutes-info');
         minutesInfo.style.display = 'block';
@@ -424,7 +450,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const selectedHour = hourSelect.querySelector('.selected');
         if (selectedDay && selectedHour) {
             const date = selectedDay.dataset.date;
-            console.log(selectedHour);
             
             // const hour = parseInt(selectedHour.innerText.split(':')[0], 10);
             const hourText = selectedHour.innerText.replace('≈', '').trim();
@@ -783,6 +808,7 @@ document.addEventListener('DOMContentLoaded', function() {
         formData.endTime = calculateEndTime(formData);
     
         // Генерируем детали бронирования
+        console.log(formData)
         generateBookingDetailsHTML(formData)
 
         // Показать модальное окно
@@ -819,13 +845,12 @@ document.addEventListener('DOMContentLoaded', function() {
      function generateBookingDetailsHTML(data) {
         const modal = document.getElementById('booking-confirmation-modal');
         const bookingDetailsContainer = modal.querySelector('.booking-details');
-
+        
         const bookingDateTime = modal.querySelector('.booking-date-time')
-        bookingDateTime.innerHTML = `<p class="booking-date-time"><strong>Дата:</strong> ${data.date} <br> <strong>Время:</strong> ${data.time} - ${data.endTime} </p>`;
+        bookingDateTime.innerHTML = `<h2 class="booking-date-time"><strong>Дата:</strong> ${data.date} <br> <strong>Время:</strong> ${data.time} - ${data.endTime} </h2>`;
         
         // Очищаем контейнер
         bookingDetailsContainer.innerHTML = '';
-
         if (data.booking_details && data.booking_details.length > 0) {
             data.booking_details.forEach((detail) => {
                 const categoryName = getCategoryNameById(detail.categoryId);
@@ -846,6 +871,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
 
                 // Добавляем секцию категории в контейнер
+                console.log(categoryName, barberName, servicesHTML)
                 bookingDetailsContainer.innerHTML += 
                     `<div class="category-section">
                         <h4>${categoryName}</h4>
@@ -973,5 +999,4 @@ document.addEventListener('DOMContentLoaded', function() {
         const modal = document.getElementById('booking-confirmation-modal');
         modal.classList.remove('show');
     }
-    
 });
