@@ -123,7 +123,7 @@ class Appointment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     start_datetime = models.DateTimeField()
     end_datetime = models.DateTimeField(null=True, blank=True)
-    booking_minute = models.PositiveSmallIntegerField('Время бронирования', null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
     user_comment = models.TextField('Комментарий клиента', null=True, blank=True)
 
     barbers = models.ManyToManyField(

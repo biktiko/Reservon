@@ -57,9 +57,13 @@
            <!-- Внутри .booking-info -->
            <span class="booking-time">{{ appointment.start_datetime|format_date_localized }}, {{ appointment.start_datetime|time:"H:i" }} - {{ appointment.end_datetime|time:"H:i" }}</span>
            {% for barber_service in appointment.barber_services.all %}
-                    {{ barber_service.barber.name }}{% if not forloop.last %}, {% endif %}
-                {% endfor %}
-            </p>
+                   {{ barber_service.barber.name }}{% if not forloop.last %}, {% endif %}
+               {% endfor %}
+           </p>
+           
+           <p><strong>User comment:</strong> &nbsp;{{ appointment.user_comment }}</p>
+           
+
 
             <!-- Начнется через -->
             {% with time_diff=appointment.start_datetime|timeuntil:now %}

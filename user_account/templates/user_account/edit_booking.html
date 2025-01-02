@@ -18,7 +18,8 @@
                 <!-- Карточка времени бронирования -->
                 <div class="time-card">
                     <h3><i class="far fa-clock"></i> Время бронирования</h3>
-                    <p class="booking-time">{{ appointment.start_datetime|date:'d.m.Y H:i' }} - {{ appointment.end_datetime|date:'H:i' }}</p>
+                    <p class="booking-time">{{ appointment.start_datetime|date:'d.m H:i' }} - {{ appointment.end_datetime|date:'H:i' }}</p>
+                    <p class="created-time"> Пользователь забронировал в {{ appointment.created_at|date:' d.m H:i' }}</p>
                 </div>
                 
                <!-- Карточка информации о клиенте -->
