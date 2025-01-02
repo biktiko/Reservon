@@ -155,8 +155,10 @@ AUTH_PASSWORD_VALIDATORS = [
 
 USE_I18N = True
 USE_L10N = True
+
+# TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Yerevan'
 USE_TZ = True
-TIME_ZONE = 'UTC'
 
 LANGUAGE_CODE = 'en'
 
