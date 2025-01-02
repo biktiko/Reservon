@@ -26,7 +26,7 @@ class AppointmentBarberServiceInline(admin.TabularInline):
 # Настройка админки для модели Appointment
 @admin.register(Appointment)
 class AppointmentAdmin(ImportExportModelAdmin):
-    list_display = ('salon', 'user', 'start_datetime', 'end_datetime', 'get_barbers_services')
+    list_display = ('salon', 'user', 'start_datetime', 'end_datetime', 'get_barbers_services', 'user_comment', 'booking_minute')
     list_filter = ('salon', 'user')
     search_fields = ('salon__name', 'user__username')
     inlines = [AppointmentBarberServiceInline]

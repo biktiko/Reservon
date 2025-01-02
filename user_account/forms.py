@@ -4,7 +4,6 @@ from django import forms
 from django.forms import ModelForm
 from django.forms.models import inlineformset_factory
 from salons.models import Appointment, AppointmentBarberService, Barber, Service, BarberAvailability
-from django.forms.widgets import DateTimeInput
 from datetime import timedelta
 
 class CustomDateTimeInput(forms.DateTimeInput):
@@ -16,20 +15,17 @@ class CustomDateTimeInput(forms.DateTimeInput):
             final_attrs.update(attrs)
         # Используем формат, соответствующий настройкам Flatpickr
         super().__init__(attrs=final_attrs, format='%d.%m.%Y %H:%M')
-
-
 class AdminBookingForm(forms.ModelForm):
     barber = forms.ModelChoiceField(
-        queryset=Barber.objects.all(),
+        queryset=Barber.objects.none(),  # Изначально пустой
         required=False,
         label='Мастер'
     )
     services = forms.ModelMultipleChoiceField(
-        queryset=Service.objects.all(),
+        queryset=Service.objects.none(),  # Изначально пустой
         required=False,
         label='Услуги'
     )
-    # Вместо end_datetime:
     DURATION_CHOICES = [(i, f'{i} мин') for i in range(10, 100, 10)]  # 10,20..90
     duration = forms.ChoiceField(
         choices=DURATION_CHOICES,
@@ -40,13 +36,37 @@ class AdminBookingForm(forms.ModelForm):
     class Meta:
         model = Appointment
         fields = ['start_datetime', 'duration', 'barber', 'services']
-        # end_datetime выпилили из fields
         labels = {
             'start_datetime': 'Начало бронирования',
         }
         widgets = {
-            'start_datetime': DateTimeInput(attrs={'type': 'datetime-local'}),
+            'start_datetime': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        print(kwargs)
+        salon = kwargs.pop('salon', None)
+        super(AdminBookingForm, self).__init__(*args, **kwargs)
+        if salon:
+            print(f"Форма инициализирована для салона: {salon.name}")
+            self.fields['barber'].queryset = salon.barbers.all()
+            self.fields['services'].queryset = salon.services.all()
+        else:
+            print("Салон не передан в форму.")
+            self.fields['barber'].queryset = Barber.objects.none()
+            self.fields['services'].queryset = Service.objects.none()
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        start_dt = self.cleaned_data['start_datetime']
+        duration_minutes = int(self.cleaned_data['duration'])
+        end_dt = start_dt + timedelta(minutes=duration_minutes)
+        instance.end_datetime = end_dt
+
+        if commit:
+            instance.save()
+            self.save_m2m()
+        return instance
 
     def save(self, commit=True):
         # Переопределяем логику сохранения

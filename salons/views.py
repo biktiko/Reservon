@@ -374,12 +374,14 @@ def book_appointment(request, id):
             # Если запрос не является JSON, возвращаем ошибку
             logger.error("Некорректный формат данных. Ожидается JSON.")
             return JsonResponse({'error': 'Некорректный формат данных.'}, status=400)
-    
+
         date_str = data.get("date")
         time_str = data.get("time")
         booking_details = data.get("booking_details", [])
         total_service_duration = data.get("total_service_duration", salon.default_duration)
-    
+        user_comment = data.get("user_comment", "")  # Пустая строка по умолчанию
+        booking_minute = data.get("booking_minute", None)
+
         # Валидация даты
         try:
             date = datetime.strptime(date_str, '%Y-%m-%d').date()
@@ -413,13 +415,15 @@ def book_appointment(request, id):
                 total_service_duration = salon.default_duration  # Используем длительность по умолчанию
     
         end_datetime = start_datetime + timedelta(minutes=total_service_duration)
-    
+
         # Создаем Appointment
         appointment = Appointment(
             salon=salon,
             user=request.user if request.user.is_authenticated else None,
             start_datetime=initial_start_datetime,
-            end_datetime=end_datetime
+            end_datetime=end_datetime,
+            user_comment=user_comment,
+            booking_minute=booking_minute 
         )
         appointment.save()
         logger.debug(f"Создано Appointment: {appointment}")

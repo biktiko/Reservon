@@ -49,7 +49,6 @@ INSTALLED_APPS = [
     'debug_toolbar'
 ]
 
-
 DEBUG_TOOLBAR_PANELS = [
     'debug_toolbar.panels.history.HistoryPanel',
     'debug_toolbar.panels.versions.VersionsPanel',
@@ -76,10 +75,8 @@ AUTHENTICATION_BACKENDS = (
     'allauth.account.auth_backends.AuthenticationBackend',
 )
 
-
 LOGIN_REDIRECT_URL = '/salons'
 LOGOUT_REDIRECT_URL = '/'
-
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -136,7 +133,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
         'OPTIONS': {
-            'timeout': 20,
+            'timeout': 30,
         }
     }
 }

@@ -53,3 +53,8 @@
 .booking-button:hover {
     background: #e67e22;
 }
+
+#user-comment{
+    width: 95%;
+    height: 28px;
+}
