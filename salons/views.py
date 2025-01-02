@@ -423,7 +423,6 @@ def book_appointment(request, id):
             start_datetime=initial_start_datetime,
             end_datetime=end_datetime,
             user_comment=user_comment,
-            booking_minute=booking_minute 
         )
         appointment.save()
         logger.debug(f"Создано Appointment: {appointment}")
