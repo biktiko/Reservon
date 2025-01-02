@@ -262,6 +262,11 @@ LOGGING = {
         },
     },
     'loggers': {
+        'django.server': {
+            'handlers': ['console', 'file'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
         'django': {
             'handlers': ['console', 'file'],
             'level': 'DEBUG',
