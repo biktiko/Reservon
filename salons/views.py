@@ -19,6 +19,7 @@ from django.dispatch import receiver
 from main.tasks import send_push_notification_task
 from authentication.models import PushSubscription
 from django.views.decorators.cache import never_cache
+from django.conf import settings
 
 import logging
 
@@ -380,7 +381,6 @@ def book_appointment(request, id):
         booking_details = data.get("booking_details", [])
         total_service_duration = data.get("total_service_duration", salon.default_duration)
         user_comment = data.get("user_comment", "")  # Пустая строка по умолчанию
-        booking_minute = data.get("booking_minute", None)
 
         # Валидация даты
         try:
@@ -570,26 +570,30 @@ def book_appointment(request, id):
         if appointments_to_create:
             appointment.barber_services.set(appointments_to_create)
 
-        admins = salon.admins.all()
-        for admin in admins:
-            push_subscriptions = PushSubscription.objects.filter(user=admin)
-            for subscription in push_subscriptions:
-                subscription_info = {
-                    "endpoint": subscription.endpoint,
-                    "keys": {
-                        "p256dh": subscription.p256dh,
-                        "auth": subscription.auth,
+        if not settings.DEBUG:
+            admins = salon.admins.all()
+            for admin in admins:
+                push_subscriptions = PushSubscription.objects.filter(user=admin)
+                for subscription in push_subscriptions:
+                    subscription_info = {
+                        "endpoint": subscription.endpoint,
+                        "keys": {
+                            "p256dh": subscription.p256dh,
+                            "auth": subscription.auth,
+                        }
                     }
-                }
-                payload = {
-                    "head": "Новое бронирование",
-                    "body": f"Пользователь успешно забронировал услугу.",
-                    "icon": "/static/main/img/notification-icon.png",
-                    "url": "/user-account/bookings/"                }
-                send_push_notification_task.delay(subscription_info, json.dumps(payload))
-                logger.info(f"Задача на отправку уведомления создана для {admin.username}.")
+                    payload = {
+                        "head": "Новое бронирование",
+                        "body": f"Пользователь успешно забронировал услугу.",
+                        "icon": "/static/main/img/notification-icon.png",
+                        "url": "/user-account/bookings/"                }
+                    send_push_notification_task.delay(subscription_info, json.dumps(payload))
+                    logger.info(f"Задача на отправку уведомления создана для {admin.username}.")
 
-        logger.info(f"Бронирование успешно создано для пользователя - {request.user if request.user.is_authenticated else 'Анонимный пользователь'}")
+            logger.info(f"Бронирование успешно создано для пользователя - {request.user if request.user.is_authenticated else 'Анонимный пользователь'}")
+        else:
+            pass
+
         return JsonResponse({'success': True, 'message': 'Бронирование успешно создано!'})
     
     except Exception as e:

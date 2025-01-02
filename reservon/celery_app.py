@@ -14,3 +14,12 @@ app.config_from_object('django.conf:settings', namespace='CELERY')
 
 # Автоматическое обнаружение задач в приложениях Django
 app.autodiscover_tasks()
+
+# # для локальной разработки
+# if os.getenv('DJANGO_DEVELOPMENT') == 'True':
+#     app.conf.update(
+#         broker_url='memory://',
+#         result_backend='django-db',
+#         task_always_eager=True,
+#         task_eager_propagates=True,
+#     )
