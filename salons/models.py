@@ -90,13 +90,12 @@ class Barber(models.Model):
     categories = models.ManyToManyField(ServiceCategory, related_name='barbers')  # Add this line
 
     def __str__(self):
-        return f"{self.name} ({self.salon.name})"
+        return self.name  
 
     def get_avatar_url(self):
         if self.avatar and self.avatar.url:
             return self.avatar.url
         return '/static/salons/img/default-avatar.png'
-    
     
 class BarberAvailability(models.Model):
     DAY_OF_WEEK_CHOICES = [
@@ -124,6 +123,9 @@ class Appointment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     start_datetime = models.DateTimeField()
     end_datetime = models.DateTimeField(null=True, blank=True)
+    booking_minute = models.PositiveSmallIntegerField('Время бронирования', null=True, blank=True)
+    user_comment = models.TextField('Комментарий клиента', null=True, blank=True)
+
     barbers = models.ManyToManyField(
         Barber,
         through='AppointmentBarberService',

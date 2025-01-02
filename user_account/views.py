@@ -24,9 +24,9 @@ logger = logging.getLogger('booking')
 @transaction.atomic
 def add_booking(request):
     if request.method == 'POST':
-        form = AdminBookingForm(request.POST)
         salon_id = request.POST.get('salon_id')
         salon = get_object_or_404(Salon, id=salon_id, admins=request.user)
+        form = AdminBookingForm(request.POST, salon=salon)
         
         if form.is_valid():
             appointment = form.save(commit=False)
@@ -62,12 +62,18 @@ def add_booking(request):
                 return JsonResponse({'success': True, 'message': 'Бронирование успешно создано!'})
             return redirect('booking_success')
         else:
+            # Если форма не валидна, повторно передаём объект salon в форму
+            salon = get_object_or_404(Salon, id=request.POST.get('salon_id'), admins=request.user)
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
                 return JsonResponse({'success': False, 'errors': form.errors.as_json()}, status=400)
+            return render(request, 'user_account/add_booking.html', {'form': form, 'selected_salon': salon})
     else:
-        form = AdminBookingForm()
-    return render(request, 'user_account/add_booking.html', {'form': form})
-
+        salon_id = request.GET.get('salon_id')  # Предполагаем, что salon_id передаётся через GET-параметр
+        print('salon_id', salon_id)
+        salon = get_object_or_404(Salon, id=salon_id, admins=request.user)
+        form = AdminBookingForm(salon=salon)
+    return render(request, 'user_account/add_booking.html', {'form': form, 'selected_salon': salon})
+    
 @login_required
 def edit_booking(request, booking_id):
     user = request.user
@@ -242,7 +248,7 @@ def manage_bookings(request):
     # Получаем мастеров для фильтрации
     barbers = Barber.objects.filter(salon=selected_salon)
 
-    booking_form = AdminBookingForm()
+    booking_form = AdminBookingForm(salon=selected_salon)
 
     context = {
         'appointments': page_obj,

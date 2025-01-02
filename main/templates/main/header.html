@@ -29,8 +29,8 @@
       {% else %}
         <!-- Пользователь не залогинен -->
         <a href="#" class="btn login-btn" onclick="openAuthModal('login')"><i class="fa-solid fa-user"></i>{% trans "Login" %}</a>
-
       {% endif %}
+      
       <form action="{% url 'set_language' %}" method="post" class="language-switcher">
         {% csrf_token %}
         <input type="hidden" name="next" value="{{ request.path }}">
