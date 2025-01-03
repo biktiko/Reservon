@@ -83,6 +83,14 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function sendSubscriptionToServer(subscription) {
+
+        if (subscription.endpoint.includes('wns2-par02p.notify.windows.com')) {   // Так как сейчас все равно не работает пуш в браузере временно отключим их вовсе
+            console.log('Пропускаем Windows WNS подписку, так как pywebpush не поддерживает aud');
+            subscription.unsubscribe();
+            console.log('unsubscribe cause wns2-par02p.notify.windows.com')
+            return;
+        }
+
         fetch('/subscribe_push/', {
             method: 'POST',
             headers: {
