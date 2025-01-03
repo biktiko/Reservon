@@ -194,13 +194,14 @@ header:hover {
 
 .language-switcher select {
   padding: 8px 15px;
-  border-radius: 5px;
+  border-radius: 8px;
   background-color: transparent;
   color: #fff;
   border: 1px solid #fff;
   font-size: 0.9rem;
   cursor: pointer;
   transition: background 0.3s, color 0.3s;
+  margin-bottom: 0px;
 }
 
 .language-switcher select:hover {
@@ -217,6 +218,14 @@ header:hover {
   color: #fff;
   margin-right: 15px;
   font-size: 1rem;
+  border: 1px solid #fff;
+  padding: 8px;
+  border-radius: 8px;
+}
+
+.auth-buttons .user-name:hover {
+  background-color: #fff;
+  color: #000;
 }
 
 /* Стили для кнопки Logout */
@@ -248,7 +257,6 @@ header:hover {
   .navigation .auth-buttons .language-switcher,
   .navigation .auth-buttons .user-name {
     margin: 5px 0;
-    width: 28%;
     text-align: center;
   }
 }
