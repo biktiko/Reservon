@@ -37,9 +37,8 @@ def subscribe_push(request):
             if not all([endpoint, p256dh, auth]):
                 return JsonResponse({"success": False, "error": "Invalid subscription data"}, status=400)
 
-            user = request.user  # Аутентифицированный пользователь
+            user = request.user  # Пользователь аутентифицирован благодаря декоратору @login_required
 
-            # Проверка на существующую подписку
             existing_subscription = PushSubscription.objects.filter(user=user, endpoint=endpoint).first()
             if existing_subscription:
                 # Проверяем, нужно ли обновление
@@ -52,21 +51,23 @@ def subscribe_push(request):
                     existing_subscription.save()
                     return JsonResponse({"success": True, "message": "Subscription updated"}, status=200)
 
-            # Создаем новую подписку, если она отсутствует
-            PushSubscription.objects.create(
+            # Сохранение подписки в базе данных
+            PushSubscription.objects.update_or_create(
                 user=user,
                 endpoint=endpoint,
-                p256dh=p256dh,
-                auth=auth,
+                defaults={
+                    'p256dh': p256dh,
+                    'auth': auth,
+                }
             )
-            return JsonResponse({"success": True, "message": "Subscribed successfully"}, status=201)
-
+            return JsonResponse({"success": True})
         except json.JSONDecodeError:
             return JsonResponse({"success": False, "error": "Invalid JSON"}, status=400)
         except Exception as e:
             return JsonResponse({"success": False, "error": str(e)}, status=500)
-
     return JsonResponse({"error": "Invalid request method"}, status=400)
+
+
 
 @csrf_exempt
 def unsubscribe_push(request):
