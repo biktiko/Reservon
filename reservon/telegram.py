@@ -1,9 +1,10 @@
+# C:\Reservon\Reservon\reservon\telegram.py
 import requests
 import logging
 
 logger = logging.getLogger(__name__)
 
-INTERCONNECT_API_URL = "https://reservon.am/api/json.php"  # Подставьте реальный URL
+INTERCONNECT_API_URL = "https://portal.interconnect.solutions/api/json.php"
 INTERCONNECT_API_KEY = "38e47e13-2733-4925-96ee-59752b05d152"
 
 def send_telegram_via_interconnect(phone_number: str, message: str, msg_id: int = 1) -> bool:
