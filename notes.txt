@@ -21,6 +21,9 @@ Flower
 http://localhost:5555
 
 
+Interconnect solutions API
+38e47e13-2733-4925-96ee-59752b05d152
+
 ручная отписка с консоли браузера
 navigator.serviceWorker.ready.then(registration => {
     registration.pushManager.getSubscription().then(subscription => {

@@ -11,7 +11,7 @@ class ProfileInline(admin.StackedInline):
     can_delete = False
     verbose_name_plural = 'Профиль'
     fk_name = 'user'
-    fields = ('phone_number', 'status', 'notes', 'login_method', 'google_uid') 
+    fields = ('phone_number', 'status', 'notes', 'login_method', 'google_uid', 'telegram', 'telegram_phone_number', 'avatar') 
     extra = 0
 
 class CustomUserAdmin(DefaultUserAdmin):

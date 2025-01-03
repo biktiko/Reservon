@@ -16,6 +16,9 @@ class Profile(models.Model):
     avatar = models.ImageField(upload_to='avatars/', null=True, blank=True)
     login_method = models.CharField(max_length=20, choices=[('password', 'Password'), ('google', 'Google')])
     google_uid = models.CharField(max_length=255, null=True, blank=True)
+    telegram = models.BooleanField(default=False)
+    telegram_phone_number = models.CharField(max_length=15, unique=True, null=True, blank=True, default=None)
+    push_subscribe = models.BooleanField(default=True)
 
     def __str__(self):
         return f"{self.user.first_name} ({self.phone_number})"
