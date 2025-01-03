@@ -577,19 +577,6 @@ def book_appointment(request, id):
             for admin in admins:
                 profile = admin.main_profile  # вот объект Profile
 
-                # telegram
-                if profile.telegram and profile.telegram_phone_number:
-                    # Пример текста - "У вас новое бронирование, 12-го числа в 16:30"
-                    # Можно гибко формировать по дате/времени
-                    booking_date_str = date_str  # Или date.strftime("%d.%m")
-                    booking_time_str = time_str  # Или start_time.strftime("%H:%M")
-                    telegram_text = f"У вас новое бронирование, {booking_date_str} {booking_time_str}"
-
-                    # Теперь отправляем
-                    success = send_telegram_via_interconnect(profile.telegram_phone_number, telegram_text)
-                    if not success:
-                        logger.warning(f"Не удалось отправить Telegram {profile.telegram_phone_number}")
-
                 # push-уведомления
                 if profile.push_subscribe:
                         push_subscriptions = PushSubscription.objects.filter(user=admin)
