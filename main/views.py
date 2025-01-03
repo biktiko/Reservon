@@ -37,24 +37,35 @@ def subscribe_push(request):
             if not all([endpoint, p256dh, auth]):
                 return JsonResponse({"success": False, "error": "Invalid subscription data"}, status=400)
 
-            user = request.user  # Пользователь аутентифицирован благодаря декоратору @login_required
+            user = request.user  # Аутентифицированный пользователь
 
-            # Сохранение подписки в базе данных
-            PushSubscription.objects.update_or_create(
+            # Проверка на существующую подписку
+            existing_subscription = PushSubscription.objects.filter(user=user, endpoint=endpoint).first()
+            if existing_subscription:
+                # Проверяем, нужно ли обновление
+                if existing_subscription.p256dh == p256dh and existing_subscription.auth == auth:
+                    return JsonResponse({"success": True, "message": "Already subscribed"}, status=200)
+                else:
+                    # Обновляем только измененные данные
+                    existing_subscription.p256dh = p256dh
+                    existing_subscription.auth = auth
+                    existing_subscription.save()
+                    return JsonResponse({"success": True, "message": "Subscription updated"}, status=200)
+
+            # Создаем новую подписку, если она отсутствует
+            PushSubscription.objects.create(
                 user=user,
                 endpoint=endpoint,
-                defaults={
-                    'p256dh': p256dh,
-                    'auth': auth,
-                }
+                p256dh=p256dh,
+                auth=auth,
             )
+            return JsonResponse({"success": True, "message": "Subscribed successfully"}, status=201)
 
-
-            return JsonResponse({"success": True})
         except json.JSONDecodeError:
             return JsonResponse({"success": False, "error": "Invalid JSON"}, status=400)
         except Exception as e:
             return JsonResponse({"success": False, "error": str(e)}, status=500)
+
     return JsonResponse({"error": "Invalid request method"}, status=400)
 
 @csrf_exempt

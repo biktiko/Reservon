@@ -573,41 +573,41 @@ def book_appointment(request, id):
             appointment.barber_services.set(appointments_to_create)
 
         if not settings.DEBUG:
+            admins = salon.admins.all()
+            for admin in admins:
+                profile = admin.main_profile  # вот объект Profile
 
-            # telegram
-            if Profile.telegram and Profile.telegram_phone_number:
-                # Пример текста - "У вас новое бронирование, 12-го числа в 16:30"
-                # Можно гибко формировать по дате/времени
-                booking_date_str = date_str  # Или date.strftime("%d.%m")
-                booking_time_str = time_str  # Или start_time.strftime("%H:%M")
-                telegram_text = f"У вас новое бронирование, {booking_date_str} {booking_time_str}"
+                # telegram
+                if profile.telegram and profile.telegram_phone_number:
+                    # Пример текста - "У вас новое бронирование, 12-го числа в 16:30"
+                    # Можно гибко формировать по дате/времени
+                    booking_date_str = date_str  # Или date.strftime("%d.%m")
+                    booking_time_str = time_str  # Или start_time.strftime("%H:%M")
+                    telegram_text = f"У вас новое бронирование, {booking_date_str} {booking_time_str}"
 
-                # Теперь отправляем
-                success = send_telegram_via_interconnect(Profile.telegram_phone_number, telegram_text)
-                if not success:
-                    logger.warning(f"Не удалось отправить Telegram {Profile.telegram_phone_number}")
+                    # Теперь отправляем
+                    success = send_telegram_via_interconnect(profile.telegram_phone_number, telegram_text)
+                    if not success:
+                        logger.warning(f"Не удалось отправить Telegram {profile.telegram_phone_number}")
 
-            # push-уведомления
-            # 2. Push
-            if Profile.push_subscribe:
-                admins = salon.admins.all()
-                for admin in admins:
-                    push_subscriptions = PushSubscription.objects.filter(user=admin)
-                    for subscription in push_subscriptions:
-                        subscription_info = {
-                            "endpoint": subscription.endpoint,
-                            "keys": {
-                                "p256dh": subscription.p256dh,
-                                "auth": subscription.auth,
+                # push-уведомления
+                if profile.push_subscribe:
+                        push_subscriptions = PushSubscription.objects.filter(user=admin)
+                        for subscription in push_subscriptions:
+                            subscription_info = {
+                                "endpoint": subscription.endpoint,
+                                "keys": {
+                                    "p256dh": subscription.p256dh,
+                                    "auth": subscription.auth,
+                                }
                             }
-                        }
-                        payload = {
-                            "head": "Новое бронирование",
-                            "body": f"Пользователь успешно забронировал услугу.",
-                            "icon": "/static/main/img/notification-icon.png",
-                            "url": "/user-account/bookings/"                }
-                        send_push_notification_task.delay(subscription_info, json.dumps(payload))
-                        logger.info(f"Задача на отправку уведомления создана для {admin.username}.")
+                            payload = {
+                                "head": "Новое бронирование",
+                                "body": f"Пользователь успешно забронировал услугу.",
+                                "icon": "/static/main/img/notification-icon.png",
+                                "url": "/user-account/bookings/"                }
+                            send_push_notification_task.delay(subscription_info, json.dumps(payload))
+                            logger.info(f"Задача на отправку уведомления создана для {admin.username}.")
 
             logger.info(f"Бронирование успешно создано для пользователя - {request.user if request.user.is_authenticated else 'Анонимный пользователь'}")
         else:
