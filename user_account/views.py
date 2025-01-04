@@ -283,8 +283,7 @@ def delete_booking(request, booking_id):
 
     if request.method == 'POST':
         appointment.delete()
-        return redirect('manage_bookings')
-
+        return redirect('user_account:manage_bookings')
     context = {
         'appointment': appointment,
     }

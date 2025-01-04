@@ -21,11 +21,6 @@ def send_verification_code(phone_number, profile):
         remaining = cooldown_period - (now - profile.last_verification_sent_at)
         raise Exception(f"Пожалуйста, подождите {int(remaining.total_seconds())} секунд перед повторной отправкой.")
 
-    # Логирование для отладки
-    logger.debug(f"TWILIO_ACCOUNT_SID: {os.getenv('TWILIO_ACCOUNT_SID')}")
-    logger.debug(f"TWILIO_AUTH_TOKEN: {os.getenv('TWILIO_AUTH_TOKEN')}")
-    logger.debug(f"TWILIO_VERIFY_SERVICE_SID: {os.getenv('TWILIO_VERIFY_SERVICE_SID')}")
-
     account_sid = os.getenv('TWILIO_ACCOUNT_SID')
     auth_token = os.getenv('TWILIO_AUTH_TOKEN')
     verify_service_sid = os.getenv('TWILIO_VERIFY_SERVICE_SID')

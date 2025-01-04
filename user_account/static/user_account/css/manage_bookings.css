@@ -245,13 +245,14 @@
 
 @media screen and (max-width: 768px) {
 
-    .filter-form button {
-        display: block;
+    .booking-card, .filter-form{
+        margin-left: -25px;
+        width: 112%;
     }
-
     
     .filter-form button{
-        width: 94%;
+        display: block;
+        width: 100%;
         margin-top: 7px;
     }
 

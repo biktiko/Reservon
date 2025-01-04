@@ -20,8 +20,7 @@ from main.tasks import send_push_notification_task
 from authentication.models import PushSubscription
 from django.views.decorators.cache import never_cache
 from django.conf import settings
-from authentication.models import Profile
-from reservon.telegram import send_telegram_via_interconnect
+from reservon.utils.twilio_service import send_whatsapp_message
 
 import logging
 
@@ -577,24 +576,56 @@ def book_appointment(request, id):
             for admin in admins:
                 profile = admin.main_profile  # вот объект Profile
 
+                # whatsapp
+                if profile.whatsapp:
+                    TEMPLATE_SID = "HX17e97951d490cbfdfe1b93775469fa84"
+       
+                    datetime_str = (
+                        appointment.start_datetime.strftime("%d.%m %H:%M")
+                        + "-" +
+                        appointment.end_datetime.strftime("%H:%M")
+                    )
+
+                    barbers_qs = appointment.barbers.all()
+                    master_names = ", ".join(b.name for b in barbers_qs) if barbers_qs else "Без мастера"
+
+                    dataTest = {
+                        "client_phoneNumber": profile.phone_number,
+                        "datetime": datetime_str,
+                        "master_name": master_names,
+                        "admin_number": profile.whatsapp_phone_number
+                    }
+
+                    content_variables_dict = {
+                        "1": dataTest["client_phoneNumber"],
+                        "2": dataTest["datetime"],
+                        "3": dataTest["master_name"]
+                    }
+
+                    # Преобразуем словарь в JSON
+                    variables_str = json.dumps(content_variables_dict, ensure_ascii=False)
+
+                    # Вызываем нашу функцию из twilio_service.py
+                    send_whatsapp_message(dataTest["admin_number"], TEMPLATE_SID, variables_str)
+
                 # push-уведомления
                 if profile.push_subscribe:
-                        push_subscriptions = PushSubscription.objects.filter(user=admin)
-                        for subscription in push_subscriptions:
-                            subscription_info = {
-                                "endpoint": subscription.endpoint,
-                                "keys": {
-                                    "p256dh": subscription.p256dh,
-                                    "auth": subscription.auth,
-                                }
+                    push_subscriptions = PushSubscription.objects.filter(user=admin)
+                    for subscription in push_subscriptions:
+                        subscription_info = {
+                            "endpoint": subscription.endpoint,
+                            "keys": {
+                                "p256dh": subscription.p256dh,
+                                "auth": subscription.auth,
                             }
-                            payload = {
-                                "head": "Новое бронирование",
-                                "body": f"Пользователь успешно забронировал услугу.",
-                                "icon": "/static/main/img/notification-icon.png",
-                                "url": "/user-account/bookings/"                }
-                            send_push_notification_task.delay(subscription_info, json.dumps(payload))
-                            logger.info(f"Задача на отправку уведомления создана для {admin.username}.")
+                        }
+                        payload = {
+                            "head": "Новое бронирование",
+                            "body": f"Пользователь успешно забронировал услугу.",
+                            "icon": "/static/main/img/notification-icon.png",
+                            "url": "/user-account/bookings/"                }
+                        send_push_notification_task.delay(subscription_info, json.dumps(payload))
+                        logger.info(f"Задача на отправку уведомления создана для {admin.username}.")
 
             logger.info(f"Бронирование успешно создано для пользователя - {request.user if request.user.is_authenticated else 'Анонимный пользователь'}")
         else:
