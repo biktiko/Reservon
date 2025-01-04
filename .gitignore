@@ -1,7 +1,8 @@
 .env
 media
-todolist.txt
 .cpanel.yml
 debug.log
 .readthedocs.yaml
 copy_heroku_env.py
+notes.txt
+db.sqlite3

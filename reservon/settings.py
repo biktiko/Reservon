@@ -129,15 +129,24 @@ GRAPPELLI_ADMIN_TITLE = "Reservon Admin"
 
 WSGI_APPLICATION = 'reservon.wsgi.application'
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-        'OPTIONS': {
-            'timeout': 30,
+if DEBUG:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+            'OPTIONS': {
+                'timeout': 30,
+            }
         }
     }
-}
+else:
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=os.environ.get('DATABASE_URL')
+        )
+    }
+    DATABASES['default']['ENGINE'] = 'django.db.backends.postgresql'
+
 
 AUTH_PASSWORD_VALIDATORS = [
     {

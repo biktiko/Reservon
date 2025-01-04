@@ -27,6 +27,22 @@ Interconnect solutions API
 whatsapp business
 2545563398
 
+Dasatabase settings
+Host
+c9pv5s2sq0i76o.cluster-czrs8kj4isg7.us-east-1.rds.amazonaws.com
+Database
+dfs8u6bl6atp3
+User
+uae4prq2ogp5s9
+Port
+5432
+Password
+p264f58e3acb6e1d674d86c493b9066714a062ee584f76f9b34e4af3e95f259ff
+URI
+postgres://uae4prq2ogp5s9:p264f58e3acb6e1d674d86c493b9066714a062ee584f76f9b34e4af3e95f259ff@c9pv5s2sq0i76o.cluster-czrs8kj4isg7.us-east-1.rds.amazonaws.com:5432/dfs8u6bl6atp3
+Heroku CLI
+heroku pg:psql postgresql-horizontal-31900 --app reservon
+
 ручная отписка с консоли браузера
 navigator.serviceWorker.ready.then(registration => {
     registration.pushManager.getSubscription().then(subscription => {
