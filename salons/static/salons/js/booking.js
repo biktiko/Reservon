@@ -57,7 +57,6 @@ document.addEventListener('DOMContentLoaded', function() {
         // Преобразование barberId к числу
         const numericBarberId = Number(barberId);
         if (isNaN(numericBarberId)) {
-            // console.log('barberId is not a number:', barberId);
             return 'Любой мастер';
         }
     
@@ -70,7 +69,6 @@ document.addEventListener('DOMContentLoaded', function() {
             return Number(card.getAttribute('data-barber-id')) == numericBarberId        
         } 
         );
-        console.log('finded card', card)
     
         if (card) {
             const cardName = card.querySelector('.barber-name');
@@ -784,63 +782,6 @@ document.addEventListener('DOMContentLoaded', function() {
         };
     });
 
-    // function showBookingConfirmationModal(formData) {
-    //     const modal = document.getElementById('booking-confirmation-modal');
-
-    //     const closeButton = modal.querySelector('.close-button');
-    //     const confirmButton = modal.querySelector('.confirm-button');
-    //     const cancelButton = modal.querySelector('.cancel-button');
-
-    //     // Функция для вычисления endTime
-    //     function calculateEndTime(formData) {
-    //         let [hours, minutes] = formData.time.split(":").map(Number);
-    //         minutes += formData.total_service_duration;
-
-    //         hours += Math.floor(minutes / 60);
-    //         minutes = minutes % 60;
-
-    //         let formattedHours = String(hours).padStart(2, "0");
-    //         let formattedMinutes = String(minutes).padStart(2, "0");
-
-    //         return `${formattedHours}:${formattedMinutes}`;
-    //     }
-
-    //     formData.endTime = calculateEndTime(formData);
-    
-    //     // Генерируем детали бронирования
-    //     console.log(formData)
-    //     generateBookingDetailsHTML(formData)
-
-    //     // Показать модальное окно
-    //     modal.classList.add('show');
-
-    //     // Обработчики событий для кнопок
-    //     if (closeButton) {
-    //         closeButton.onclick = () => {
-    //             hideBookingConfirmationModal();
-    //         };
-    //     }
-
-    //     if (confirmButton) {
-    //         confirmButton.onclick = () => {
-    //             submitBookingData(formData);
-    //         };
-    //     }
-
-    //     if (cancelButton) {
-    //         cancelButton.onclick = () => {
-    //             hideBookingConfirmationModal();
-    //         };
-    //     };
-
-    //     // Обработчик закрытия по клику вне модального окна
-    //     window.onclick = (event) => {
-    //         if (event.target === modal) {
-    //             hideBookingConfirmationModal();
-    //         }
-    //     };
-    // }
-
     function showBookingConfirmationModal(formData) {
         const modal = document.getElementById('booking-confirmation-modal');
     
@@ -883,26 +824,14 @@ document.addEventListener('DOMContentLoaded', function() {
         // Важно: здесь мы перехватываем нажатие «Подтвердить»
         if (confirmButton) {
             confirmButton.onclick = () => {
-                // 1) Считываем комментарий из поля textarea
                 const userCommentField = document.getElementById('user-comment');
                 let userComment = '';
                 if (userCommentField) {
                     userComment = userCommentField.value.trim();
                 }
     
-                // 2) Вычисляем минуту
-                // Допустим, formData.time = "10:05"
-                let bookingMinute = 0;
-                if (formData.time) {
-                    const [hh, mm] = formData.time.split(':');
-                    bookingMinute = parseInt(mm, 10); 
-                }
-    
-                // 3) Добавляем поля к formData
                 formData.user_comment = userComment;
-                formData.booking_minute = bookingMinute;
     
-                // 4) Отправляем на сервер
                 submitBookingData(formData);
             };
         }
@@ -914,7 +843,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         };
     }
-    
     
      // Функция для генерации HTML деталей бронирования
      function generateBookingDetailsHTML(data) {
