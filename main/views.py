@@ -23,12 +23,6 @@ def contacts(request):
 def search_salons(request):
     return redirect('salons:salons_main')
 
-# views.py
-def some_view(request):
-    is_admin = request.user.is_authenticated and request.user.administered_salons.exists()
-    return render(request, 'template.html', {'is_admin': is_admin})
-
-
 @csrf_exempt
 @login_required
 def subscribe_push(request):

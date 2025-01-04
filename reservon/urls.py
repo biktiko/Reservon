@@ -12,7 +12,9 @@ urlpatterns = [
     path('', include(('main.urls', 'main'), namespace='main')),
     path('auth/', include(('authentication.urls', 'authentication'), namespace='authentication')),
     path('salons/', include(('salons.urls', 'salons'), namespace='salons')),
-    path('user-account/', include(('user_account.urls', 'user_account'), namespace='user_account')),
+    # path('user-account/', include(('user_account.urls', 'user_account'), namespace='user_account')),
+    path('user-account/', include('user_account.urls', namespace='user_account')),
+
     path('i18n/', include('django.conf.urls.i18n')), 
     path('accounts/', include('allauth.urls')),
     path('__debug__/', include('debug_toolbar.urls')),

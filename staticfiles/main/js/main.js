@@ -1,4 +1,8 @@
 document.addEventListener('DOMContentLoaded', function () {
+
+    const modalContent = document.getElementById('auth-modal');
+    modalContent.style.display = 'none';
+
     const menuToggle = document.getElementById('menu-toggle');
     const navigation = document.getElementById('navigation');
     const navLinks = navigation.querySelectorAll('a');

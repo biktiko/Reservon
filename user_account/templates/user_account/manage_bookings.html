@@ -30,7 +30,7 @@
           <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addBookingModal">
             Добавить бронирование
           </button>           
-        </form>
+    </form>
 
         <div class="modal fade" id="addBookingModal" tabindex="-1" role="dialog" aria-labelledby="addBookingModalLabel" aria-hidden="true">
             <div class="modal-dialog" role="document">
@@ -104,7 +104,6 @@
         
     </div>
     {% else %}
-        <!-- Опционально: вывести сообщение об ошибке или пропустить этот объект -->
         <p>Ошибка: бронирование без идентификатора.</p>
     {% endif %}
         {% empty %}

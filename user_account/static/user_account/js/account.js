@@ -3,13 +3,18 @@ function toggleSidebar() {
     const overlay = document.querySelector('.overlay');
 
     sidebar.classList.toggle('open');
+    console.log(sidebar.classList)
     overlay.classList.toggle('active');
 }
 
 
 function closeSidebar() {
     const sidebar = document.querySelector('.sidebar');
+    const overlay = document.querySelector('.overlay');
+
     sidebar.classList.remove('open');
+    overlay.classList.remove('active');
+
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -18,7 +23,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Открыть/закрыть
     if (menuButton) {
         menuButton.addEventListener('click', () => {
-            console.log('click');
             toggleSidebar();
         });
     }

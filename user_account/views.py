@@ -543,7 +543,7 @@ def my_account_view(request):
         if user_form.is_valid() and profile_form.is_valid():
             user_form.save()
             profile_form.save()
-            return redirect('my_account')  # Обновить страницу
+            return redirect('user_account:my_account') 
     else:
         user_form = UserProfileForm(instance=user)
         profile_form = ProfileForm(instance=profile)

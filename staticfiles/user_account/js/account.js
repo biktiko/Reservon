@@ -18,7 +18,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Открыть/закрыть
     if (menuButton) {
         menuButton.addEventListener('click', () => {
-            console.log('click');
             toggleSidebar();
         });
     }
