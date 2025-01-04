@@ -8,6 +8,11 @@ from django.shortcuts import redirect
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth import get_backends
 from django.views.decorators.cache import never_cache
+import random
+from django.utils import timezone
+from datetime import timedelta
+import requests
+from django.conf import settings
 import json
 import re
 import logging
@@ -152,7 +157,9 @@ def login_view(request):
             # Если пользователь не верифицирован, посылаем код
             if profile.status == 'unverified':
                 try:
-                    send_verification_code(phone_number, profile)
+                    # send_verification_code(phone_number, profile
+                    generate_and_send_otp(profile)  # <-- наша новая функция
+
                     request.session['phone_number'] = phone_number
                     return JsonResponse({'next_step': 'verify_code', 'phone_number': phone_number})
                 except Exception as e:
@@ -396,3 +403,67 @@ from django.http import HttpResponse
 def clear_cache_view(request):
     cache.clear()
     return HttpResponse("Кэш успешно очищен.")
+
+def generate_4_digit_code():
+    return str(random.randint(1000, 9999))
+
+def send_interconnect_sms(phone, message_text):
+    # url = "https://portal.interconnect.solutions/api/v2/messages"
+    url = 'https://portal.interconnect.solutions/api/json.php'
+
+    phone_int = int(phone.lstrip('+')) # или .replace('+','') - зависит от того, как API принимает
+
+    payload = {
+        "auth": settings.INTERCONNECT_AUTH,
+        "data": [
+            {
+                "type": "sms",
+                "id": 100500,
+                "phone": phone_int,  
+                "sms_signature": "Reservon",
+                "sms_message": message_text,
+                "sms_lifetime": 3600,
+                "short_link": False
+            }
+        ]
+    }
+
+    try:
+        # Укажем заголовок Content-Type: application/json
+        headers = {"Content-Type": "application/json"}
+        response = requests.post(url, json=payload, headers=headers)
+
+        print("DEBUG: status_code =", response.status_code)
+        print("DEBUG: raw_response =", response.text)  # уже видим, что пусто
+        try:
+            response_data = response.json()
+        except ValueError as ve:
+            raise Exception(f"Interconnect returned non-JSON or empty response: {response.text}")
+
+
+        if response.status_code == 200 and response_data.get("success") == True:
+            # Проверяем data[0]["success"]
+            data_items = response_data.get("data", [])
+            if data_items and data_items[0].get("success") == True:
+                return True
+            else:
+                raise Exception(f"Interconnect partial error: {response_data}")
+        else:
+            raise Exception(f"Interconnect error: {response_data}")
+    except Exception as e:
+        raise Exception(f"Failed to send SMS via Interconnect: {e}")
+
+
+def generate_and_send_otp(profile):
+    """
+    Генерирует 4-значный код и отправляет через Interconnect.
+    Сохраняет код и время истечения в profile.
+    """
+    code = generate_4_digit_code()
+    profile.otp_code = code
+    profile.otp_expires = timezone.now() + timedelta(minutes=5)  # код действителен 5 минут
+    profile.save()
+
+    # Отправляем по SMS
+    message_text = f"Ваш код подтверждения от RESERVON: {code}"
+    send_interconnect_sms(profile.phone_number, message_text)
