@@ -16,6 +16,7 @@ from django.conf import settings
 import json
 import re
 import logging
+import uuid
 
 from .models import Profile
 from .utils import send_verification_code, check_verification_code
@@ -413,12 +414,15 @@ def send_interconnect_sms(phone, message_text):
 
     phone_int = int(phone.lstrip('+')) # или .replace('+','') - зависит от того, как API принимает
 
+    # Генерируем уникальный ID
+    unique_id = int(uuid.uuid4().int >> 64)
+
     payload = {
         "auth": settings.INTERCONNECT_AUTH,
         "data": [
             {
                 "type": "sms",
-                "id": 100500,
+                "id": unique_id,
                 "phone": phone_int,  
                 "sms_signature": "Reservon",
                 "sms_message": message_text,
@@ -434,7 +438,7 @@ def send_interconnect_sms(phone, message_text):
         response = requests.post(url, json=payload, headers=headers)
 
         print("DEBUG: status_code =", response.status_code)
-        print("DEBUG: raw_response =", response.text)  # уже видим, что пусто
+        print("DEBUG: raw_response =", response.text)
         try:
             response_data = response.json()
         except ValueError as ve:
