@@ -1,7 +1,8 @@
 # reservon/middleware.py
 from django.contrib.sites.models import Site
 from django.utils.deprecation import MiddlewareMixin
-
+import logging
+import uuid
 class DynamicSiteMiddleware(MiddlewareMixin):
     def process_request(self, request):
         host = request.get_host().split(':')[0]
@@ -14,3 +15,12 @@ class DynamicSiteMiddleware(MiddlewareMixin):
             site = Site.objects.get(id=1)
             request.site = site
             request.site_id = site.id
+
+class RequestIDMiddleware(MiddlewareMixin):
+    def process_request(self, request):
+        request.id = uuid.uuid4()
+        logging.LoggerAdapter(logging.getLogger('reservon'), {'request_id': request.id})
+
+    def process_response(self, request, response):
+        response['X-Request-ID'] = request.id
+        return response

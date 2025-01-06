@@ -24,7 +24,7 @@ from .utils import send_verification_code, check_verification_code
 logger = logging.getLogger('authentication')
 
 def normalize_phone_number(phone_number):
-    # Приводим номер к формату +374xxxxxxxx или +15005550007 для теста
+    # Приводим номер к формату +374xxxxxxxx
     phone_number = phone_number.strip()
     if not phone_number.startswith('+'):
         phone_number = '+' + phone_number
@@ -49,6 +49,7 @@ def load_modal(request):
                     salon_id = data.get('salon_id', None)
                     if salon_id:
                         request.session['salon_id'] = salon_id
+                        
                 # login_modal.html должен сам решать, показывать ли кнопку Google или нет 
                 # в зависимости от ситуации (шаблон проверит login_method позже)
                 html = render_to_string('authentication/login_modal.html', context, request=request)
@@ -75,6 +76,7 @@ def get_form(request):
             data = json.loads(request.body)
             step = data.get('step')
             phone_number = data.get('phone_number')
+
             if phone_number:
                 phone_number = normalize_phone_number(phone_number)
 
@@ -248,13 +250,12 @@ def set_password(request):
         try:
             data = json.loads(request.body)
             phone_number = data.get('phone_number')
-            first_name = data.get('first_name')
             password = data.get('password')
             password_confirm = data.get('password_confirm')
 
-            logger.debug(f"set_password called with phone_number: {phone_number}, first_name: {first_name}")
+            logger.debug(f"set_password called with phone_number: {phone_number}")
 
-            if not all([phone_number, first_name, password, password_confirm]):
+            if not all([phone_number, password, password_confirm]):
                 logger.error("set_password: Missing fields")
                 return JsonResponse({'error': 'Все поля обязательны.'}, status=400)
 
@@ -284,7 +285,6 @@ def set_password(request):
                 return JsonResponse({'error': 'Доступен только вход через Google.'}, status=400)
 
             # Установка имени и пароля
-            user.first_name = first_name
             user.set_password(password)
             user.save()
             logger.debug("set_password: User password set")

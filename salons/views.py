@@ -28,7 +28,6 @@ logger = logging.getLogger('booking')
 
 
 # salons/views.py
-
 def salon_detail(request, id):
     # Получаем салон по ID
     salon = get_object_or_404(Salon, id=id)
@@ -70,13 +69,6 @@ def salon_detail(request, id):
 
     # Подготовка данных для передачи в JavaScript (если необходимо)
     barbers_by_category_json = json.dumps(barbers_by_category, cls=DjangoJSONEncoder)
-
-    # Добавим отладочные сообщения
-    print(f"Салон: {salon.name}")
-    print(f"Категорий с услугами: {len(categories_with_services)}")
-    for entry in categories_with_services:
-        print(f"Категория: {entry['category'].name}, Услуг: {entry['services'].count()}")
-    print(f"Барберов по категориям: {barbers_by_category}")
 
     context = {
         'salon': salon,
@@ -718,8 +710,6 @@ def generate_safe_cache_key(salon_id, date_str, hours, booking_details, cache_ti
     key_hash = hashlib.md5(key_string.encode('utf-8')).hexdigest()
     return f"available_minutes_{salon_id}_v{get_cache_version(salon_id)}_{key_hash}"
 
-
-# @cache_page(60 * 15)
 @never_cache
 def main(request):
     query = request.GET.get('q', '')
@@ -733,7 +723,6 @@ def main(request):
         'salons': salons,
         'q': query,
     }
-    logger.debug(f"Passing 'q' to context: '{query}'")
     return render(request, 'salons/salons.html', context)
 
 def get_cache_version(salon_id):

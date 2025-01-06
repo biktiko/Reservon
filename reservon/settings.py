@@ -7,6 +7,7 @@ import environ
 import dj_database_url
 import sys
 import ssl
+from pythonjsonlogger import jsonlogger
 
 env = environ.Env(
     DEBUG=(bool, False)
@@ -248,7 +249,16 @@ ALLOWED_HOSTS = [
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'filters': {
+        'ignore_static': {
+            '()': 'reservon.filters.IgnoreStaticRequestsFilter',  # Обновите путь, если нужно
+        },
+    },
     'formatters': {
+        'json': {
+            '()': 'pythonjsonlogger.jsonlogger.JsonFormatter',
+            'format': '%(levelname)s %(asctime)s %(name)s %(message)s',
+        },
         'verbose': {
             'format': '{levelname} {asctime} {module} {message}',
             'style': '{',
@@ -259,17 +269,19 @@ LOGGING = {
         },
     },
     'handlers': {
-        'console': {  
-            'level': 'DEBUG',
+        'console': {
+            'level': 'INFO',
             'class': 'logging.StreamHandler',
-            'stream': sys.stdout,
-            'formatter': 'verbose',
+            'formatter': 'json',
+            'filters': ['ignore_static'],
+            'stream': sys.stderr,
         },
         'file': {
-            'level': 'DEBUG',
+            'level': 'INFO',
             'class': 'logging.FileHandler',
             'filename': 'debug.log',
             'formatter': 'verbose',
+            'filters': ['ignore_static'],
             'encoding': 'utf-8',
         },
     },
@@ -282,6 +294,11 @@ LOGGING = {
         'django': {
             'handlers': ['console', 'file'],
             'level': 'DEBUG',
+            'propagate': False,
+        },
+        'django.request': {
+            'handlers': ['console', 'error_file'],
+            'level': 'ERROR',
             'propagate': False,
         },
         'allauth': {
@@ -307,15 +324,23 @@ LOGGING = {
         'boto3': {
             'handlers': ['console'],
             'level': 'DEBUG',
+            'propagate': False,
         },
         'botocore': {
             'handlers': ['console'],
             'level': 'DEBUG',
+            'propagate': False,
         },
         'django_storages': {
             'handlers': ['console'],
             'level': 'DEBUG',
-        }
+            'propagate': False,
+        },
+        'reservon': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
     },
     'root': {
         'handlers': ['console', 'file'], 
