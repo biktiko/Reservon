@@ -399,7 +399,6 @@ function submitVerifyCode() {
 
 function submitSetPassword() {
     var phone_number = document.getElementById('id_phone_number').value;
-    // var first_name = document.getElementById('id_first_name').value;
     var password = document.getElementById('id_password').value;
     var password_confirm = document.getElementById('id_password_confirm').value;
     var submitButton = document.getElementById('submit-set-password-btn');

@@ -1,8 +1,8 @@
 # C:\Reservon\Reservon\salons\models.py
 from django.db import models
 from django.contrib.auth.models import User
-from datetime import timedelta
 from django.utils.translation import gettext_lazy as _
+from simple_history.models import HistoricalRecords
 
 class Salon(models.Model):
     admins = models.ManyToManyField(User, related_name='administered_salons', blank=True)
@@ -30,6 +30,7 @@ class Salon(models.Model):
     description_ru = models.TextField('description_ru', blank=True)
     description_eng = models.TextField('description_eng', blank=True)
     reservDays = models.IntegerField('Reserv days', default=9)
+    history = HistoricalRecords()
 
     status = models.CharField(
         max_length=10,
@@ -66,6 +67,7 @@ class Service(models.Model):
     duration = models.DurationField()
     salon = models.ForeignKey(Salon, on_delete=models.CASCADE, related_name='services')
     category = models.ForeignKey(ServiceCategory, on_delete=models.SET_NULL, null=True, blank=True, related_name='services')
+    history = HistoricalRecords()
     
     status = models.CharField(
         max_length=10,
@@ -83,11 +85,12 @@ class SalonImage(models.Model):
 
 class Barber(models.Model):
     salon = models.ForeignKey(Salon, on_delete=models.CASCADE, related_name='barbers')
-    user = models.OneToOneField(User, on_delete=models.SET_NULL, null=True, blank=True)
+    user = models.OneToOneField(User, on_delete=models.SET_NULL, null=True, blank=True )
     name = models.CharField(max_length=100)
     avatar = models.ImageField(upload_to='salons/barbers', blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     categories = models.ManyToManyField(ServiceCategory, related_name='barbers')  # Add this line
+    history = HistoricalRecords()
 
     def __str__(self):
         return self.name  
@@ -113,6 +116,7 @@ class BarberAvailability(models.Model):
     start_time = models.TimeField()
     end_time = models.TimeField()
     is_available = models.BooleanField(default=True)
+    history = HistoricalRecords()
 
     def __str__(self):
         status = 'Доступен' if self.is_available else 'Недоступен'
@@ -125,6 +129,7 @@ class Appointment(models.Model):
     end_datetime = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     user_comment = models.TextField('Комментарий клиента', null=True, blank=True)
+    history = HistoricalRecords()
 
     barbers = models.ManyToManyField(
         Barber,
@@ -144,7 +149,7 @@ class AppointmentBarberService(models.Model):
     services = models.ManyToManyField(Service)
     start_datetime = models.DateTimeField()
     end_datetime = models.DateTimeField()
-
+    history = HistoricalRecords()
 
     def get_total_duration(self):
         return (self.end_datetime - self.start_datetime).total_seconds() / 60  # Возвращает в минутах

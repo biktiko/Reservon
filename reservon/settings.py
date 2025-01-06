@@ -19,7 +19,6 @@ environ.Env.read_env(env_file=os.path.join(BASE_DIR, '.env'))
 
 SECRET_KEY = env('SECRET_KEY')
 
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env('DEBUG')
 
 INTERCONNECT_AUTH = env('INTERCONNECT_auth')
@@ -49,7 +48,8 @@ INSTALLED_APPS = [
     'main',
     'user_account.apps.UserAccountConfig',
     'salons',
-    'debug_toolbar'
+    'debug_toolbar',
+    'simple_history'
 ]
 
 DEBUG_TOOLBAR_PANELS = [
@@ -94,6 +94,7 @@ MIDDLEWARE = [
     'allauth.account.middleware.AccountMiddleware',
     'debug_toolbar.middleware.DebugToolbarMiddleware',
     'reservon.middleware.RequestIDMiddleware',
+    'simple_history.middleware.HistoryRequestMiddleware',
 ] 
 
 INTERNAL_IPS = [
@@ -170,7 +171,6 @@ AUTH_PASSWORD_VALIDATORS = [
 USE_I18N = True
 USE_L10N = True
 
-# TIME_ZONE = 'UTC'
 TIME_ZONE = 'Asia/Yerevan'
 USE_TZ = True
 
@@ -382,7 +382,7 @@ ADMIN_INTERFACE = {
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-SESSION_ENGINE = 'django.contrib.sessions.backends.db'  # Сохранять сессии в базе данных
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 
 if DEBUG:
     SESSION_COOKIE_SAMESITE = 'Strict'
@@ -398,7 +398,7 @@ else:
 
 SOCIALACCOUNT_LOGIN_ON_GET = True
 ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_EMAIL_VERIFICATION = "optional"  # или " mandatory", в зависимости требований
+ACCOUNT_EMAIL_VERIFICATION = "optional"
 
 SOCIALACCOUNT_AUTO_SIGNUP = True
 SOCIALACCOUNT_QUERY_EMAIL = True
@@ -457,17 +457,6 @@ WEBPUSH_SETTINGS = {
     "VAPID_PRIVATE_KEY": "j5YA554oR44NkEYgXQ00f5mcNcHZyfw27BElPdNRXxQ",
     "VAPID_ADMIN_EMAIL": "tsigma.team@gmail.com"
 }
-
-# for test
-# from django.core.files.storage import default_storage
-# print("DEBUG =", DEBUG)
-# print("DEFAULT_FILE_STORAGE =", DEFAULT_FILE_STORAGE)
-# print("Before unwrapping default_storage:", default_storage.__class__)
-
-# Попытка ручной перезагрузки после settings
-# default_storage._wrapped = None
-
-# print("After unwrapping default_storage:", default_storage.__class__)
 
 if not DEBUG:
     from django.core.files.storage import default_storage
