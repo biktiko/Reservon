@@ -519,7 +519,7 @@ def book_appointment(request, id):
                         availabilities__is_available=True
                     ).exclude(
                         id__in=busy_barber_ids
-                    ).distinct().first()
+                    ).first()
     
                     if available_barber:
                         barber = available_barber
