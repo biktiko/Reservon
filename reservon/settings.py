@@ -251,7 +251,7 @@ LOGGING = {
     'disable_existing_loggers': False,
     'filters': {
         'ignore_static': {
-            '()': 'reservon.filters.IgnoreStaticRequestsFilter',  # Обновите путь, если нужно
+            '()': 'reservon.filters.IgnoreStaticRequestsFilter',
         },
     },
     'formatters': {
@@ -282,6 +282,13 @@ LOGGING = {
             'filename': 'debug.log',
             'formatter': 'verbose',
             'filters': ['ignore_static'],
+            'encoding': 'utf-8',
+        },
+        'error_file': {
+            'level': 'ERROR',
+            'class': 'logging.FileHandler',
+            'filename': 'error.log',
+            'formatter': 'verbose',
             'encoding': 'utf-8',
         },
     },
@@ -323,17 +330,17 @@ LOGGING = {
         },
         'boto3': {
             'handlers': ['console'],
-            'level': 'DEBUG',
+            'level': 'WARNING',
             'propagate': False,
         },
         'botocore': {
             'handlers': ['console'],
-            'level': 'DEBUG',
+            'level': 'WARNING',
             'propagate': False,
         },
         'django_storages': {
             'handlers': ['console'],
-            'level': 'DEBUG',
+            'level': 'WARNING',
             'propagate': False,
         },
         'reservon': {
