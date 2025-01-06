@@ -45,7 +45,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'webpush',
     'authentication',
-    'main',
+    'main.apps.MainConfig',
     'user_account.apps.UserAccountConfig',
     'salons',
     'debug_toolbar',
