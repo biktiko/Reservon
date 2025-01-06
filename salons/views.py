@@ -578,7 +578,7 @@ def book_appointment(request, id):
 
                 # whatsapp
                 if profile.whatsapp:
-                    TEMPLATE_SID = "HX17e97951d490cbfdfe1b93775469fa84"
+                    TEMPLATE_SID = "HXa27885cd64b14637a00e845fbbfaa326"
        
                     datetime_str = (
                         appointment.start_datetime.strftime("%d.%m %H:%M")
@@ -597,9 +597,9 @@ def book_appointment(request, id):
                     }
 
                     content_variables_dict = {
-                        "1": dataTest["client_phoneNumber"],
-                        "2": dataTest["datetime"],
-                        "3": dataTest["master_name"]
+                        "1": dataTest["datetime"],
+                        "2": dataTest["master_name"],
+                        "3": dataTest["client_phoneNumber"]
                     }
 
                     # Преобразуем словарь в JSON

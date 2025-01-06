@@ -139,9 +139,6 @@ def login_view(request):
 
             phone_number = normalize_phone_number(phone_number)
 
-            if not (re.match(r'^\+374\d{8}$', phone_number) or phone_number == "+15005550007"):
-                return JsonResponse({'error': 'Неверный формат армянского номера телефона.'}, status=400)
-
             user, user_created = User.objects.get_or_create(username=phone_number)
             if user_created:
                 user.set_unusable_password()
