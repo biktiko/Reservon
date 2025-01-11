@@ -17,6 +17,7 @@ urlpatterns = [
     path('accounts/', include('allauth.urls')),
     path('__debug__/', include('debug_toolbar.urls')),
     path('service-worker.js', ServiceWorkerView.as_view(), name='service_worker'),
+    path('api/', include('api.urls')),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
 if settings.DEBUG:

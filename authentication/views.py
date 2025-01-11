@@ -143,6 +143,8 @@ def login_view(request):
 
             try:
                 profile = Profile.objects.get(user=user)
+                print('profile')
+                print(profile)
             except Profile.DoesNotExist:
                 if Profile.objects.filter(phone_number=phone_number).exists():
                     return JsonResponse({'error': 'Этот номер уже используется другим профилем.'}, status=400)

@@ -18,7 +18,6 @@ environ.Env.read_env(env_file=os.path.join(BASE_DIR, '.env'))
 
 SECRET_KEY = env('SECRET_KEY')
 
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env('DEBUG')
 
 INSTALLED_APPS = [
@@ -46,25 +45,26 @@ INSTALLED_APPS = [
     'main',
     'user_account.apps.UserAccountConfig',
     'salons',
-    'debug_toolbar'
+    'api'
+    # 'debug_toolbar'
 ]
 
-DEBUG_TOOLBAR_PANELS = [
-    'debug_toolbar.panels.history.HistoryPanel',
-    'debug_toolbar.panels.versions.VersionsPanel',
-    'debug_toolbar.panels.timer.TimerPanel',
-    'debug_toolbar.panels.settings.SettingsPanel',
-    'debug_toolbar.panels.headers.HeadersPanel',
-    'debug_toolbar.panels.request.RequestPanel',
-    'debug_toolbar.panels.sql.SQLPanel',
-    'debug_toolbar.panels.staticfiles.StaticFilesPanel',
-    'debug_toolbar.panels.templates.TemplatesPanel',
-    'debug_toolbar.panels.alerts.AlertsPanel',
-    'debug_toolbar.panels.cache.CachePanel',
-    'debug_toolbar.panels.signals.SignalsPanel',
-    'debug_toolbar.panels.redirects.RedirectsPanel',
-    'debug_toolbar.panels.profiling.ProfilingPanel',
-]
+# DEBUG_TOOLBAR_PANELS = [
+#     'debug_toolbar.panels.history.HistoryPanel',
+#     'debug_toolbar.panels.versions.VersionsPanel',
+#     'debug_toolbar.panels.timer.TimerPanel',
+#     'debug_toolbar.panels.settings.SettingsPanel',
+#     'debug_toolbar.panels.headers.HeadersPanel',
+#     'debug_toolbar.panels.request.RequestPanel',
+#     'debug_toolbar.panels.sql.SQLPanel',
+#     'debug_toolbar.panels.staticfiles.StaticFilesPanel',
+#     'debug_toolbar.panels.templates.TemplatesPanel',
+#     'debug_toolbar.panels.alerts.AlertsPanel',
+#     'debug_toolbar.panels.cache.CachePanel',
+#     'debug_toolbar.panels.signals.SignalsPanel',
+#     'debug_toolbar.panels.redirects.RedirectsPanel',
+#     'debug_toolbar.panels.profiling.ProfilingPanel',
+# ]
 
 SITE_ID = 1
 
@@ -88,8 +88,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'allauth.account.middleware.AccountMiddleware',
-    'debug_toolbar.middleware.DebugToolbarMiddleware',
+    'allauth.account.middleware.AccountMiddleware'
+    # 'debug_toolbar.middleware.DebugToolbarMiddleware',
 ] 
 
 INTERNAL_IPS = [
@@ -422,17 +422,6 @@ WEBPUSH_SETTINGS = {
     "VAPID_PRIVATE_KEY": "j5YA554oR44NkEYgXQ00f5mcNcHZyfw27BElPdNRXxQ",
     "VAPID_ADMIN_EMAIL": "tsigma.team@gmail.com"
 }
-
-# for test
-# from django.core.files.storage import default_storage
-# print("DEBUG =", DEBUG)
-# print("DEFAULT_FILE_STORAGE =", DEFAULT_FILE_STORAGE)
-# print("Before unwrapping default_storage:", default_storage.__class__)
-
-# Попытка ручной перезагрузки после settings
-# default_storage._wrapped = None
-
-# print("After unwrapping default_storage:", default_storage.__class__)
 
 if not DEBUG:
     from django.core.files.storage import default_storage

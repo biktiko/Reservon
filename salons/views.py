@@ -26,8 +26,25 @@ import logging
 
 logger = logging.getLogger('booking')
 
+# @cache_page(60 * 15)
+@never_cache
+def main(request):
+    query = request.GET.get('q', '')
+    if query:
+        salons = Salon.objects.filter(
+            Q(name__icontains=query) | Q(address__icontains=query)
+        )
+    else:
+        salons = Salon.objects.filter(status='active')
+    context = {
+        'salons': salons,
+        'q': query,
+    }
+    return render(request, 'salons/salons.html', context)
 
-# salons/views.py
+def get_cache_version(salon_id):
+    version = cache.get(f"available_minutes_version_{salon_id}", 1)
+    return version
 
 def salon_detail(request, id):
     # Получаем салон по ID
@@ -87,11 +104,10 @@ def salon_detail(request, id):
 
     return render(request, 'salons/salon-detail.html', context)
 
-    
 def get_barber_availability(request, barber_id):
     try:
         barber = Barber.objects.get(id=barber_id)
-        availability = barber.availability  # Предполагается, что availability хранит расписание в JSON
+        availability = barber.availability
         return JsonResponse({'availability': availability})
     except Barber.DoesNotExist:
         return JsonResponse({'error': 'Barber not found'}, status=404)
@@ -718,27 +734,6 @@ def generate_safe_cache_key(salon_id, date_str, hours, booking_details, cache_ti
     key_hash = hashlib.md5(key_string.encode('utf-8')).hexdigest()
     return f"available_minutes_{salon_id}_v{get_cache_version(salon_id)}_{key_hash}"
 
-
-# @cache_page(60 * 15)
-@never_cache
-def main(request):
-    query = request.GET.get('q', '')
-    if query:
-        salons = Salon.objects.filter(
-            Q(name__icontains=query) | Q(address__icontains=query)
-        )
-    else:
-        salons = Salon.objects.filter(status='active')
-    context = {
-        'salons': salons,
-        'q': query,
-    }
-    logger.debug(f"Passing 'q' to context: '{query}'")
-    return render(request, 'salons/salons.html', context)
-
-def get_cache_version(salon_id):
-    version = cache.get(f"available_minutes_version_{salon_id}", 1)
-    return version
 
 @receiver([post_save, post_delete], sender=BarberAvailability)
 def increment_cache_version_on_availability_change(sender, instance, **kwargs):

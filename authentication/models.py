@@ -12,7 +12,6 @@ class Profile(models.Model):
     phone_number = models.CharField(max_length=15, unique=True, null=True, blank=True)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='unverified')
     last_verification_sent_at = models.DateTimeField(null=True, blank=True) 
-    notes = models.TextField('Notes', blank=True, null=True)
     avatar = models.ImageField(upload_to='avatars/', null=True, blank=True)
     login_method = models.CharField(max_length=20, choices=[('password', 'Password'), ('google', 'Google')])
     google_uid = models.CharField(max_length=255, null=True, blank=True)
