@@ -88,13 +88,6 @@ def salon_detail(request, id):
     # Подготовка данных для передачи в JavaScript (если необходимо)
     barbers_by_category_json = json.dumps(barbers_by_category, cls=DjangoJSONEncoder)
 
-    # Добавим отладочные сообщения
-    print(f"Салон: {salon.name}")
-    print(f"Категорий с услугами: {len(categories_with_services)}")
-    for entry in categories_with_services:
-        print(f"Категория: {entry['category'].name}, Услуг: {entry['services'].count()}")
-    print(f"Барберов по категориям: {barbers_by_category}")
-
     context = {
         'salon': salon,
         'categories_with_services': categories_with_services,
@@ -543,7 +536,7 @@ def book_appointment(request, id):
                         availabilities__is_available=True
                     ).exclude(
                         id__in=busy_barber_ids
-                    ).distinct().first()
+                    ).first()
     
                     if available_barber:
                         barber = available_barber
@@ -594,7 +587,7 @@ def book_appointment(request, id):
 
                 # whatsapp
                 if profile.whatsapp:
-                    TEMPLATE_SID = "HX17e97951d490cbfdfe1b93775469fa84"
+                    TEMPLATE_SID = "HXa27885cd64b14637a00e845fbbfaa326"
        
                     datetime_str = (
                         appointment.start_datetime.strftime("%d.%m %H:%M")
@@ -613,9 +606,9 @@ def book_appointment(request, id):
                     }
 
                     content_variables_dict = {
-                        "1": dataTest["client_phoneNumber"],
-                        "2": dataTest["datetime"],
-                        "3": dataTest["master_name"]
+                        "1": dataTest["datetime"],
+                        "2": dataTest["master_name"],
+                        "3": dataTest["client_phoneNumber"]
                     }
 
                     # Преобразуем словарь в JSON

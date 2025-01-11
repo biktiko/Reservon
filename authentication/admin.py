@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as DefaultUserAdmin
 from django.contrib.auth.models import User
 from .models import Profile
-
+from main.admin import NoteInline
 # Отмена регистрации стандартного UserAdmin
 admin.site.unregister(User)
 
@@ -11,14 +11,14 @@ class ProfileInline(admin.StackedInline):
     can_delete = False
     verbose_name_plural = 'Профиль'
     fk_name = 'user'
-    fields = ('phone_number', 'status', 'login_method', 'google_uid', 'whatsapp', 'push_subscribe', 'whatsapp_phone_number', 'avatar') 
+    fields = ('phone_number', 'status','login_method', 'google_uid', 'whatsapp', 'push_subscribe', 'whatsapp_phone_number', 'avatar') 
     extra = 0
 
 class CustomUserAdmin(DefaultUserAdmin):
-    inlines = (ProfileInline,)
     list_display = DefaultUserAdmin.list_display + ('has_password', 'profile_status')
     list_filter = DefaultUserAdmin.list_filter + ('main_profile__status',)
     search_fields = DefaultUserAdmin.search_fields + ('main_profile__phone_number',)
+    inlines = (ProfileInline, NoteInline)
 
     add_fieldsets = (
         (None, {

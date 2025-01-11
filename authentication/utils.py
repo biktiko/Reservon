@@ -5,6 +5,7 @@ import logging
 from twilio.rest import Client
 from django.utils import timezone
 from datetime import timedelta
+from authentication.models import User
 
 logger = logging.getLogger('booking')
 
@@ -48,21 +49,42 @@ def send_verification_code(phone_number, profile):
 
 def check_verification_code(phone_number, code):
     """
-    Checks the verification code entered by the user using Twilio Verify API.
+    Проверяем 4-значный код, который хранится у нас в БД.
     """
-    account_sid = os.getenv('TWILIO_ACCOUNT_SID')
-    auth_token = os.getenv('TWILIO_AUTH_TOKEN')
-    verify_service_sid = os.getenv('TWILIO_VERIFY_SERVICE_SID')
-
-    client = Client(account_sid, auth_token)
-
     try:
-        verification_check = client.verify.services(verify_service_sid).verification_checks.create(
-            to=phone_number,
-            code=code
-        )
-        logger.debug(f"Verification check for {phone_number}: {verification_check.status}")
-        return verification_check.status
-    except Exception as e:
-        logger.error(f"Error checking verification code for {phone_number}: {e}")
-        raise
+        user = User.objects.get(username=phone_number)
+        profile = user.main_profile
+        
+        # Проверяем, что код совпадает и не просрочен
+        if profile.otp_code == code and profile.otp_expires and profile.otp_expires > timezone.now():
+            # Код ок, возвращаем 'approved'
+            return 'approved'
+        else:
+            return 'rejected'
+    except User.DoesNotExist:
+        return 'rejected'
+
+# def check_verification_code(phone_number, code):
+#     """
+#     Checks the verification code entered by the user using Twilio Verify API.
+#     """
+#     account_sid = os.getenv('TWILIO_ACCOUNT_SID')
+#     auth_token = os.getenv('TWILIO_AUTH_TOKEN')
+#     verify_service_sid = os.getenv('TWILIO_VERIFY_SERVICE_SID')
+
+#     client = Client(account_sid, auth_token)
+
+#     try:
+#         verification_check = client.verify.services(verify_service_sid).verification_checks.create(
+#             to=phone_number,
+#             code=code
+#         )
+#         logger.debug(f"Verification check for {phone_number}: {verification_check.status}")
+#         return verification_check.status
+#     except Exception as e:
+#         logger.error(f"Error checking verification code for {phone_number}: {e}")
+#         raise
+
+
+
+

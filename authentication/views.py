@@ -8,9 +8,15 @@ from django.shortcuts import redirect
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth import get_backends
 from django.views.decorators.cache import never_cache
+import random
+from django.utils import timezone
+from datetime import timedelta
+import requests
+from django.conf import settings
 import json
 import re
 import logging
+import uuid
 
 from .models import Profile
 from .utils import send_verification_code, check_verification_code
@@ -18,7 +24,7 @@ from .utils import send_verification_code, check_verification_code
 logger = logging.getLogger('authentication')
 
 def normalize_phone_number(phone_number):
-    # Приводим номер к формату +374xxxxxxxx или +15005550007 для теста
+    # Приводим номер к формату +374xxxxxxxx
     phone_number = phone_number.strip()
     if not phone_number.startswith('+'):
         phone_number = '+' + phone_number
@@ -43,6 +49,7 @@ def load_modal(request):
                     salon_id = data.get('salon_id', None)
                     if salon_id:
                         request.session['salon_id'] = salon_id
+                        
                 # login_modal.html должен сам решать, показывать ли кнопку Google или нет 
                 # в зависимости от ситуации (шаблон проверит login_method позже)
                 html = render_to_string('authentication/login_modal.html', context, request=request)
@@ -69,6 +76,7 @@ def get_form(request):
             data = json.loads(request.body)
             step = data.get('step')
             phone_number = data.get('phone_number')
+
             if phone_number:
                 phone_number = normalize_phone_number(phone_number)
 
@@ -133,9 +141,6 @@ def login_view(request):
 
             phone_number = normalize_phone_number(phone_number)
 
-            if not (re.match(r'^\+374\d{8}$', phone_number) or phone_number == "+15005550007"):
-                return JsonResponse({'error': 'Неверный формат армянского номера телефона.'}, status=400)
-
             user, user_created = User.objects.get_or_create(username=phone_number)
             if user_created:
                 user.set_unusable_password()
@@ -154,7 +159,9 @@ def login_view(request):
             # Если пользователь не верифицирован, посылаем код
             if profile.status == 'unverified':
                 try:
-                    send_verification_code(phone_number, profile)
+                    # send_verification_code(phone_number, profile
+                    generate_and_send_otp(profile)  # <-- наша новая функция
+
                     request.session['phone_number'] = phone_number
                     return JsonResponse({'next_step': 'verify_code', 'phone_number': phone_number})
                 except Exception as e:
@@ -245,13 +252,12 @@ def set_password(request):
         try:
             data = json.loads(request.body)
             phone_number = data.get('phone_number')
-            first_name = data.get('first_name')
             password = data.get('password')
             password_confirm = data.get('password_confirm')
 
-            logger.debug(f"set_password called with phone_number: {phone_number}, first_name: {first_name}")
+            logger.debug(f"set_password called with phone_number: {phone_number}")
 
-            if not all([phone_number, first_name, password, password_confirm]):
+            if not all([phone_number, password, password_confirm]):
                 logger.error("set_password: Missing fields")
                 return JsonResponse({'error': 'Все поля обязательны.'}, status=400)
 
@@ -281,7 +287,6 @@ def set_password(request):
                 return JsonResponse({'error': 'Доступен только вход через Google.'}, status=400)
 
             # Установка имени и пароля
-            user.first_name = first_name
             user.set_password(password)
             user.save()
             logger.debug("set_password: User password set")
@@ -398,3 +403,70 @@ from django.http import HttpResponse
 def clear_cache_view(request):
     cache.clear()
     return HttpResponse("Кэш успешно очищен.")
+
+def generate_4_digit_code():
+    return str(random.randint(1000, 9999))
+
+def send_interconnect_sms(phone, message_text):
+    # url = "https://portal.interconnect.solutions/api/v2/messages"
+    url = 'https://portal.interconnect.solutions/api/json.php'
+
+    phone_int = int(phone.lstrip('+')) # или .replace('+','') - зависит от того, как API принимает
+
+    # Генерируем уникальный ID
+    unique_id = int(uuid.uuid4().int >> 64)
+
+    payload = {
+        "auth": settings.INTERCONNECT_AUTH,
+        "data": [
+            {
+                "type": "sms",
+                "id": unique_id,
+                "phone": phone_int,  
+                "sms_signature": "Reservon",
+                "sms_message": message_text,
+                "sms_lifetime": 3600,
+                "short_link": False
+            }
+        ]
+    }
+
+    try:
+        # Укажем заголовок Content-Type: application/json
+        headers = {"Content-Type": "application/json"}
+        response = requests.post(url, json=payload, headers=headers)
+
+        print("DEBUG: status_code =", response.status_code)
+        print("DEBUG: raw_response =", response.text)
+        try:
+            response_data = response.json()
+        except ValueError as ve:
+            raise Exception(f"Interconnect returned non-JSON or empty response: {response.text}")
+
+
+        if response.status_code == 200 and response_data.get("success") == True:
+            # Проверяем data[0]["success"]
+            data_items = response_data.get("data", [])
+            if data_items and data_items[0].get("success") == True:
+                return True
+            else:
+                raise Exception(f"Interconnect partial error: {response_data}")
+        else:
+            raise Exception(f"Interconnect error: {response_data}")
+    except Exception as e:
+        raise Exception(f"Failed to send SMS via Interconnect: {e}")
+
+
+def generate_and_send_otp(profile):
+    """
+    Генерирует 4-значный код и отправляет через Interconnect.
+    Сохраняет код и время истечения в profile.
+    """
+    code = generate_4_digit_code()
+    profile.otp_code = code
+    profile.otp_expires = timezone.now() + timedelta(minutes=5)  # код действителен 5 минут
+    profile.save()
+
+    # Отправляем по SMS
+    message_text = f"Ваш код подтверждения от RESERVON: {code}"
+    send_interconnect_sms(profile.phone_number, message_text)

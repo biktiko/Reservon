@@ -196,6 +196,10 @@
     }
 }
 
+.set-password-form{
+    color: black;
+}
+
 @media (max-width: 480px) {
     .modal-content {
         padding: 20px;

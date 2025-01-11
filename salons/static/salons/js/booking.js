@@ -336,19 +336,22 @@ document.addEventListener('DOMContentLoaded', function() {
     
         if (uncachedHours.length > 0) {
             try {
+                const responseData = JSON.stringify({
+                    salon_id: salonId,
+                    date: date,
+                    hours: uncachedHours,
+                    booking_details: collectBookingFormData().booking_details,
+                    total_service_duration: collectBookingFormData().total_service_duration
+                })
+                console.log(responseData)
+
                 const response = await fetch('/salons/get_available_minutes/', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRFToken': getCookie('csrftoken')
                     },
-                    body: JSON.stringify({
-                        salon_id: salonId,
-                        date: date,
-                        hours: uncachedHours,
-                        booking_details: collectBookingFormData().booking_details,
-                        total_service_duration: collectBookingFormData().total_service_duration
-                    })
+                    body: responseData
                 });
     
                 if (!response.ok) {

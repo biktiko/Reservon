@@ -7,6 +7,7 @@ import environ
 import dj_database_url
 import sys
 import ssl
+from pythonjsonlogger import jsonlogger
 
 env = environ.Env(
     DEBUG=(bool, False)
@@ -19,6 +20,8 @@ environ.Env.read_env(env_file=os.path.join(BASE_DIR, '.env'))
 SECRET_KEY = env('SECRET_KEY')
 
 DEBUG = env('DEBUG')
+
+INTERCONNECT_AUTH = env('INTERCONNECT_auth')
 
 INSTALLED_APPS = [
     'storages',
@@ -42,29 +45,29 @@ INSTALLED_APPS = [
     'rest_framework',
     'webpush',
     'authentication',
-    'main',
+    'main.apps.MainConfig',
     'user_account.apps.UserAccountConfig',
     'salons',
-    'api'
-    # 'debug_toolbar'
+    'api',
+    'debug_toolbar'
 ]
 
-# DEBUG_TOOLBAR_PANELS = [
-#     'debug_toolbar.panels.history.HistoryPanel',
-#     'debug_toolbar.panels.versions.VersionsPanel',
-#     'debug_toolbar.panels.timer.TimerPanel',
-#     'debug_toolbar.panels.settings.SettingsPanel',
-#     'debug_toolbar.panels.headers.HeadersPanel',
-#     'debug_toolbar.panels.request.RequestPanel',
-#     'debug_toolbar.panels.sql.SQLPanel',
-#     'debug_toolbar.panels.staticfiles.StaticFilesPanel',
-#     'debug_toolbar.panels.templates.TemplatesPanel',
-#     'debug_toolbar.panels.alerts.AlertsPanel',
-#     'debug_toolbar.panels.cache.CachePanel',
-#     'debug_toolbar.panels.signals.SignalsPanel',
-#     'debug_toolbar.panels.redirects.RedirectsPanel',
-#     'debug_toolbar.panels.profiling.ProfilingPanel',
-# ]
+DEBUG_TOOLBAR_PANELS = [
+    'debug_toolbar.panels.history.HistoryPanel',
+    'debug_toolbar.panels.versions.VersionsPanel',
+    'debug_toolbar.panels.timer.TimerPanel',
+    'debug_toolbar.panels.settings.SettingsPanel',
+    'debug_toolbar.panels.headers.HeadersPanel',
+    'debug_toolbar.panels.request.RequestPanel',
+    'debug_toolbar.panels.sql.SQLPanel',
+    'debug_toolbar.panels.staticfiles.StaticFilesPanel',
+    'debug_toolbar.panels.templates.TemplatesPanel',
+    'debug_toolbar.panels.alerts.AlertsPanel',
+    'debug_toolbar.panels.cache.CachePanel',
+    'debug_toolbar.panels.signals.SignalsPanel',
+    'debug_toolbar.panels.redirects.RedirectsPanel',
+    'debug_toolbar.panels.profiling.ProfilingPanel',
+]
 
 SITE_ID = 1
 
@@ -88,8 +91,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'allauth.account.middleware.AccountMiddleware'
-    # 'debug_toolbar.middleware.DebugToolbarMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
 ] 
 
 INTERNAL_IPS = [
@@ -166,7 +169,6 @@ AUTH_PASSWORD_VALIDATORS = [
 USE_I18N = True
 USE_L10N = True
 
-# TIME_ZONE = 'UTC'
 TIME_ZONE = 'Asia/Yerevan'
 USE_TZ = True
 
@@ -246,7 +248,16 @@ ALLOWED_HOSTS = [
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'filters': {
+        'ignore_static': {
+            '()': 'reservon.filters.IgnoreStaticRequestsFilter',
+        },
+    },
     'formatters': {
+        'json': {
+            '()': 'pythonjsonlogger.jsonlogger.JsonFormatter',
+            'format': '%(levelname)s %(asctime)s %(name)s %(message)s',
+        },
         'verbose': {
             'format': '{levelname} {asctime} {module} {message}',
             'style': '{',
@@ -257,16 +268,25 @@ LOGGING = {
         },
     },
     'handlers': {
-        'console': {  
-            'level': 'DEBUG',
+        'console': {
+            'level': 'INFO',
             'class': 'logging.StreamHandler',
-            'stream': sys.stdout,
-            'formatter': 'verbose',
+            'formatter': 'json',
+            'filters': ['ignore_static'],
+            'stream': sys.stderr,
         },
         'file': {
-            'level': 'DEBUG',
+            'level': 'INFO',
             'class': 'logging.FileHandler',
             'filename': 'debug.log',
+            'formatter': 'verbose',
+            'filters': ['ignore_static'],
+            'encoding': 'utf-8',
+        },
+        'error_file': {
+            'level': 'ERROR',
+            'class': 'logging.FileHandler',
+            'filename': 'error.log',
             'formatter': 'verbose',
             'encoding': 'utf-8',
         },
@@ -280,6 +300,11 @@ LOGGING = {
         'django': {
             'handlers': ['console', 'file'],
             'level': 'DEBUG',
+            'propagate': False,
+        },
+        'django.request': {
+            'handlers': ['console', 'error_file'],
+            'level': 'ERROR',
             'propagate': False,
         },
         'allauth': {
@@ -304,16 +329,24 @@ LOGGING = {
         },
         'boto3': {
             'handlers': ['console'],
-            'level': 'DEBUG',
+            'level': 'WARNING',
+            'propagate': False,
         },
         'botocore': {
             'handlers': ['console'],
-            'level': 'DEBUG',
+            'level': 'WARNING',
+            'propagate': False,
         },
         'django_storages': {
             'handlers': ['console'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        'reservon': {
+            'handlers': ['console', 'file'],
             'level': 'DEBUG',
-        }
+            'propagate': False,
+        },
     },
     'root': {
         'handlers': ['console', 'file'], 
@@ -347,7 +380,7 @@ ADMIN_INTERFACE = {
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-SESSION_ENGINE = 'django.contrib.sessions.backends.db'  # Сохранять сессии в базе данных
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 
 if DEBUG:
     SESSION_COOKIE_SAMESITE = 'Strict'
@@ -363,7 +396,7 @@ else:
 
 SOCIALACCOUNT_LOGIN_ON_GET = True
 ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_EMAIL_VERIFICATION = "optional"  # или " mandatory", в зависимости требований
+ACCOUNT_EMAIL_VERIFICATION = "optional"
 
 SOCIALACCOUNT_AUTO_SIGNUP = True
 SOCIALACCOUNT_QUERY_EMAIL = True

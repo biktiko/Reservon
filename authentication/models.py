@@ -18,6 +18,8 @@ class Profile(models.Model):
     whatsapp = models.BooleanField(default=False)
     whatsapp_phone_number = models.CharField(max_length=15, unique=True, null=True, blank=True, default=None)
     push_subscribe = models.BooleanField(default=True)
+    otp_code = models.CharField(max_length=6, null=True, blank=True)
+    otp_expires = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.user.first_name} ({self.phone_number})"

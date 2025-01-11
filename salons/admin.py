@@ -14,7 +14,7 @@ from .models import (
 )
 from import_export import resources
 from import_export.admin import ImportExportModelAdmin
-
+from main.admin import NoteInline
 # --- Настройка админки для AppointmentBarberService ---
 
 class AppointmentBarberServiceInline(admin.TabularInline):
@@ -29,7 +29,7 @@ class AppointmentAdmin(ImportExportModelAdmin):
     list_display = ('salon', 'user', 'start_datetime', 'end_datetime', 'get_barbers_services', 'user_comment', 'created_at')
     list_filter = ('salon', 'user')
     search_fields = ('salon__name', 'user__username')
-    inlines = [AppointmentBarberServiceInline]
+    inlines = [AppointmentBarberServiceInline, NoteInline]
 
     def get_barbers_services(self, obj):
         result = []
@@ -93,7 +93,63 @@ class ServiceCategoryAdmin(admin.ModelAdmin):
 # --- Настройка админки для Barber ---
 
 # Форма для модели Barber с использованием стандартного виджета Textarea
+from authentication.models import Profile  # Ensure correct import path
+class BarberAdminForm(forms.ModelForm):
+    # Fields from the Profile model
+    profile_phone_number = forms.CharField(
+        label='Phone Number',
+        max_length=15,
+        required=False
+    )
+    profile_avatar = forms.ImageField(
+        label='Profile Avatar',
+        required=False
+    )
+    profile_status = forms.ChoiceField(
+        label='Profile Status',
+        choices=Profile.STATUS_CHOICES,
+        required=False
+    )
+    # Add more Profile fields as needed
 
+    class Meta:
+        model = Barber
+        fields = '__all__'  # Include all Barber fields
+
+    def __init__(self, *args, **kwargs):
+        super(BarberAdminForm, self).__init__(*args, **kwargs)
+        if self.instance and self.instance.user and hasattr(self.instance.user, 'main_profile'):
+            profile = self.instance.user.main_profile
+            self.fields['profile_phone_number'].initial = profile.phone_number
+            self.fields['profile_avatar'].initial = profile.avatar
+            self.fields['profile_status'].initial = profile.status
+            # Initialize other Profile fields as needed
+
+    def save(self, commit=True):
+        barber = super(BarberAdminForm, self).save(commit=False)
+        user = barber.user
+
+        # Save Barber first
+        if commit:
+            barber.save()
+
+        # Handle Profile
+        profile_phone_number = self.cleaned_data.get('profile_phone_number')
+        profile_avatar = self.cleaned_data.get('profile_avatar')
+        profile_status = self.cleaned_data.get('profile_status')
+        # Retrieve or create Profile
+        if user:
+            profile, created = Profile.objects.get_or_create(user=user)
+            if profile_phone_number:
+                profile.phone_number = profile_phone_number
+            if profile_avatar:
+                profile.avatar = profile_avatar
+            if profile_status:
+                profile.status = profile_status
+            # Update other Profile fields as needed
+            profile.save()
+
+        return barber
 class BarberAvailabilityInline(admin.TabularInline):
     model = BarberAvailability
     extra = 1
@@ -101,12 +157,13 @@ class BarberAvailabilityInline(admin.TabularInline):
 
 @admin.register(Barber)
 class BarberAdmin(ImportExportModelAdmin):
-    list_display = ('name', 'salon', 'get_categories')
+    form = BarberAdminForm
+    list_display = ('user', 'name', 'salon', 'get_categories')
     list_filter = ('salon', 'categories')
     search_fields = ('name', 'salon__name')
     filter_horizontal = ('categories',)
-    autocomplete_fields = ['salon', 'categories']
-    fields = ('salon', 'name', 'avatar', 'description', 'categories')
+    autocomplete_fields = ['salon', 'categories', 'user']
+    fields = ('salon', 'user', 'name', 'avatar', 'description', 'categories')
     inlines = [BarberAvailabilityInline]
 
     def get_categories(self, obj):
@@ -146,7 +203,7 @@ class SalonAdmin(ImportExportModelAdmin):
     list_display = ('name', 'status', 'default_price', 'default_duration', 'reservDays', 'coordinates')
     list_filter = ('status',)
     search_fields = ('name', 'address')
-    inlines = [ServiceInline, SalonImageInline, BarberInline]  # Убрали AppointmentBarberServiceInline
+    inlines = [ServiceInline, SalonImageInline, BarberInline, NoteInline]  # Убрали AppointmentBarberServiceInline
     autocomplete_fields = ['admins']  # Добавляем 'admins' в autocomplete_fields
     fieldsets = (
         (None, {
