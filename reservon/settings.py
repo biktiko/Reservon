@@ -48,8 +48,8 @@ INSTALLED_APPS = [
     'main.apps.MainConfig',
     'user_account.apps.UserAccountConfig',
     'salons',
-    'debug_toolbar',
-    'simple_history'
+    'api',
+    'debug_toolbar'
 ]
 
 DEBUG_TOOLBAR_PANELS = [

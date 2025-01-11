@@ -232,6 +232,7 @@ function submitLogin() {
     })
     .then(response => response.json())
     .then(data => {
+        console.log(data)
         if (data.google_only) {
             // Перенаправляем на Google логин
             console.log(window.googleLoginUrl)
@@ -244,7 +245,7 @@ function submitLogin() {
             }
         }
     }
-)
+    )
     .catch(error => {
         console.error('Error:', error);
         document.getElementById('login-response').innerHTML = '<p>Не удалось отправить код верификации. Пожалуйста, попробуйте позже.</p>';
