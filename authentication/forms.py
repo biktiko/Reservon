@@ -4,7 +4,18 @@ from django import forms
 from .models import User, Profile
 from django.forms.widgets import FileInput
 from django.core.files.uploadedfile import UploadedFile
+from django.contrib.auth.forms import UserCreationForm, UserChangeForm
+from django.contrib.auth.models import User
 
+class CustomUserCreationForm(UserCreationForm):
+    class Meta:
+        model = User
+        fields = ('username', 'email', 'first_name', 'last_name',)
+
+class CustomUserChangeForm(UserChangeForm):
+    class Meta:
+        model = User
+        fields = ('username', 'email', 'first_name', 'last_name', 'password', 'is_staff', 'is_active')
 class PhoneNumberForm(forms.Form):
     phone_number = forms.CharField(max_length=15, required=True)
 

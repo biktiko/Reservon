@@ -3,6 +3,8 @@ from django.contrib.auth.admin import UserAdmin as DefaultUserAdmin
 from django.contrib.auth.models import User
 from .models import Profile
 from main.admin import NoteInline
+from .forms import CustomUserCreationForm, CustomUserChangeForm
+
 # Отмена регистрации стандартного UserAdmin
 admin.site.unregister(User)
 
@@ -15,31 +17,52 @@ class ProfileInline(admin.StackedInline):
     extra = 0
 
 class CustomUserAdmin(DefaultUserAdmin):
+    add_form = CustomUserCreationForm
+    form = CustomUserChangeForm
+
     list_display = DefaultUserAdmin.list_display + ('has_password', 'profile_status')
     list_filter = DefaultUserAdmin.list_filter + ('main_profile__status',)
     search_fields = DefaultUserAdmin.search_fields + ('main_profile__phone_number',)
-    inlines = (ProfileInline, NoteInline)
+    inlines = (ProfileInline, NoteInline, )
 
+    # Поля при создании (add_view)
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('username', 'email', 'first_name', 'last_name', 'is_staff', 'is_active'),
+            'fields': (
+                'username',
+                'email',
+                'first_name',
+                'last_name',
+                'password1',
+                'password2',   # <-- Нужно чтобы задавать пароль
+                'is_staff',
+                'is_active'
+            ),
         }),
     )
 
-    def save_model(self, request, obj, form, change):
-        if not obj.pk:  # Если это новый объект
-            obj.set_unusable_password()  # Устанавливает, что у пользователя нет пароля
-        super().save_model(request, obj, form, change)
-
-    def save_formset(self, request, form, formset, change):
-        if formset.model == Profile:
-            instances = formset.save(commit=False)
-            for instance in instances:
-                instance.save()
-            formset.save_m2m()
-        else:
-            super().save_formset(request, form, formset, change)
+    # Поля при редактировании (change_view) Django берёт из form = CustomUserChangeForm
+    fieldsets = (
+        (None, {
+            'fields': (
+                'username',
+                'password',   # поле пароль всё равно нужно, даже если хэш
+                'email',
+                'first_name',
+                'last_name',
+            )
+        }),
+        ('Права', {
+            'fields': (
+                'is_active',
+                'is_staff',
+                'is_superuser',
+                'groups',
+                'user_permissions'
+            ),
+        }),
+    )
 
     def has_password(self, obj):
         return obj.has_usable_password()
@@ -55,3 +78,4 @@ class CustomUserAdmin(DefaultUserAdmin):
     profile_status.admin_order_field = 'main_profile__status'
 
 admin.site.register(User, CustomUserAdmin)
+admin.site.register(Profile)
