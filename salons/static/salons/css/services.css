@@ -6,7 +6,9 @@
 
 .service-categories {
     display: flex;
-    margin-bottom: 15px;
+    flex-wrap: wrap; /* Разрешаем перенос элементов */
+    gap: 10px; /* Добавляем отступы между кнопками */
+    justify-content: flex-start; /* Выравниваем кнопки по левому краю */
 }
 
 .services-container {
@@ -31,8 +33,11 @@
 }
 
 .category-button {
-    margin-right: 8px;
-    padding: 10px 20px;
+    /* flex: 0 0 calc(30% - 10px); Каждая кнопка занимает треть строки */
+    max-width: 200px; /* Устанавливаем максимальную ширину */
+    /* min-width: 150px; Минимальная ширина кнопок */
+    padding: 10px;
+    text-align: center;
     background-color: #333;
     color: #ccc;
     border: none;
@@ -40,6 +45,7 @@
     cursor: pointer;
     transition: background 0.3s, color 0.3s;
 }
+
 
 .category-button:hover {
     background-color: #444;
@@ -170,4 +176,10 @@
     display: none;
 }
 
-
+/* Адаптивные стили для мобильных устройств */
+/* @media (max-width: 768px) {
+    .category-button {
+        flex: 1 1 100%;
+        max-width: 100%; 
+    }
+} */
