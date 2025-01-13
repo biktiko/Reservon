@@ -30,6 +30,7 @@ class Salon(models.Model):
     description_ru = models.TextField('description_ru', blank=True)
     description_eng = models.TextField('description_eng', blank=True)
     reservDays = models.IntegerField('Reserv days', default=9)
+    mod = models.CharField(choices=[('category', 'Category'), ('barber', 'Barber')], max_length=10, default='category')
     history = HistoricalRecords()
 
     status = models.CharField(
@@ -89,7 +90,8 @@ class Barber(models.Model):
     name = models.CharField(max_length=100)
     avatar = models.ImageField(upload_to='salons/barbers', blank=True, null=True)
     description = models.TextField(blank=True, null=True)
-    categories = models.ManyToManyField(ServiceCategory, related_name='barbers')  # Add this line
+    categories = models.ManyToManyField(ServiceCategory, related_name='barbers')
+    services = models.ManyToManyField(Service, related_name='barbers', blank=True, through='BarberService')
     history = HistoricalRecords()
 
     def __str__(self):
@@ -99,8 +101,20 @@ class Barber(models.Model):
         if self.avatar and self.avatar.url:
             return self.avatar.url
         return '/static/salons/img/default-avatar.png'
+
+class BarberService(models.Model):
+    barber = models.ForeignKey(Barber, on_delete=models.CASCADE, related_name='barber_services')
+    service = models.ForeignKey(Service, on_delete=models.CASCADE, related_name='barber_services')
+    additional_info = models.TextField(blank=True, null=True)
+    price = models.DecimalField(max_digits=8, decimal_places=2, blank=True, null=True)
+    duration = models.DurationField(blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.barber.name} - {self.service.name}"
+    
     
 class BarberAvailability(models.Model):
+        
     DAY_OF_WEEK_CHOICES = [
         ('monday', 'Понедельник'),
         ('tuesday', 'Вторник'),

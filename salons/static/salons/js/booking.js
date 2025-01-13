@@ -324,7 +324,8 @@ document.addEventListener('DOMContentLoaded', function() {
     async function getAvailableMinutesBatch(salonId, date, hours) {
         const uncachedHours = [];
         const result = {};
-    
+        console.log(collectBookingFormData().booking_details)
+        
         hours.forEach(hour => {
             const key = `${date}_${hour}`;
             if (availableMinutesCache[key]) {
@@ -333,7 +334,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 uncachedHours.push(hour);
             }
         });
-    
+        
         if (uncachedHours.length > 0) {
             try {
                 const responseData = JSON.stringify({
@@ -426,8 +427,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // Calculate end time
             let endMinute = minute + totalDurationElem;
             let endHour = hour;
-    
-            if (endMinute >= 60) {
+            
+            while(endMinute >= 60) {
                 endMinute -= 60;
                 endHour += 1;
             }
@@ -543,6 +544,8 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     function collectBookingFormData() {
+
+        const salonMod = document.getElementById('salon-mod').value;
         const formData = {
             salon_id: salonId,
             date: selectedDateInput.value,
@@ -550,13 +553,35 @@ document.addEventListener('DOMContentLoaded', function() {
             booking_details: [],
             total_service_duration: 0
         };
+
         const categories = new Set([...Object.keys(selectedServicesByCategory), ...Object.keys(selectedBarbersByCategory)]);
     
         categories.forEach(categoryId => {
             const barberId = selectedBarbersByCategory[categoryId] || 'any';
             const services = selectedServicesByCategory[categoryId] || [];
             let duration = 0;
-    
+
+            // == Фильтруем услуги, если режим 'barbers' и barberId != 'any' ==
+            if (salonMod == 'barber' && barberId !='any') {
+                const barberServicesMap = {};
+                document.querySelectorAll('.service-card[data-barber-ids]').forEach(card => {
+                    const serviceId = card.getAttribute('data-service-id');
+                    const barberIds = card.getAttribute('data-barber-ids').split(',');
+                    barberIds.forEach(bid => {
+                        if (!barberServicesMap[bid]) {
+                        barberServicesMap[bid] = [];
+                        }
+                        barberServicesMap[bid].push(serviceId);
+                    });
+                });
+                console.log('barberServicesMap:', barberServicesMap);
+
+                services = services.filter(svcId => {
+                    // Принадлежит ли услуга svcId этому барберу?
+                    return barberServicesMap[barberId] && barberServicesMap[barberId].includes(svcId);
+                });
+            }
+
             if (services.length > 0) {
                 duration = services.reduce((total, serviceId) => total + getServiceDuration(serviceId), 0);
             }
