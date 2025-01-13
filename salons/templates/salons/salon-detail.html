@@ -28,7 +28,9 @@
 
 {% include 'salons/book-confirm.html' %}
 
-<div class="salon-detail">
+<div class="salon-detail" >
+    <input type="hidden" id="salon-mod" value="{{ salon.mod }}">
+
     <div class="salon-container">
         <!-- Левая часть -->
         <div class="info-sections">
@@ -57,12 +59,20 @@
 
             <!-- Правая часть -->
             <div class="right-section">
-                <!-- Включение выбора услуг -->
-
+  
+                {% if salon.mod == "category" %}
+                <h2> Выберите услуги </h2>
                 {% include 'salons/salon-services.html' with categories_with_services=categories_with_services barbers_by_category=barbers_by_category barbers_by_category_json=barbers_by_category_json %}
-             
+                
+                <h2> Выберите мастера </h2>
                 {% include 'salons/barbers.html' with category=category barbers_by_category=barbers_by_category %}
 
+                {% else %}
+                    <h2> Выберите мастера </h2>
+                    {% include 'salons/barbers.html' with category=category barbers_by_category=barbers_by_category %}
+                    <h2> Выберите услуги </h2>
+                    {% include 'salons/salon-services.html' with categories_with_services=categories_with_services barbers_by_category=barbers_by_category barbers_by_category_json=barbers_by_category_json %}
+                {% endif %}
                 <!-- Выбор даты и времени -->
                 <div class="date-time-selection">
                     <h3>{% trans "Выберите дату и время" %}</h3>

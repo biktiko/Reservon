@@ -29,13 +29,13 @@ class AdminBookingForm(forms.ModelForm):
     DURATION_CHOICES = [(i, f'{i} мин') for i in range(10, 100, 10)]  # 10,20..90
     duration = forms.ChoiceField(
         choices=DURATION_CHOICES,
-        initial=20,          # дефолт 20
+        initial=40,
         label='Длительность'
     )
 
     class Meta:
         model = Appointment
-        fields = ['start_datetime', 'duration', 'barber', 'services']
+        fields = ['start_datetime', 'duration', 'barber', 'services', 'user_comment']
         labels = {
             'start_datetime': 'Начало бронирования',
         }

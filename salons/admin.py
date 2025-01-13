@@ -7,6 +7,7 @@ from .models import (
     Service,
     SalonImage,
     Barber,
+    BarberService,
     BarberAvailability,
     ServiceCategory,
     Appointment,
@@ -15,6 +16,7 @@ from .models import (
 from import_export import resources
 from import_export.admin import ImportExportModelAdmin
 from main.admin import NoteInline
+
 # --- Настройка админки для AppointmentBarberService ---
 
 class AppointmentBarberServiceInline(admin.TabularInline):
@@ -155,21 +157,33 @@ class BarberAvailabilityInline(admin.TabularInline):
     extra = 1
     fields = ('day_of_week', 'start_time', 'end_time', 'is_available')
 
+# salons/admin.py
+
+class BarberServiceInline(admin.TabularInline):
+    model = BarberService
+    extra = 1
+    autocomplete_fields = ['service']  # Включаем автозаполнение для поля 'service'
+    fields = ('service', 'additional_info', 'price', 'duration')
+    show_change_link = True  # Позволяет перейти к редактированию выбранной услуги
+
 @admin.register(Barber)
 class BarberAdmin(ImportExportModelAdmin):
     form = BarberAdminForm
-    list_display = ('user', 'name', 'salon', 'get_categories')
+    list_display = ('user', 'name', 'salon', 'get_categories', 'get_services')
     list_filter = ('salon', 'categories')
     search_fields = ('name', 'salon__name')
     filter_horizontal = ('categories',)
     autocomplete_fields = ['salon', 'categories', 'user']
     fields = ('salon', 'user', 'name', 'avatar', 'description', 'categories')
-    inlines = [BarberAvailabilityInline]
+    inlines = [BarberAvailabilityInline, BarberServiceInline]  # Включаем инлайн для услуг
 
     def get_categories(self, obj):
         return ", ".join([category.name for category in obj.categories.all()])
     get_categories.short_description = 'Категории'
 
+    def get_services(self, obj):
+        return ", ".join([service.name for service in obj.services.all()])
+    get_services.short_description = 'Услуги'
 
 @admin.register(BarberAvailability)
 class BarberAvailabilityAdmin(admin.ModelAdmin):
@@ -200,14 +214,14 @@ class BarberInline(admin.StackedInline):
 @admin.register(Salon)
 class SalonAdmin(ImportExportModelAdmin):
     form = SalonAdminForm
-    list_display = ('name', 'status', 'default_price', 'default_duration', 'reservDays', 'coordinates')
-    list_filter = ('status',)
+    list_display = ('name', 'status', 'default_price', 'default_duration', 'reservDays', 'coordinates', 'mod')
+    list_filter = ('status', 'mod')
     search_fields = ('name', 'address')
-    inlines = [ServiceInline, SalonImageInline, BarberInline, NoteInline]  # Убрали AppointmentBarberServiceInline
-    autocomplete_fields = ['admins']  # Добавляем 'admins' в autocomplete_fields
+    inlines = [ServiceInline, SalonImageInline, BarberInline, NoteInline]
+    autocomplete_fields = ['admins']
     fieldsets = (
         (None, {
-            'fields': ('name', 'logo', 'address', 'coordinates', 'reservDays', 'status', 'admins')
+            'fields': ('name', 'logo', 'address', 'coordinates', 'reservDays', 'status', 'admins', 'mod')
         }),
         ('Описание', {
             'fields': (
