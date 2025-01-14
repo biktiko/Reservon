@@ -418,33 +418,33 @@ def has_overlap(schedules, start_dt, end_dt):
     return False
 
 
-    # Преобразуем set в отсортированные списки
-    available_minutes_response = {hour: sorted(list(minutes)) for hour, minutes in available_minutes.items()}
+    # # Преобразуем set в отсортированные списки
+    # available_minutes_response = {hour: sorted(list(minutes)) for hour, minutes in available_minutes.items()}
 
-    # Генерация безопасного ключа кэша с использованием хеширования
-    current_time = timezone.now()
-    cache_time_str = f"{(current_time.minute // 5) * 5}"  # Округление до ближайших 5 минут
+    # # Генерация безопасного ключа кэша с использованием хеширования
+    # current_time = timezone.now()
+    # cache_time_str = f"{(current_time.minute // 5) * 5}"  # Округление до ближайших 5 минут
 
-    cache_key = generate_safe_cache_key(
-        salon_id,
-        date_str,
-        hours,
-        booking_details,
-        cache_time_str,
-        selected_barber_id=selected_barber_id  # Включаем выбранного мастера
-    )
+    # cache_key = generate_safe_cache_key(
+    #     salon_id,
+    #     date_str,
+    #     hours,
+    #     booking_details,
+    #     cache_time_str,
+    #     selected_barber_id=selected_barber_id  # Включаем выбранного мастера
+    # )
 
-    # Попытка получить данные из кэша
-    cached_response = cache.get(cache_key)
-    if cached_response:
-        logger.debug(f"Данные получены из кэша. Ключ: {cache_key}")
-        return Response(cached_response)
+    # # Попытка получить данные из кэша
+    # cached_response = cache.get(cache_key)
+    # if cached_response:
+    #     logger.debug(f"Данные получены из кэша. Ключ: {cache_key}")
+    #     return Response(cached_response)
 
-    # Кешируем результат с учётом безопасного ключа
-    response = {'available_minutes': available_minutes_response}
-    cache.set(cache_key, response, timeout=30)  # Уменьшаем время кэша до 30 секунд
-    logger.debug(f"Кеширование результатов успешно. Ключ: {cache_key}")
-    return Response(response)
+    # # Кешируем результат с учётом безопасного ключа
+    # response = {'available_minutes': available_minutes_response}
+    # cache.set(cache_key, response, timeout=30)  # Уменьшаем время кэша до 30 секунд
+    # logger.debug(f"Кеширование результатов успешно. Ключ: {cache_key}")
+    # return Response(response)
 
 @transaction.atomic
 def book_appointment(request, id):
@@ -668,6 +668,17 @@ def book_appointment(request, id):
             for admin in admins:
                 profile = admin.main_profile  # вот объект Profile
 
+                 # Получаем номер телефона пользователя
+                if request.user.is_authenticated:
+                    try:
+                        user_profile = request.user.profile  # Предполагается, что у пользователя есть профиль
+                        user_phone_number = user_profile.phone_number
+                    except:
+                        logger.warning("Профиль пользователя не найден.")
+                        user_phone_number = "Неизвестен"
+                else:
+                    user_phone_number = "Неизвестен"
+
                 # whatsapp
                 if profile.whatsapp:
                     TEMPLATE_SID = "HXa27885cd64b14637a00e845fbbfaa326"
@@ -682,7 +693,7 @@ def book_appointment(request, id):
                     master_names = ", ".join(b.name for b in barbers_qs) if barbers_qs else "Без мастера"
 
                     dataTest = {
-                        "client_phoneNumber": profile.phone_number,
+                        "client_phoneNumber": user_phone_number,
                         "datetime": datetime_str,
                         "master_name": master_names,
                         "admin_number": profile.whatsapp_phone_number
