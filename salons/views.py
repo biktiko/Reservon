@@ -661,7 +661,8 @@ def book_appointment(request, id):
         # Связываем созданные AppointmentBarberService с Appointment
         if appointments_to_create:
             appointment.barber_services.set(appointments_to_create)
-
+        print('request.user.main_profile.phone_number')
+        print(request.user.main_profile.phone_number)
         if not settings.DEBUG:
             admins = salon.admins.all()
             for admin in admins:
@@ -670,9 +671,8 @@ def book_appointment(request, id):
                  # Получаем номер телефона пользователя
                 if request.user.is_authenticated:
                     try:
-                        user_phone_number = request.user
-                        # user_phone_number = user_profile.phone_number
-                    except:
+                        user_phone_number = request.user.main_profile.phone_number
+                    except AttributeError:
                         logger.warning("Профиль пользователя не найден.")
                         user_phone_number = "Неизвестен"
                 else:
