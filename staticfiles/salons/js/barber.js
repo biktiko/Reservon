@@ -137,6 +137,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Функция для обновления UI после выбора барбера
     function updateBarberSelectionUI(barberId) {
+
         console.log('updateBarberSelectionUI', barberId);
         // Убираем выделение со всех карточек барберов
         barberList.querySelectorAll('.barber-card').forEach(card => {

@@ -112,8 +112,8 @@ class BarberAdminForm(forms.ModelForm):
         choices=Profile.STATUS_CHOICES,
         required=False
     )
-    # Add more Profile fields as needed
 
+    # Add more Profile fields as needed
     class Meta:
         model = Barber
         fields = '__all__'  # Include all Barber fields
@@ -163,18 +163,18 @@ class BarberServiceInline(admin.TabularInline):
     model = BarberService
     extra = 1
     autocomplete_fields = ['service']  # Включаем автозаполнение для поля 'service'
-    fields = ('service', 'additional_info', 'price', 'duration')
+    fields = ('service', 'additional_info', 'price', 'duration', 'category')
     show_change_link = True  # Позволяет перейти к редактированию выбранной услуги
 
 @admin.register(Barber)
 class BarberAdmin(ImportExportModelAdmin):
     form = BarberAdminForm
-    list_display = ('user', 'name', 'salon', 'get_categories', 'get_services')
+    list_display = ('user', 'name', 'salon', 'get_categories', 'get_services', 'default_duration')
     list_filter = ('salon', 'categories')
     search_fields = ('name', 'salon__name')
     filter_horizontal = ('categories',)
     autocomplete_fields = ['salon', 'categories', 'user']
-    fields = ('salon', 'user', 'name', 'avatar', 'description', 'categories')
+    fields = ('salon', 'user', 'name', 'avatar', 'description', 'categories', 'default_duration')
     inlines = [BarberAvailabilityInline, BarberServiceInline]  # Включаем инлайн для услуг
 
     def get_categories(self, obj):

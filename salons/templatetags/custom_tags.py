@@ -5,6 +5,10 @@ from django import template
 register = template.Library()
 
 @register.filter
+def index(sequence, position):
+    return sequence[position]
+
+@register.filter
 def get_item(dictionary, key):
     return dictionary.get(key)
 
@@ -15,3 +19,4 @@ def concat(value, arg):
 @register.filter
 def filter_salon(services, salon):
     return services.filter(salon=salon, status='active')
+

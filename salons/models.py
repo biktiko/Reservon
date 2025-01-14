@@ -48,8 +48,8 @@ class Salon(models.Model):
         verbose_name_plural = 'Salons'
 
 class ServiceCategory(models.Model):
-    name = models.CharField(max_length=100, unique=True)  # Название категории
-    default_duration = models.IntegerField('Default duration (minutes)', default=15)
+    name = models.CharField(max_length=100, unique=True)
+    default_duration = models.IntegerField('Default duration (minutes)', default=30)
 
     def __str__(self):
         return self.name
@@ -92,6 +92,7 @@ class Barber(models.Model):
     description = models.TextField(blank=True, null=True)
     categories = models.ManyToManyField(ServiceCategory, related_name='barbers')
     services = models.ManyToManyField(Service, related_name='barbers', blank=True, through='BarberService')
+    default_duration = models.IntegerField('Default duration (minutes)', default=40)
     history = HistoricalRecords()
 
     def __str__(self):
@@ -105,6 +106,7 @@ class Barber(models.Model):
 class BarberService(models.Model):
     barber = models.ForeignKey(Barber, on_delete=models.CASCADE, related_name='barber_services')
     service = models.ForeignKey(Service, on_delete=models.CASCADE, related_name='barber_services')
+    category = models.ForeignKey(ServiceCategory, on_delete=models.CASCADE, related_name='barber_services', default=1)
     additional_info = models.TextField(blank=True, null=True)
     price = models.DecimalField(max_digits=8, decimal_places=2, blank=True, null=True)
     duration = models.DurationField(blank=True, null=True)

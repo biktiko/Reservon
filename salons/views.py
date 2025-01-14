@@ -1,6 +1,6 @@
 # salons/views.py
 from django.shortcuts import render, get_object_or_404
-from .models import Salon, Appointment, Barber, Service, ServiceCategory, AppointmentBarberService, BarberAvailability
+from .models import Salon, Appointment, Barber, Service, ServiceCategory, AppointmentBarberService, BarberAvailability, BarberService
 from django.core.serializers.json import DjangoJSONEncoder
 from django.http import JsonResponse
 from rest_framework.decorators import api_view
@@ -58,29 +58,48 @@ def salon_detail(request, id):
 
     # Создаем структуру данных: {category: [services]}
     categories_with_services = []
-    for category in service_categories:
-        services = Service.objects.filter(
-            salon=salon,
-            status='active',
-            category=category
-        )
-        if services.exists():
-            categories_with_services.append({
-                'category': category,
-                'services': services
-            })
+    if salon.mod == 'category':
+        for category in service_categories:
+            services = Service.objects.filter(
+                salon=salon,
+                status='active',
+                category=category
+            )
+            if services.exists():
+                categories_with_services.append({
+                    'category': category,
+                    'services': services
+                })
+            # print('categories_with_services', categories_with_services)
+
+    else:
+        for category in service_categories:
+            barber_services = BarberService.objects.filter(
+                barber__salon=salon,
+                category=category,
+                service__status='active' 
+            )
+            # print('barber_service', category, barber_services)
+            if barber_services.exists():
+                categories_with_services.append({
+                    'category': category,
+                    'services': barber_services
+                })
+            # print('categories_with_services', categories_with_services)
 
     # Собираем барберов по категориям
     barbers_by_category = {}
     for entry in categories_with_services:
         category = entry['category']
 
-        barbers = Barber.objects.filter(categories=category, salon=salon)
-        # barbers = Barber.objects.filter(
-        #     categories=category,
-        #     salon=salon,
-        #     barber_services__service__category=category
-        # ).distinct()
+        if salon.mod == 'category':
+            barbers = Barber.objects.filter(categories=category, salon=salon)
+        else:
+            barbers = Barber.objects.filter(
+                salon=salon,
+                barber_services__service__status='active',
+            ).distinct()
+            barbers = barbers.filter(barber_services__service__salon=salon)
 
         barbers_list = []
         for barber in barbers:
@@ -88,7 +107,8 @@ def salon_detail(request, id):
                 'id': barber.id,
                 'name': barber.name,
                 'avatar': barber.get_avatar_url(),
-                'description': barber.description or ''
+                'description': barber.description or '',
+                'defaultDuration': barber.default_duration or 30
             })
         barbers_by_category[category.id] = barbers_list
 
@@ -103,6 +123,7 @@ def salon_detail(request, id):
     }
 
     return render(request, 'salons/salon-detail.html', context)
+
 
 def get_barber_availability(request, barber_id):
     try:
@@ -418,33 +439,33 @@ def has_overlap(schedules, start_dt, end_dt):
     return False
 
 
-    # Преобразуем set в отсортированные списки
-    available_minutes_response = {hour: sorted(list(minutes)) for hour, minutes in available_minutes.items()}
+    # # Преобразуем set в отсортированные списки
+    # available_minutes_response = {hour: sorted(list(minutes)) for hour, minutes in available_minutes.items()}
 
-    # Генерация безопасного ключа кэша с использованием хеширования
-    current_time = timezone.now()
-    cache_time_str = f"{(current_time.minute // 5) * 5}"  # Округление до ближайших 5 минут
+    # # Генерация безопасного ключа кэша с использованием хеширования
+    # current_time = timezone.now()
+    # cache_time_str = f"{(current_time.minute // 5) * 5}"  # Округление до ближайших 5 минут
 
-    cache_key = generate_safe_cache_key(
-        salon_id,
-        date_str,
-        hours,
-        booking_details,
-        cache_time_str,
-        selected_barber_id=selected_barber_id  # Включаем выбранного мастера
-    )
+    # cache_key = generate_safe_cache_key(
+    #     salon_id,
+    #     date_str,
+    #     hours,
+    #     booking_details,
+    #     cache_time_str,
+    #     selected_barber_id=selected_barber_id  # Включаем выбранного мастера
+    # )
 
-    # Попытка получить данные из кэша
-    cached_response = cache.get(cache_key)
-    if cached_response:
-        logger.debug(f"Данные получены из кэша. Ключ: {cache_key}")
-        return Response(cached_response)
+    # # Попытка получить данные из кэша
+    # cached_response = cache.get(cache_key)
+    # if cached_response:
+    #     logger.debug(f"Данные получены из кэша. Ключ: {cache_key}")
+    #     return Response(cached_response)
 
-    # Кешируем результат с учётом безопасного ключа
-    response = {'available_minutes': available_minutes_response}
-    cache.set(cache_key, response, timeout=30)  # Уменьшаем время кэша до 30 секунд
-    logger.debug(f"Кеширование результатов успешно. Ключ: {cache_key}")
-    return Response(response)
+    # # Кешируем результат с учётом безопасного ключа
+    # response = {'available_minutes': available_minutes_response}
+    # cache.set(cache_key, response, timeout=30)  # Уменьшаем время кэша до 30 секунд
+    # logger.debug(f"Кеширование результатов успешно. Ключ: {cache_key}")
+    # return Response(response)
 
 @transaction.atomic
 def book_appointment(request, id):
@@ -668,6 +689,17 @@ def book_appointment(request, id):
             for admin in admins:
                 profile = admin.main_profile  # вот объект Profile
 
+                 # Получаем номер телефона пользователя
+                if request.user.is_authenticated:
+                    try:
+                        user_profile = request.user.profile  # Предполагается, что у пользователя есть профиль
+                        user_phone_number = user_profile.phone_number
+                    except:
+                        logger.warning("Профиль пользователя не найден.")
+                        user_phone_number = "Неизвестен"
+                else:
+                    user_phone_number = "Неизвестен"
+
                 # whatsapp
                 if profile.whatsapp:
                     TEMPLATE_SID = "HXa27885cd64b14637a00e845fbbfaa326"
@@ -682,7 +714,7 @@ def book_appointment(request, id):
                     master_names = ", ".join(b.name for b in barbers_qs) if barbers_qs else "Без мастера"
 
                     dataTest = {
-                        "client_phoneNumber": profile.phone_number,
+                        "client_phoneNumber": user_phone_number,
                         "datetime": datetime_str,
                         "master_name": master_names,
                         "admin_number": profile.whatsapp_phone_number
