@@ -519,7 +519,6 @@ def book_appointment(request, id):
         )
         appointment.save()
         logger.debug(f"Создано Appointment: {appointment}")
-    
         # Список для хранения созданных AppointmentBarberService
         appointments_to_create = []
     
@@ -671,8 +670,8 @@ def book_appointment(request, id):
                  # Получаем номер телефона пользователя
                 if request.user.is_authenticated:
                     try:
-                        user_profile = request.user.profile  # Предполагается, что у пользователя есть профиль
-                        user_phone_number = user_profile.phone_number
+                        user_phone_number = request.user
+                        # user_phone_number = user_profile.phone_number
                     except:
                         logger.warning("Профиль пользователя не найден.")
                         user_phone_number = "Неизвестен"
