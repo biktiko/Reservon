@@ -4,7 +4,6 @@
 {% load custom_tags %}
 <link rel="stylesheet" href="{% static 'salons/css/services.css' %}">
 
-<div>
     <div class="service-selection">
         <div class="service-categories">
             {% for entry in categories_with_services %}
@@ -34,7 +33,7 @@
                     <p>{% trans "Нет доступных категорий услуг." %}</p>
                 {% endif %}
             </div>
-      {% elif salon.mod == 'barber' %}
+        {% else %}
             <!-- РЕЖИМ BARBERS -->
       
             <!-- Сюда вставляем ваш JSON со списком барберов по категориям -->
@@ -60,11 +59,7 @@
               {% else %}
                   <p>{% trans "Нет доступных категорий услуг." %}</p>
               {% endif %}
-          {% else %}
-              <p>{% trans "Неизвестный режим отображения услуг." %}</p>
           {% endif %}
-        </div>
-
 
         <!-- Контейнер для пагинации -->
         <div class="pagination-container">
@@ -72,4 +67,3 @@
             <!-- Кнопки страниц будут добавлены динамически через JavaScript -->
         </div>
     </div>
-</div>
