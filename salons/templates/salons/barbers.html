@@ -6,22 +6,23 @@
 <div class="barber-selection">
     <!-- Активный барбер -->
     {% if salon.mod == "category" %}
-    <div id="active-barber" class="barber-card active-barber-card">
-        <img src="{% static 'salons/img/default-avatar.png' %}" alt="Любой мастер" class="barber-avatar">
-        <div class="barber-info">
-            <h4 class="barber-name">{% trans "Любой мастер" %}</h4>
-            <p class="barber-description">{% trans "Описание или слоган" %}</p>
-        </div>
-    </div>
-    {% else %}
         <div id="active-barber" class="barber-card active-barber-card">
-            <img src="{% static 'salons/img/default-avatar.png' %}" data-barber-id="1" class="barber-avatar">
+            <img src="{% static 'salons/img/default-avatar.png' %}" alt="Любой мастер" class="barber-avatar">
+            <div class="barber-info">
+                <h4 class="barber-name">{% trans "Любой мастер" %}</h4>
+                <p class="barber-description">{% trans "Описание или слоган" %}</p>
+            </div>
+        </div>
+    {% else %}
+        <div id="active-barber" class="barber-card active-barber-card" data-barber-id="1" >
+            <img src="{% static 'salons/img/default-avatar.png' %}" class="barber-avatar">
             <div class="barber-info">
                 <h4 class="barber-name"></h4>
                 <p class="barber-description"></p>
             </div>
         </div>
     {% endif %}
+
     <!-- Список барберов -->
     <div id="barber-list" class="barber-list">
         <!-- Опция "Любой мастер" -->

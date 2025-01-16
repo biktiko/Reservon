@@ -23,16 +23,20 @@ document.addEventListener('DOMContentLoaded', function() {
     const selectedDateInput = document.getElementById('selected-date'); // Скрытое поле для даты
     const selectedTimeInput = document.getElementById('selected-time'); // Скрытое поле для времени
 
-    const reservDays = parseInt(salonDataElement.dataset.reservDays, 10) || 7; // Например, 30 дней вперед
+    const reservDays = parseInt(salonDataElement.dataset.reservDays, 10) || 7;
 
     // Кэш для доступных минут
     const availableMinutesCache = {}; // Ключ: ${date}_${hour}, Значение: массив минут
-
+    
     // Сбор данных о барберах
     const barbersData = {};
     const barberCards = document.querySelectorAll('.barber-card');
-
+    
     const servicesBarbersContainer = document.querySelector('.selected-services-barbers');
+    
+    // Обработка клика на кнопку бронирования через событие submit формы
+    const bookingForm = document.getElementById('booking-form');
+    const bookingButton = bookingForm.querySelector('.booking-button');
 
     function getCategoryNameById(categoryId) {
         const categoriesCards = Array.from(document.querySelectorAll('.category-button'));
@@ -308,6 +312,25 @@ document.addEventListener('DOMContentLoaded', function() {
         daySelect.appendChild(dayOption);
     }
 
+    // Active first day button
+    function initializeBoookingDay(){
+        // Получаем элемент с ID 'day-select'
+        const daysContainer = document.getElementById('day-select');
+
+        // Проверяем, что элемент существует
+        if (daysContainer) {
+            // Находим первый элемент с классом 'day-option' внутри контейнера
+            const firstDayOption = daysContainer.querySelector('.day-option');
+            
+            // Проверяем, что первый элемент найден
+            if (firstDayOption) {
+                // Вызываем искусственный клик на найденном элементе
+                firstDayOption.click();
+            }
+        }
+    }
+    initializeBoookingDay()
+
     function handleDayClick(dayOption) {
         clearSelection(daySelect);
         dayOption.classList.add('selected');
@@ -557,15 +580,11 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Обработка клика на кнопку бронирования через событие submit формы
-    const bookingForm = document.getElementById('booking-form');
-
     if (!bookingForm) {
         console.error('Element with id "booking-form" not found.');
         return;
     }
 
-    const bookingButton = bookingForm.querySelector('.booking-button');
     if (!bookingButton) {
         console.error('Element with class "booking-button" not found within the booking form.');
         return;
@@ -573,6 +592,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Обработчик клика на кнопку бронирования
     bookingButton.addEventListener('click', function(event) {
+        console.log('clicked')
         // Проверяем, заполнены ли необходимые поля
         if (!canSubmitForm()) {
 
@@ -584,6 +604,7 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             event.preventDefault(); // Предотвращаем стандартную отправку формы
             // Получаем информацию об авторизации пользователя
+
             const isAuthenticated = bookingButton.dataset.isAuthenticated === 'true';
             if (!isAuthenticated) {
                 // Сохраняем данные формы в localStorage
@@ -707,7 +728,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function submitBookingForm() {
-
         const formData = collectBookingFormData();
         showBookingConfirmationModal(formData);
     }
@@ -901,7 +921,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function showBookingConfirmationModal(formData) {
         const modal = document.getElementById('booking-confirmation-modal');
-    
+        console.log(modal)
         const closeButton = modal.querySelector('.close-button');
         const confirmButton = modal.querySelector('.confirm-button');
         const cancelButton = modal.querySelector('.cancel-button');
@@ -966,9 +986,15 @@ document.addEventListener('DOMContentLoaded', function() {
      function generateBookingDetailsHTML(data) {
         const modal = document.getElementById('booking-confirmation-modal');
         const bookingDetailsContainer = modal.querySelector('.booking-details');
-        
+        console.log(modal)
+
         const bookingDateTime = modal.querySelector('.booking-date-time')
-        bookingDateTime.innerHTML = `<h2 class="booking-date-time"><strong>Дата:</strong> ${data.date} <br> <strong>Время:</strong> ${data.time} - ${data.endTime} </h2>`;
+        if(bookingDateTime){
+            bookingDateTime.innerHTML = `<h2 class="booking-date-time"><strong>Дата:</strong> ${data.date} <br> <strong>Время:</strong> ${data.time} - ${data.endTime} </h2>`;
+        }else{
+            alert('Ваше бронирование уже подтверждено. Спасибо!');
+
+        }
         
         // Очищаем контейнер
         bookingDetailsContainer.innerHTML = '';
@@ -1119,7 +1145,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function hideBookingConfirmationModal() {
         const modal = document.getElementById('booking-confirmation-modal');
         modal.classList.remove('show');
-        modal.style.display = 'none'; // Добавляем скрытие модального окна
+        // modal.style.display = 'none'; // Добавляем скрытие модального окна
     }
 
 });
