@@ -14,24 +14,17 @@
         </div>
     </div>
     {% else %}
-        <div id="active-barber" class="barber-card active-barber-card">
-            <img src="{% static 'salons/img/default-avatar.png' %}" data-barber-id="1" class="barber-avatar">
+        <div id="active-barber" class="barber-card active-barber-card"  data-barber-id="1">
+            <img src="{% static 'salons/img/default-avatar.png' %}" class="barber-avatar">
             <div class="barber-info">
-                <h4 class="barber-name"></h4>
+                <h4 class="barber-name">Test name</h4>
                 <p class="barber-description"></p>
             </div>
         </div>
     {% endif %}
     <!-- Список барберов -->
     <div id="barber-list" class="barber-list">
-        <!-- Опция "Любой мастер" -->
-        <div class="barber-card" data-barber-id="any">
-            <img src="{% static 'salons/img/default-avatar.png' %}" alt="Любой мастер" class="barber-avatar">
-            <div class="barber-info">
-                <h4 class="barber-name">{% trans "Любой мастер" %}</h4>
-                <p class="barber-description">{% trans "Описание или слоган" %}</p>
-            </div>
-        </div>
+    
         <!-- Список барберов -->
         {% for barber in salon.barbers.all %}
             <div class="barber-card" data-barber-id="{{ barber.id }}">

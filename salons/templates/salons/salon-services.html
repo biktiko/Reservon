@@ -34,34 +34,37 @@
                     <p>{% trans "Нет доступных категорий услуг." %}</p>
                 {% endif %}
             </div>
-            {% else %}
+      {% elif salon.mod == 'barber' %}
             <!-- РЕЖИМ BARBERS -->
       
             <!-- Сюда вставляем ваш JSON со списком барберов по категориям -->
             {% if barbers_by_category %}
               {{ barbers_by_category|json_script:"barbers-by-category" }}
             {% endif %}
-      
+            
             <div class="services-container">
               {% if categories_with_services %}
-                {% for entry in categories_with_services %}
-                  <div class="category-section" data-category-id="{{ entry.category.id }}">
-                    <div class="category-services services-grid">
-                      {% if not entry.services %}
-                        <p>{% trans "Нет доступных услуг." %}</p>
-                      {% else %}
-                        {% for service in entry.services %}
-                          {% include 'salons/service-card.html' with service=service category=entry.category %}
-                        {% endfor %}
-                      {% endif %}
-                    </div>
-                  </div>
-                {% endfor %}
+                  {% for entry in categories_with_services %}
+                      <div class="category-section" data-category-id="{{ entry.category.id }}">
+                          <div class="category-services services-grid">
+                              {% if not entry.services %}
+                                  <p>{% trans "Нет доступных услуг." %}</p>
+                              {% else %}
+                                  {% for bs in entry.services %}
+                                      {% include 'salons/service-card.html' with barber_service=bs category=entry.category %}
+                                  {% endfor %}
+                              {% endif %}
+                          </div>
+                      </div>
+                  {% endfor %}
               {% else %}
-                <p>{% trans "Нет доступных категорий услуг." %}</p>
+                  <p>{% trans "Нет доступных категорий услуг." %}</p>
               {% endif %}
-            </div>
+          {% else %}
+              <p>{% trans "Неизвестный режим отображения услуг." %}</p>
           {% endif %}
+        </div>
+
 
         <!-- Контейнер для пагинации -->
         <div class="pagination-container">

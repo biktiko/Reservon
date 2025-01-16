@@ -17,17 +17,18 @@
         </div>
     </div>
 {% else %}
-    <div class="service-card" data-barber-ids="{% for bs in service.barber_services.all %}{{ bs.barber.id }}{% if not forloop.last %},{% endif %}{% endfor %}"
-        data-price="{{ service.price }}" 
-        data-duration="{{ service.duration|duration_minutes }}" 
-        data-service-id="{{ service.id }}"
-        data-category-id="{{ category.id }}">
-        {% if service.image %}
-            <img src="{{ service.image.url }}" alt="{{ service.name }}" class="service-image">
+    <div class="service-card" 
+        data-price="{{ barber_service.price }}" 
+        data-duration="{{ barber_service.duration|duration_minutes }}" 
+        data-barber-id="{{ barber_service.barber.id }}" 
+        data-category-id="{{ category.id }}" 
+        data-service-id="{{ barber_service.id }}">
+        {% if barber_service.image %}
+            <img src="{{ barber_service.image.url }}" alt="{{ barber_service.name }}" class="service-image">
         {% endif %}
         <div class="service-info">
-            <h4 class="service-name">{{ service.name }}</h4>
-            <p class="service-details">{{ service.price|floatformat:0 }} драм • {{ service.duration|duration_minutes }} минут</p>
+            <h4 class="service-name">{{ barber_service.name }}</h4>
+            <p class="service-details">{{ barber_service.price|floatformat:0 }} драм • {{ barber_service.duration|duration_minutes }} минут</p>
         </div>
     </div>
 {% endif %}
