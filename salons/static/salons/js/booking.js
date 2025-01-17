@@ -354,7 +354,11 @@ document.addEventListener('DOMContentLoaded', function() {
         initializeBoookingDay()
     }
 
-    isCheckDays==true ? populateDays() : initializeBoookingDay()
+    if(isCheckDays==true || isCheckDays=="True"){
+        populateDays()
+    }else{
+        initializeBoookingDay()
+    }
 
     // Вспомогательная функция - проверяет есть ли хоть один час
     async function hasDayAvailability(salonId, dateStr, startHour, endHour) {
