@@ -35,6 +35,7 @@ class Salon(models.Model):
     description_eng = models.TextField('description_eng', blank=True)
     reservDays = models.IntegerField('Reserv days', default=9)
     mod = models.CharField(choices=MOD_CHOICES, max_length=10, default='category')
+    IsCheckDays = models.BooleanField('Is Check Days', default=True)
 
     status = models.CharField(
         max_length=10,

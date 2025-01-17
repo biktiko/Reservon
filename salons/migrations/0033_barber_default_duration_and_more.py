@@ -15,11 +15,6 @@ class Migration(migrations.Migration):
             name='default_duration',
             field=models.IntegerField(default=40, verbose_name='Default duration (minutes)'),
         ),
-        migrations.AddField(
-            model_name='historicalbarber',
-            name='default_duration',
-            field=models.IntegerField(default=40, verbose_name='Default duration (minutes)'),
-        ),
         migrations.AlterField(
             model_name='servicecategory',
             name='default_duration',

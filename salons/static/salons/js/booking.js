@@ -5,11 +5,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // Сначала объявляем salonDataElement, а затем salonId
     const salonDataElement = document.getElementById('salon-data');
     const salonId = parseInt(salonDataElement.dataset.salonId, 10);
+
     const salonModInput = document.getElementById('salon-mod');
-    let salonMod = 'null';
-    if (salonModInput) {
-        salonMod = salonModInput.value;
-    }
+    const salonMod = salonModInput.value;
+
+    const isCheckDays = salonDataElement.dataset.ischeckdays
+    console.log(isCheckDays)
+    
     console.log('Salon mod is ', salonMod)
 
     const serviceDurationElement = document.getElementById('service-duration');
@@ -314,6 +316,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Комментируем код на английском:
     async function populateDays() {
+        console.log('populate')
         daySelect.innerHTML = '';
         const daysToCheck = [];
         for (let i = 0; i < reservDays; i++) {
@@ -351,6 +354,8 @@ document.addEventListener('DOMContentLoaded', function() {
         initializeBoookingDay()
     }
 
+    isCheckDays==true ? populateDays() : initializeBoookingDay()
+
     // Вспомогательная функция - проверяет есть ли хоть один час
     async function hasDayAvailability(salonId, dateStr, startHour, endHour) {
         const hoursRange = [];
@@ -379,8 +384,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    populateDays()
-
+    
     function handleDayClick(dayOption) {
         clearSelection(daySelect);
         dayOption.classList.add('selected');
@@ -466,7 +470,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     booking_details: formData.booking_details,
                     total_service_duration: formData.total_service_duration
                 });
-                console.log(responseData)
                 const response = await fetch('/salons/get_available_minutes/', {
                     method: 'POST',
                     headers: {
@@ -628,8 +631,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 populateAvailableMinutes(availableMinutes, date, hour);
             }
         }
-
-        populateDays()
+        
+        isCheckDays==true ? populateDays() : initializeBoookingDay()
     });
 
     if (!bookingForm) {
