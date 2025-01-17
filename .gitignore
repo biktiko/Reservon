@@ -7,3 +7,4 @@ copy_heroku_env.py
 notes.txt
 db.sqlite3
 error.log
+/venv
