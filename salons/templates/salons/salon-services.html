@@ -4,7 +4,6 @@
 {% load custom_tags %}
 <link rel="stylesheet" href="{% static 'salons/css/services.css' %}">
 
-<div>
     <div class="service-selection">
         <div class="service-categories">
             {% for entry in categories_with_services %}
@@ -34,30 +33,33 @@
                     <p>{% trans "Нет доступных категорий услуг." %}</p>
                 {% endif %}
             </div>
-            {% else %}
-            <!-- РЕЖИМ "barber": У каждого мастера (barber) своя услуга (barber_service) -->
+        {% else %}
+            <!-- РЕЖИМ BARBERS -->
+      
+            <!-- Сюда вставляем ваш JSON со списком барберов по категориям -->
+            {% if barbers_by_category %}
+              {{ barbers_by_category|json_script:"barbers-by-category" }}
+            {% endif %}
+            
             <div class="services-container">
-                {% if categories_with_services %}
-                    {% for entry in categories_with_services %}
-                        <div class="category-section" data-category-id="{{ entry.category.id }}">
-                            <div class="category-services services-grid">
-                                {% if not entry.services %}
-                                    <p>{% trans "Нет доступных услуг." %}</p>
-                                {% else %}
-                                    <!-- В режиме barber у нас список barber_services -->
-                                    {% for barber_service in entry.services %}
-                                        {% include 'salons/service-card.html' with service=barber_service.service category=entry.category barber=barber_service.barber  %}
-                                    {% endfor %}
-                                {% endif %}
-                            </div>
-                        </div>
-                    {% endfor %}
-                {% else %}
-                    <p>{% trans "Нет доступных категорий услуг." %}</p>
-                {% endif %}
-            </div>
-        {% endif %}
-
+              {% if categories_with_services %}
+                  {% for entry in categories_with_services %}
+                      <div class="category-section" data-category-id="{{ entry.category.id }}">
+                          <div class="category-services services-grid">
+                              {% if not entry.services %}
+                                  <p>{% trans "Нет доступных услуг." %}</p>
+                              {% else %}
+                                  {% for bs in entry.services %}
+                                      {% include 'salons/service-card.html' with barber_service=bs category=entry.category %}
+                                  {% endfor %}
+                              {% endif %}
+                          </div>
+                      </div>
+                  {% endfor %}
+              {% else %}
+                  <p>{% trans "Нет доступных категорий услуг." %}</p>
+              {% endif %}
+          {% endif %}
 
         <!-- Контейнер для пагинации -->
         <div class="pagination-container">
@@ -65,4 +67,3 @@
             <!-- Кнопки страниц будут добавлены динамически через JavaScript -->
         </div>
     </div>
-</div>

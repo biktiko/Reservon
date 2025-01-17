@@ -1,23 +1,34 @@
+<!-- templates/salons/service-card.html -->
 {% load duration_extras %}
 {% load static %}
 
-<div class="service-card" 
-    data-price="{% if barber_service %}{{ barber_service.price }}{% else %}{{ service.price }}{% endif %}" 
-    data-duration="{% if barber_service %}{{ barber_service.duration|duration_minutes }}{% else %}{{ service.duration|duration_minutes }}{% endif %}" 
-    {% if barber %} data-barber-ids="{{ barber.id }}" {% endif %}
-    data-service-id="{{ service.id }}"
-    data-category-id="{{ category.id }}">
-    {% if service.image %}
-        <img src="{{ service.image.url }}" alt="{{ service.name }}" class="service-image">
-    {% endif %}
-    <div class="service-info">
-        <h4 class="service-name">{{ service.name }}</h4>
-        <p class="service-details">
-            {% if barber_service %}
-                {{ barber_service.price|floatformat:0 }} драм • {{ barber_service.duration|duration_minutes }} минут
-            {% else %}
-                {{ service.price|floatformat:0 }} драм • {{ service.duration|duration_minutes }} минут
-            {% endif %}
-        </p>
+{% if salon.mod == "category" %}
+    <div class="service-card" 
+        data-price="{{ service.price }}" 
+        data-duration="{{ service.duration|duration_minutes }}" 
+        data-service-id="{{ service.id }}"
+        data-category-id="{{ category.id }}">
+        {% if service.image %}
+            <img src="{{ service.image.url }}" alt="{{ service.name }}" class="service-image">
+        {% endif %}
+        <div class="service-info">
+            <h4 class="service-name">{{ service.name }}</h4>
+            <p class="service-details">{{ service.price|floatformat:0 }} драм • {{ service.duration|duration_minutes }} минут</p>
+        </div>
     </div>
-</div>
+{% else %}
+    <div class="service-card" 
+        data-price="{{ barber_service.price }}" 
+        data-duration="{{ barber_service.duration|duration_minutes }}" 
+        data-barber-id="{{ barber_service.barber.id }}" 
+        data-category-id="{{ category.id }}" 
+        data-service-id="{{ barber_service.id }}">
+        {% if barber_service.image %}
+            <img src="{{ barber_service.image.url }}" alt="{{ barber_service.name }}" class="service-image">
+        {% endif %}
+        <div class="service-info">
+            <h4 class="service-name">{{ barber_service.name }}</h4>
+            <p class="service-details">{{ barber_service.price|floatformat:0 }} драм • {{ barber_service.duration|duration_minutes }} минут</p>
+        </div>
+    </div>
+{% endif %}

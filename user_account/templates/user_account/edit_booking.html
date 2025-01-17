@@ -82,36 +82,57 @@
         {{ form.non_field_errors }}
         {{ formset.management_form }}
         
-        <!-- account/templates/account/edit_booking.html -->
-        <div id="empty-form" style="display: none;">
-            {{ formset.empty_form.id }}
-            <button type="button" class="remove-form-button"><i class="fas fa-trash-alt"></i></button>
-            <h3>Категория: Новая категория</h3>
-            <div class="form-group">
-                <label>Мастер:</label>
-                <!-- Удалите класс select2-hidden-accessible из селекта мастера -->
-                {{ formset.empty_form.barber|remove_class:"select2-hidden-accessible" }}
+<!-- Форма для создания новой категории (empty-form) -->
+<div id="empty-form" style="display: none;">
+    {{ formset.empty_form.id }} <!-- Поле ID формы -->
+    <button type="button" class="remove-form-button"><i class="fas fa-trash-alt"></i></button>
+    <h3>Категория: Новая категория</h3>
+    
+    <div class="form-group">
+        <label>Мастер:</label>
+        <!-- Удалите класс select2-hidden-accessible из селекта мастера -->
+        {{ formset.empty_form.barber|remove_class:"select2-hidden-accessible" }}
+    </div>
+    
+        <!-- Условное отображение полей услуг -->
+        {% if salonMod == "barber" %}
+            <div class="form-group{% if formset.empty_form.barberServices.errors %} has-error{% endif %}">
+                <label>Услуги барбера:</label>
+                {{ formset.empty_form.barberServices|remove_class:"select2-hidden-accessible" }}
+                {% if formset.empty_form.barberServices.errors %}
+                    <div class="error-message">
+                        {{ formset.empty_form.barberServices.errors }}
+                    </div>
+                {% endif %}
             </div>
-            <div class="form-group">
+        {% else %}
+            <div class="form-group{% if formset.empty_form.services.errors %} has-error{% endif %}">
                 <label>Услуги:</label>
-                <!-- Удалите класс select2-hidden-accessible из селекта услуг -->
                 {{ formset.empty_form.services|remove_class:"select2-hidden-accessible" }}
+                {% if formset.empty_form.services.errors %}
+                    <div class="error-message">
+                        {{ formset.empty_form.services.errors }}
+                    </div>
+                {% endif %}
             </div>
-            <div class="time-group">
-                <div class="form-group">
-                    <label>Время начала:</label>
-                    {{ formset.empty_form.start_datetime }}
-                </div>
-                <div class="form-group">
-                    <label>Время окончания:</label>
-                    {{ formset.empty_form.end_datetime }}
-                </div>
+        {% endif %}
+        
+        <div class="time-group">
+            <div class="form-group">
+                <label>Время начала:</label>
+                {{ formset.empty_form.start_datetime }}
             </div>
-            <div class="category-summary">
-                <p class="duration">Длительность: 0 минут</p>
-                <p class="price">Цена: 0 ֏</p>
+            <div class="form-group">
+                <label>Время окончания:</label>
+                {{ formset.empty_form.end_datetime }}
             </div>
         </div>
+        
+        <div class="category-summary">
+            <p class="duration">Длительность: 0 минут</p>
+            <p class="price">Цена: 0 ֏</p>
+        </div>
+    </div>
 
         <!-- Контейнер для формсет -->
         <div id="formset-container">
@@ -121,7 +142,7 @@
                     {{ category.form.id }} <!-- Поле ID формы -->
                     <button type="button" class="remove-form-button"><i class="fas fa-trash-alt"></i></button>
                     <h3>{{ category.category_name }}</h3>
-        
+            
                     <div class="form-group{% if category.form.barber.errors %} has-error{% endif %}">
                         <label>Мастер:</label>
                         {{ category.form.barber }}
@@ -132,17 +153,30 @@
                         {% endif %}
                     </div>
                     
-                    <div class="form-group{% if category.form.services.errors %} has-error{% endif %}">
-                        <label>Услуги:</label>
-                        {{ category.form.services }}
-                        {% if category.form.services.errors %}
-                            <div class="error-message">
-                                {{ category.form.services.errors }}
-                            </div>
-                        {% endif %}
-                    </div>
-                    
-        
+                    <!-- Условное отображение полей услуг -->
+                    {% if salonMod == "barber" %}
+                        <div class="form-group{% if category.form.barberServices.errors %} has-error{% endif %}">
+
+                            <label>Услуги барбера:</label>
+                            {{ category.form.barberServices }}
+                            {% if category.form.barberServices.errors %}
+                                <div class="error-message">
+                                    {{ category.form.barberServices.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <div class="form-group{% if category.form.services.errors %} has-error{% endif %}">
+                            <label>Услуги:</label>
+                            {{ category.form.services }}
+                            {% if category.form.services.errors %}
+                                <div class="error-message">
+                                    {{ category.form.services.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+
                     <div class="time-group">
                         <div class="form-group{% if category.form.start_datetime.errors %} has-error{% endif %}">
                             <label>Время начала:</label>
@@ -162,7 +196,6 @@
                                 </div>
                             {% endif %}
                         </div>
-                        
                     </div>
                     
                     <div class="category-summary">
@@ -170,7 +203,6 @@
                         <p class="price">Цена: {{ category.price|floatformat:0 }} ֏</p>
                     </div>
                     
-        
                     {% if category.form.errors %}
                         <div class="form-errors">
                             {{ category.form.errors }}
@@ -179,7 +211,7 @@
                 </div>
             {% endfor %}
         </div>
-        
+
         <button type="submit" class="submit-button">Сохранить изменения</button>
         
         <button type="button" id="refresh-data-button">Обновить данные</button>

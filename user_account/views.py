@@ -2,7 +2,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.db import models
-from salons.models import Salon, Appointment, Barber, Service, AppointmentBarberService, BarberAvailability
+from salons.models import Salon, Appointment, Barber, Service, AppointmentBarberService, BarberAvailability, BarberService
 from authentication.models import Profile
 from django.core.paginator import Paginator
 from .forms import  AppointmentBarberServiceFormSet, AdminBookingForm, BarberScheduleForm
@@ -83,10 +83,11 @@ def edit_booking(request, booking_id):
         salon__in=user.administered_salons.all()
     )
     salon = appointment.salon
+    salonMod = salon.mod  # "barber" или "category"
 
-    # Получаем имя клиента
     if appointment.user:
         customer_name = appointment.user.get_full_name() or 'Гость'
+        customer_phone = getattr(appointment.user.main_profile, 'phone_number', 'Не указан')
     else:
         customer_name = 'Гость'
 
@@ -97,23 +98,28 @@ def edit_booking(request, booking_id):
         customer_phone = 'Не указан'
 
     if request.method == 'POST':
-        formset = AppointmentBarberServiceFormSet(request.POST, instance=appointment)
+        formset = AppointmentBarberServiceFormSet(
+            request.POST,
+            instance=appointment,
+            form_kwargs={'salonMod': salonMod}
+        )
         if formset.is_valid():
             with transaction.atomic():
-                formset.instance = appointment  # Устанавливаем связь формсета с appointment
-
-                # Сохраняем формы по отдельности
                 instances = formset.save(commit=False)
                 for obj in formset.deleted_objects:
                     obj.delete()
-                for instance in instances:
-                    instance.appointment = appointment
-                    instance.save()
+                for instance_obj in instances:
+                    instance_obj.appointment = appointment
+                    instance_obj.save()
                 formset.save_m2m()
 
-                # После сохранения формсета обновляем start_datetime и end_datetime в Appointment
-                appointment.start_datetime = appointment.barber_services.aggregate(models.Min('start_datetime'))['start_datetime__min']
-                appointment.end_datetime = appointment.barber_services.aggregate(models.Max('end_datetime'))['end_datetime__max']
+                # Обновляем дату/время начала и окончания в Appointment
+                appointment.start_datetime = appointment.barber_services.aggregate(
+                    models.Min('start_datetime')
+                )['start_datetime__min']
+                appointment.end_datetime = appointment.barber_services.aggregate(
+                    models.Max('end_datetime')
+                )['end_datetime__max']
                 appointment.save(update_fields=['start_datetime', 'end_datetime'])
 
                 messages.success(request, 'Бронирование успешно обновлено.')
@@ -121,27 +127,64 @@ def edit_booking(request, booking_id):
         else:
             messages.error(request, 'Пожалуйста, исправьте ошибки ниже.')
     else:
-        formset = AppointmentBarberServiceFormSet(instance=appointment)
-
-    # Вычисляем длительность и цену для каждой категории
+        formset = AppointmentBarberServiceFormSet(
+            instance=appointment,
+            form_kwargs={'salonMod': salonMod}
+        )
+    # Собираем данные для рендера шаблона
     category_forms = []
     total_duration = 0
     total_price = 0
+
     for form_instance in formset.forms:
         barber_service = form_instance.instance
-        if barber_service.pk:
-            services = barber_service.services.all()
+
+        # 1) Получаем список услуг (или barberServices) в зависимости от pk и режима
+        if salonMod == "barber":
+            if barber_service.pk:
+                services = barber_service.barberServices.all()  # уже сохранённые barberServices
+            else:
+                service_ids = form_instance['barberServices'].value()  # данные из формы
+                services = BarberService.objects.filter(id__in=service_ids)
+
+            # 2) Считаем длительность и цену
+            #    у BarberService duration хранится в поле .duration (timedelta),
+            #    price — в .price
+            total_duration_category = sum(
+                s.duration.total_seconds() / 60 for s in services if s.duration
+            )
+            total_price_category = sum(
+                s.price for s in services if s.price
+            )
+            
+            # 3) Название «категории» (можно вывести barber_service.barber.name
+            #    или barber_service.category — зависит от вашей логики)
+            #    Пока сделаем так же, как в "category" — берём category.name:
+            categories = set(s.category.name for s in services if s.category)
+            category_name = ', '.join(categories) if categories else 'Без категории'
+
         else:
-            # Используем данные из формы
-            service_ids = form_instance['services'].value()
-            services = Service.objects.filter(id__in=service_ids)
-        # Вычисляем длительность и цену категории
-        total_duration_category = sum(service.duration.total_seconds() / 60 for service in services)
-        total_price_category = sum(service.price for service in services)
+            # "category" режим
+            if barber_service.pk:
+                services = barber_service.services.all()
+            else:
+                service_ids = form_instance['services'].value()
+                services = Service.objects.filter(id__in=service_ids)
+
+            total_duration_category = sum(
+                s.duration.total_seconds() / 60 for s in services if s.duration
+            )
+            total_price_category = sum(
+                s.price for s in services if s.price
+            )
+            categories = set(s.category.name for s in services if s.category)
+            category_name = ', '.join(categories) if categories else 'Без категории'
+
+        # 4) Общий total
         total_duration += total_duration_category
         total_price += total_price_category
-        categories = set(service.category.name for service in services if service.category)
-        category_name = ', '.join(categories) if categories else 'Без категории'
+
+        # 5) Добавляем словарь в category_forms, чтобы шаблон отобразил
         category_forms.append({
             'form': form_instance,
             'duration': total_duration_category,
@@ -149,23 +192,22 @@ def edit_booking(request, booking_id):
             'category_name': category_name,
         })
 
-    # Получаем количество категорий
-    category_count = len(category_forms)
-
     context = {
         'formset': formset,
         'appointment': appointment,
         'total_duration': total_duration,
         'total_price': total_price,
-        'category_count': category_count,
+        'category_forms': category_forms,
         'customer_name': customer_name,
         'customer_phone': customer_phone,
         'category_forms': category_forms,
         'active_menu': 'bookings',
         'active_sidebar': 'salons',
         'LANGUAGE_CODE': request.LANGUAGE_CODE,
+        'salonMod': salonMod
     }
     return render(request, 'user_account/edit_booking.html', context)
+
 
 @login_required
 def account_dashboard(request):

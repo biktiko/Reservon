@@ -32,6 +32,7 @@ def add_class(field, css_class):
 
 @register.filter
 def format_phone(value):
+
     # Форматируем номер телефона
     if value and len(value) == 11:
         return f"+{value[0]} ({value[1:4]}) {value[4:7]}-{value[7:9]}-{value[9:]}"
@@ -39,13 +40,26 @@ def format_phone(value):
 
 @register.filter
 def phone_number_format(value):
-    """Форматирует номер телефона для использования в tel: ссылке."""
-    return re.sub(r'\D', '', value)
+    if not value:
+        return ''
+    else:
+        """Форматирует номер телефона для использования в tel: ссылке."""
+        return re.sub(r'\D', '', value)
+
+# @register.filter(name='remove_class')
+# def remove_class(field, class_name):
+#     if field.field.widget.attrs.get('class'):
+#         classes = field.field.widget.attrs['class'].split()
+#         classes = [cls for cls in classes if cls != class_name]
+#         field.field.widget.attrs['class'] = ' '.join(classes)
+#     return field
 
 @register.filter(name='remove_class')
 def remove_class(field, class_name):
-    if field.field.widget.attrs.get('class'):
-        classes = field.field.widget.attrs['class'].split()
-        classes = [cls for cls in classes if cls != class_name]
-        field.field.widget.attrs['class'] = ' '.join(classes)
+    if hasattr(field, 'field'):
+        # Удаляем класс из атрибутов виджета
+        classes = field.field.widget.attrs.get('class', '').split()
+        if class_name in classes:
+            classes.remove(class_name)
+            field.field.widget.attrs['class'] = ' '.join(classes)
     return field

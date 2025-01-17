@@ -157,7 +157,8 @@ def login_view(request):
                     profile = Profile.objects.create(user=user, phone_number=phone_number, status='unverified')
 
             # Если пользователь не верифицирован, посылаем код
-            if profile.status == 'unverified':
+            
+            if profile.status == 'unverified' or profile.login_method == 'sms':
                 try:
                     # send_verification_code(phone_number, profile
                     generate_and_send_otp(profile)  # <-- наша новая функция
@@ -176,7 +177,7 @@ def login_view(request):
                 # Не показываем пароли
                 request.session['phone_number'] = phone_number
                 return JsonResponse({'google_only': True, 
-                                     'phone_number': phone_number})
+                                    'phone_number': phone_number})
             
             # Если login_method=password или login_method не установлен, но пользователь уже верифицирован
             # Проверяем, есть ли пароль
@@ -188,6 +189,8 @@ def login_view(request):
                 # Пользователь верифицирован, но логин_method не google, значит можно задать пароль или выбрать Google
                 request.session['phone_number'] = phone_number
                 return JsonResponse({'next_step': 'set_password', 'user_exists': False, 'phone_number': phone_number})
+
+            
 
         except json.JSONDecodeError:
             logger.error("JSON decode error in login_view")
@@ -226,16 +229,32 @@ def verify_code(request):
                 request.session['phone_number'] = phone_number
 
                 # Если пользователь уже привязал google - тогда вообще пароли не спрашиваем
-                if profile.login_method == 'google':
-                    # Возвращаем фронту, что нужен google
-                    return JsonResponse({'google_only': True, 'phone_number': phone_number})
-                
-                # Иначе проверяем пароль
-                if user.has_usable_password():
-                    next_step = 'enter_password'
+                if profile.login_method != 'sms':
+                    if profile.login_method == 'google':
+                        # Возвращаем фронту, что нужен google
+                        return JsonResponse({'google_only': True, 'phone_number': phone_number})
+                    
+                    # Иначе проверяем пароль
+                    if user.has_usable_password():
+                        next_step = 'enter_password'
+                    else:
+                        next_step = 'set_password'
                 else:
-                    next_step = 'set_password'
-                
+                    # Аутентифицируем пользователя
+                    login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+                    logger.info(f'User {phone_number} logged in successfully via SMS')
+
+                    from_booking = request.session.get('from_booking', False)
+                    salon_id = request.session.get('salon_id', None)
+                    if from_booking and salon_id:
+                        del request.session['from_booking']
+                        del request.session['salon_id']
+                        logger.debug("set_password: Redirect to booking")
+
+                        return JsonResponse({'success': True, 'redirect_to_booking': True, 'salon_id': salon_id})
+                    else:
+                        return JsonResponse({'success': True, 'redirect_to_booking': False})
+
                 return JsonResponse({'next_step': next_step, 'phone_number': phone_number})
             except User.DoesNotExist:
                 return JsonResponse({'error': 'Пользователь не найден.'}, status=404)

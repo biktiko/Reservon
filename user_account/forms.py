@@ -3,7 +3,7 @@
 from django import forms
 from django.forms import ModelForm
 from django.forms.models import inlineformset_factory
-from salons.models import Appointment, AppointmentBarberService, Barber, Service, BarberAvailability
+from salons.models import Appointment, AppointmentBarberService, Barber, Service, BarberService, BarberAvailability
 from datetime import timedelta
 
 class CustomDateTimeInput(forms.DateTimeInput):
@@ -99,25 +99,67 @@ class AppointmentForm(ModelForm):
         model = Appointment
         fields= []
         
+from django.forms.models import inlineformset_factory, BaseInlineFormSet
+
+class CustomAppointmentBarberServiceFormSet(BaseInlineFormSet):
+    """
+    Кастомный FormSet, который принимает salonMod как параметр
+    и передаёт его в каждую форму.
+    """
+    def __init__(self, *args, salonMod='category', **kwargs):
+        # Сохраняем salonMod, чтобы потом передавать в формы
+        self.salonMod = salonMod
+        super().__init__(*args, **kwargs)
+
+    def get_form_kwargs(self, index):
+        # Берём стандартные kwargs формы
+        kwargs = super().get_form_kwargs(index)
+        # Добавляем наш параметр salonMod
+        kwargs['salonMod'] = self.salonMod
+        return kwargs
 class AppointmentBarberServiceForm(ModelForm):
     class Meta:
         model = AppointmentBarberService
-        fields = ['barber', 'services', 'start_datetime', 'end_datetime']
+        fields = ['barber', 'services', 'barberServices', 'start_datetime', 'end_datetime']
         widgets = {
             'services': forms.SelectMultiple(attrs={'class': 'services-select'}),
+            'barberServices': forms.SelectMultiple(attrs={'class': 'barberServices-select'}),
             'barber': forms.Select(attrs={'class': 'barber-select'}),
             'start_datetime': CustomDateTimeInput(attrs={'class': 'datetime-input start-datetime'}),
             'end_datetime': CustomDateTimeInput(attrs={'class': 'datetime-input end-datetime'}),
         }
+    
+    def __init__(self, *args, **kwargs):
+        salonMod = kwargs.pop('salonMod', 'category')
+        super().__init__(*args, **kwargs)
+
+        if salonMod == "barber":
+            # Скрываем services
+            self.fields['services'].widget = forms.HiddenInput()
+
+            # Просто все BarberService по текущему салону
+            qs = BarberService.objects.filter(barber__salon=self.instance.appointment.salon)
+            self.fields['barberServices'].queryset = qs
+
+        else:
+            # Скрываем barberServices
+            self.fields['barberServices'].widget = forms.HiddenInput()
+
+            # Все обычные Service в салоне
+            qs = Service.objects.filter(salon=self.instance.appointment.salon)
+            self.fields['services'].queryset = qs
 
 AppointmentBarberServiceFormSet = inlineformset_factory(
     Appointment,
     AppointmentBarberService,
     form=AppointmentBarberServiceForm,
-    fields=['barber', 'services', 'start_datetime', 'end_datetime'],
+    formset=CustomAppointmentBarberServiceFormSet,  # <-- важно
+    fields=['barber', 'services', 'barberServices', 'start_datetime', 'end_datetime'],
     extra=0,
     can_delete=True
 )
+
+
 
 class BarberFieldForm(forms.ModelForm):
     class Meta:

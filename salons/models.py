@@ -1,8 +1,7 @@
-# C:\Reservon\Reservon\salons\models.py
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils.translation import gettext_lazy as _
-from simple_history.models import HistoricalRecords
+# from simple_history.models import HistoricalRecords
 
 class Salon(models.Model):
     admins = models.ManyToManyField(User, related_name='administered_salons', blank=True)
@@ -12,6 +11,11 @@ class Salon(models.Model):
         ('active', 'Active'),
         ('suspend', 'Suspend'),
         ('disable', 'Disable'),
+    ]
+
+    MOD_CHOICES = [
+        ('category', 'Category'),  # Режим, где услуги берутся из модели Service
+        ('barber', 'Barber'),      # Режим, где услуги берутся из BarberService
     ]
 
     name = models.CharField('Salon name', max_length=50)
@@ -30,8 +34,7 @@ class Salon(models.Model):
     description_ru = models.TextField('description_ru', blank=True)
     description_eng = models.TextField('description_eng', blank=True)
     reservDays = models.IntegerField('Reserv days', default=9)
-    mod = models.CharField(choices=[('category', 'Category'), ('barber', 'Barber')], max_length=10, default='category')
-    history = HistoricalRecords()
+    mod = models.CharField(choices=MOD_CHOICES, max_length=10, default='category')
 
     status = models.CharField(
         max_length=10,
@@ -47,16 +50,16 @@ class Salon(models.Model):
         verbose_name = 'Salon'
         verbose_name_plural = 'Salons'
 
+
 class ServiceCategory(models.Model):
-    name = models.CharField(max_length=100, unique=True)
-    default_duration = models.IntegerField('Default duration (minutes)', default=30)
+    name = models.CharField(max_length=100, unique=True)  # Название категории
+    default_duration = models.IntegerField('Default duration (minutes)', default=15)
 
     def __str__(self):
         return self.name
 
 
 class Service(models.Model):
-
     STATUS_CHOICES = [
         ('active', 'Active'),
         ('suspend', 'Suspend'),
@@ -68,8 +71,7 @@ class Service(models.Model):
     duration = models.DurationField()
     salon = models.ForeignKey(Salon, on_delete=models.CASCADE, related_name='services')
     category = models.ForeignKey(ServiceCategory, on_delete=models.SET_NULL, null=True, blank=True, related_name='services')
-    history = HistoricalRecords()
-    
+
     status = models.CharField(
         max_length=10,
         choices=STATUS_CHOICES,
@@ -79,21 +81,31 @@ class Service(models.Model):
 
     def __str__(self):
         return self.name
+
+
 class SalonImage(models.Model):
     salon = models.ForeignKey(Salon, on_delete=models.CASCADE, related_name='images')
     image = models.ImageField(upload_to='salons/salons')
     upload_date = models.DateTimeField(auto_now_add=True)
 
+    def __str__(self):
+        return f"Image of {self.salon.name} ({self.upload_date.date()})"
+
+
 class Barber(models.Model):
     salon = models.ForeignKey(Salon, on_delete=models.CASCADE, related_name='barbers')
-    user = models.OneToOneField(User, on_delete=models.SET_NULL, null=True, blank=True )
+    user = models.OneToOneField(User, on_delete=models.SET_NULL, null=True, blank=True)
     name = models.CharField(max_length=100)
     avatar = models.ImageField(upload_to='salons/barbers', blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     categories = models.ManyToManyField(ServiceCategory, related_name='barbers')
-    services = models.ManyToManyField(Service, related_name='barbers', blank=True, through='BarberService')
-    default_duration = models.IntegerField('Default duration (minutes)', default=40)
-    history = HistoricalRecords()
+    
+    # Убираем "through='BarberService'", т.к. теперь BarberService не хранит FK на Service
+    services = models.ManyToManyField(
+        Service,
+        related_name='barbers',
+        blank=True
+    )
 
     def __str__(self):
         return self.name  
@@ -103,20 +115,46 @@ class Barber(models.Model):
             return self.avatar.url
         return '/static/salons/img/default-avatar.png'
 
+
 class BarberService(models.Model):
-    barber = models.ForeignKey(Barber, on_delete=models.CASCADE, related_name='barber_services')
-    service = models.ForeignKey(Service, on_delete=models.CASCADE, related_name='barber_services')
-    category = models.ForeignKey(ServiceCategory, on_delete=models.CASCADE, related_name='barber_services', default=1)
-    additional_info = models.TextField(blank=True, null=True)
+    """Отдельная модель для режима 'barber': каждая услуга хранится отдельно
+    и привязана к конкретному барберу, имеет собственные поля."""
+    barber = models.ForeignKey(
+        Barber, 
+        on_delete=models.CASCADE, 
+        related_name='barber_services'
+    )
+
+    name = models.CharField(max_length=100, default='Service name')
+    image = models.ImageField(upload_to='salons/barberservices', blank=True, null=True)
     price = models.DecimalField(max_digits=8, decimal_places=2, blank=True, null=True)
     duration = models.DurationField(blank=True, null=True)
 
+    category = models.ForeignKey(
+        ServiceCategory, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        related_name='barber_services'
+    )
+
+    STATUS_CHOICES = [
+        ('active', 'Active'),
+        ('suspend', 'Suspend'),
+    ]
+
+    status = models.CharField(
+        max_length=10,
+        choices=STATUS_CHOICES,
+        default='active',
+        verbose_name="Status"
+    )
+
     def __str__(self):
-        return f"{self.barber.name} - {self.service.name}"
-    
-    
+        return f"{self.barber.name} - {self.name}"
+
+
 class BarberAvailability(models.Model):
-        
     DAY_OF_WEEK_CHOICES = [
         ('monday', 'Понедельник'),
         ('tuesday', 'Вторник'),
@@ -132,11 +170,11 @@ class BarberAvailability(models.Model):
     start_time = models.TimeField()
     end_time = models.TimeField()
     is_available = models.BooleanField(default=True)
-    history = HistoricalRecords()
 
     def __str__(self):
         status = 'Доступен' if self.is_available else 'Недоступен'
         return f"{self.barber.name} - {self.get_day_of_week_display()} {self.start_time}-{self.end_time} ({status})"
+
 
 class Appointment(models.Model):
     salon = models.ForeignKey(Salon, on_delete=models.CASCADE)
@@ -145,7 +183,6 @@ class Appointment(models.Model):
     end_datetime = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     user_comment = models.TextField('Комментарий клиента', null=True, blank=True)
-    history = HistoricalRecords()
 
     barbers = models.ManyToManyField(
         Barber,
@@ -157,21 +194,26 @@ class Appointment(models.Model):
         return f"{self.salon.name} - {self.start_datetime} - {self.end_datetime}"
 
     def get_total_duration(self):
-        total_duration = sum(item.get_total_duration() for item in self.barber_services.all())
+        total_duration = sum(
+            item.get_total_duration() for item in self.barber_services.all()
+        )
         return total_duration
+
+
 class AppointmentBarberService(models.Model):
+    """Таблица для хранения связки Appointment - Barber - [Services].
+    Предполагается, что здесь services - это обычные 'Service' (режим category)."""
     appointment = models.ForeignKey(Appointment, on_delete=models.CASCADE, related_name='barber_services')
     barber = models.ForeignKey(Barber, on_delete=models.SET_NULL, null=True, blank=True, related_name='appointmentbarberservice')
-    services = models.ManyToManyField(Service)
+    
+    # services - это FK к модели Service, а не BarberService
+    services = models.ManyToManyField(Service, blank=True)
+    barberServices = models.ManyToManyField(BarberService, blank=True)
     start_datetime = models.DateTimeField()
     end_datetime = models.DateTimeField()
-    history = HistoricalRecords()
 
     def get_total_duration(self):
         return (self.end_datetime - self.start_datetime).total_seconds() / 60  # Возвращает в минутах
 
     def __str__(self):
         return f"{self.appointment} - {self.barber.name if self.barber else 'Любой мастер'}"
-
-
-

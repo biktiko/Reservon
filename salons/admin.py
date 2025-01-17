@@ -22,7 +22,7 @@ from main.admin import NoteInline
 class AppointmentBarberServiceInline(admin.TabularInline):
     model = AppointmentBarberService
     extra = 1
-    fields = ('barber', 'services', 'start_datetime', 'end_datetime')
+    fields = ('barber', 'services', 'barberServices', 'start_datetime', 'end_datetime')
     filter_horizontal = ('services',)
 
 # Настройка админки для модели Appointment
@@ -78,6 +78,7 @@ class ServiceInline(admin.TabularInline):
     autocomplete_fields = ['category']
     show_change_link = True
 
+
 # --- Настройка админки для ServiceCategory ---
 
 class ServiceCategoryServiceInline(admin.TabularInline):
@@ -112,8 +113,8 @@ class BarberAdminForm(forms.ModelForm):
         choices=Profile.STATUS_CHOICES,
         required=False
     )
-
     # Add more Profile fields as needed
+
     class Meta:
         model = Barber
         fields = '__all__'  # Include all Barber fields
@@ -157,33 +158,39 @@ class BarberAvailabilityInline(admin.TabularInline):
     extra = 1
     fields = ('day_of_week', 'start_time', 'end_time', 'is_available')
 
-# salons/admin.py
-
 class BarberServiceInline(admin.TabularInline):
     model = BarberService
     extra = 1
-    autocomplete_fields = ['service']  # Включаем автозаполнение для поля 'service'
-    fields = ('service', 'additional_info', 'price', 'duration', 'category')
-    show_change_link = True  # Позволяет перейти к редактированию выбранной услуги
+    fields = ('name', 'image', 'price', 'duration', 'category', 'status')
+    show_change_link = True
+
 
 @admin.register(Barber)
 class BarberAdmin(ImportExportModelAdmin):
     form = BarberAdminForm
-    list_display = ('user', 'name', 'salon', 'get_categories', 'get_services', 'default_duration')
+    list_display = ('user', 'name', 'salon', 'get_categories', 'get_services', 'get_barber_services_names')
     list_filter = ('salon', 'categories')
     search_fields = ('name', 'salon__name')
-    filter_horizontal = ('categories',)
+    filter_horizontal = ('categories', 'services')
     autocomplete_fields = ['salon', 'categories', 'user']
-    fields = ('salon', 'user', 'name', 'avatar', 'description', 'categories', 'default_duration')
-    inlines = [BarberAvailabilityInline, BarberServiceInline]  # Включаем инлайн для услуг
+    fields = ('salon', 'user', 'name', 'avatar', 'description', 'categories', 'services')
+    inlines = [BarberAvailabilityInline, BarberServiceInline]
 
     def get_categories(self, obj):
         return ", ".join([category.name for category in obj.categories.all()])
     get_categories.short_description = 'Категории'
 
     def get_services(self, obj):
+        """Услуги из модели Service, которые привязаны к барберу в режиме category."""
         return ", ".join([service.name for service in obj.services.all()])
-    get_services.short_description = 'Услуги'
+    get_services.short_description = 'Услуги (category)'
+
+    def get_barber_services_names(self, obj):
+        """Услуги из модели BarberService, которые используются в режиме barber."""
+        names = [bs.name for bs in obj.barber_services.all()]
+        return ", ".join(names)
+    get_barber_services_names.short_description = 'Услуги барбера (barber)'
+
 
 @admin.register(BarberAvailability)
 class BarberAvailabilityAdmin(admin.ModelAdmin):

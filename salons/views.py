@@ -50,15 +50,15 @@ def salon_detail(request, id):
     # Получаем салон по ID
     salon = get_object_or_404(Salon, id=id)
 
-    # Получаем категории услуг, имеющие активные услуги в данном салоне
-    service_categories = ServiceCategory.objects.filter(
-        services__salon=salon,
-        services__status='active'
-    ).distinct()
+    if salon.mod=='category':
+        # Получаем категории услуг, имеющие активные услуги в данном салоне
+        service_categories = ServiceCategory.objects.filter(
+            services__salon=salon,
+            services__status='active'
+        ).distinct()
 
-    # Создаем структуру данных: {category: [services]}
-    categories_with_services = []
-    if salon.mod == 'category':
+        # Создаем структуру данных: {category: [services]}
+        categories_with_services = []
         for category in service_categories:
             services = Service.objects.filter(
                 salon=salon,
@@ -70,60 +70,91 @@ def salon_detail(request, id):
                     'category': category,
                     'services': services
                 })
-            # print('categories_with_services', categories_with_services)
 
-    else:
+        # Собираем барберов по категориям
+        barbers_by_category = {}
+        for entry in categories_with_services:
+            category = entry['category']
+
+            barbers = Barber.objects.filter(categories=category, salon=salon)
+
+            barbers_list = []
+            for barber in barbers:
+                barbers_list.append({
+                    'id': barber.id,
+                    'name': barber.name,
+                    'avatar': barber.get_avatar_url(),
+                    'description': barber.description or ''
+                })
+            barbers_by_category[category.id] = barbers_list
+
+        # Подготовка данных для передачи в JavaScript (если необходимо)
+        barbers_by_category_json = json.dumps(barbers_by_category, cls=DjangoJSONEncoder)
+        print('barbersByCategory', barbers_by_category_json)
+        context = {
+            'salon': salon,
+            'categories_with_services': categories_with_services,
+            'barbers_by_category': barbers_by_category,
+            'barbers_by_category_json': barbers_by_category_json,
+        }
+    elif salon.mod == 'barber':
+        # Режим barber: используем BarberService
+        service_categories = ServiceCategory.objects.filter(
+            barber_services__barber__salon=salon,
+            barber_services__status='active'
+        ).distinct()
+
+        categories_with_barber_services = []
         for category in service_categories:
             barber_services = BarberService.objects.filter(
-                barber__salon=salon,
                 category=category,
-                service__status='active' 
-            )
-            # print('barber_service', category, barber_services)
+                barber__salon=salon,
+                status='active'
+            ).select_related('barber')
             if barber_services.exists():
-                categories_with_services.append({
+                categories_with_barber_services.append({
                     'category': category,
                     'services': barber_services
                 })
-            # print('categories_with_services', categories_with_services)
 
-    # Собираем барберов по категориям
-    barbers_by_category = {}
-    for entry in categories_with_services:
-        category = entry['category']
+        # Собираем барберов по категориям
+        barbers_by_category = {}
+        for entry in categories_with_barber_services:
+            category = entry['category']
 
-        if salon.mod == 'category':
-            barbers = Barber.objects.filter(categories=category, salon=salon)
-        else:
             barbers = Barber.objects.filter(
+                categories=category,
                 salon=salon,
-                barber_services__service__status='active',
+                barber_services__category=category
             ).distinct()
-            barbers = barbers.filter(barber_services__service__salon=salon)
 
-        barbers_list = []
-        for barber in barbers:
-            barbers_list.append({
-                'id': barber.id,
-                'name': barber.name,
-                'avatar': barber.get_avatar_url(),
-                'description': barber.description or '',
-                'defaultDuration': barber.default_duration or 30
-            })
-        barbers_by_category[category.id] = barbers_list
+            barbers_list = []
 
-    # Подготовка данных для передачи в JavaScript (если необходимо)
-    barbers_by_category_json = json.dumps(barbers_by_category, cls=DjangoJSONEncoder)
+            for barber in barbers:
+                barbers_list.append({
+                    'id': barber.id,
+                    'name': barber.name,
+                    'avatar': barber.get_avatar_url(),
+                    'description': barber.description or ''
+                })
+            barbers_by_category[category.id] = barbers_list
 
-    context = {
-        'salon': salon,
-        'categories_with_services': categories_with_services,
-        'barbers_by_category': barbers_by_category,
-        'barbers_by_category_json': barbers_by_category_json,
-    }
+        # Подготовка данных для передачи в JavaScript (если необходимо)
+        barbers_by_category_json = json.dumps(barbers_by_category, cls=DjangoJSONEncoder)
 
+        context = {
+            'salon': salon,
+            'categories_with_services': categories_with_barber_services,
+            'barbers_by_category': barbers_by_category,
+            'barbers_by_category_json': barbers_by_category_json,
+        }
+    else:
+        context = {
+            'salon': salon,
+            'mode':'unknown mode'
+        }
+    
     return render(request, 'salons/salon-detail.html', context)
-
 
 def get_barber_availability(request, barber_id):
     try:
@@ -470,6 +501,7 @@ def has_overlap(schedules, start_dt, end_dt):
 @transaction.atomic
 def book_appointment(request, id):
     logger.debug("Начало обработки запроса на бронирование")
+
     try:
         if request.method != "POST":
             logger.warning(f"Некорректный метод запроса: {request.method}")
@@ -489,6 +521,8 @@ def book_appointment(request, id):
             # Если запрос не является JSON, возвращаем ошибку
             logger.error("Некорректный формат данных. Ожидается JSON.")
             return JsonResponse({'error': 'Некорректный формат данных.'}, status=400)
+
+        salonMod = data.get('salonMod', 'category')
 
         date_str = data.get("date")
         time_str = data.get("time")
@@ -540,7 +574,6 @@ def book_appointment(request, id):
         )
         appointment.save()
         logger.debug(f"Создано Appointment: {appointment}")
-    
         # Список для хранения созданных AppointmentBarberService
         appointments_to_create = []
     
@@ -582,6 +615,8 @@ def book_appointment(request, id):
     
         else:
             # Есть booking_details
+            print('salon Mod', salonMod)
+
             for category_detail in booking_details:
                 category_id = category_detail.get('categoryId')
                 services = category_detail.get('services', [])
@@ -666,15 +701,32 @@ def book_appointment(request, id):
                 # Присваиваем услуги
                 for service_info in services:
                     service_id = service_info.get('serviceId')
-                    try:
-                        service = Service.objects.get(id=service_id, salon=salon)
-                        appointment_barber_service.services.add(service)
-                        logger.debug(f"Добавлена услуга {service.name} (ID: {service.id}) к AppointmentBarberService")
-                    except Service.DoesNotExist:
+                    if salonMod == 'barber':
+                        # === РЕЖИМ БАРБЕРА ===
+                        try:
+                            barber_service = BarberService.objects.get(id=service_id, barber=barber)
+                            appointment_barber_service.barberServices.add(barber_service)
+                            logger.debug(
+                                f"[BARBER MODE] Добавлена barberService '{barber_service.name}' "
+                                f"(ID: {barber_service.id}) к AppointmentBarberService"
+                            )
+                        except BarberService.DoesNotExist:
+                            logger.warning(f"BarberService с ID {service_id} не найдена или не привязана к {barber.name}")
+                            return JsonResponse({'error': f"BarberService с ID {service_id} не найдена."}, status=400)
+                    
+                    else:
+                        # === РЕЖИМ КАТЕГОРИИ ===
+                        try:
+                            service = Service.objects.get(id=service_id, salon=salon)
+                            appointment_barber_service.services.add(service)
+                            logger.debug(
+                                f"[CATEGORY MODE] Добавлена Service '{service.name}' "
+                                f"(ID: {service.id}) к AppointmentBarberService"
+                            )
+                        except Service.DoesNotExist:
+                            logger.warning(f"Услуга с ID {service_id} не найдена в салоне {salon}")
+                            return JsonResponse({'error': f"Услуга с ID {service_id} не найдена в салоне."}, status=400)
 
-                        logger.warning(f"Услуга с ID {service_id} не найдена в салоне {salon}")
-                        return JsonResponse({'error': f"Услуга с ID {service_id} не найдена в салоне."}, status=400)
-    
                 appointments_to_create.append(appointment_barber_service)
     
                 # Обновляем start_datetime для следующей услуги
@@ -692,9 +744,8 @@ def book_appointment(request, id):
                  # Получаем номер телефона пользователя
                 if request.user.is_authenticated:
                     try:
-                        user_profile = request.user.profile  # Предполагается, что у пользователя есть профиль
-                        user_phone_number = user_profile.phone_number
-                    except:
+                        user_phone_number = request.user.main_profile.phone_number
+                    except AttributeError:
                         logger.warning("Профиль пользователя не найден.")
                         user_phone_number = "Неизвестен"
                 else:
