@@ -1091,6 +1091,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (closeConfirmationButton) {
             closeConfirmationButton.onclick = () => {
                 hideBookingConfirmationModal();
+                location.reload();
             };
         }
     }
@@ -1103,7 +1104,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         modalBody.innerHTML = 
             `<h2 style="color: red" id="modal-title">Бронирование НЕ подтвердилось!</h2>
-            <p class="booking-success-message"> Вероятнее всего в это время забронировать не получится, пожалуйста, попробуйте в другое время или смените мастера </p>
+            <p class="booking-success-message"> К сожалению, бронирование не удалось подтвердить. Возможно, это время уже занято. Попробуйте, пожалуйста, выбрать другое время или другого мастера </p>
 
             <div class="close-confirmation-container">
                 <button class="close-confirmation-button">Закрыть</button>

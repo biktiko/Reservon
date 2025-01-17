@@ -379,9 +379,31 @@ function submitVerifyCode() {
         },
         body: JSON.stringify({ 'phone_number': phone_number, 'code': code })
     })
-    .then(response => response.json())
+    .then(response => {
+        console.log('Response status:', response.status);
+        // Проверяем, успешен ли ответ
+        if (!response.ok) {
+            return response.json().then(errData => {
+                throw new Error(errData.error || 'Неизвестная ошибка');
+            });
+        }
+        return response.json();
+    })
     .then(data => {
-        if (data.next_step) {
+        console.log(data)
+        if(data.success) {
+            console.log('success')
+            if (data.redirect_to_booking) {
+                closeModal();
+                // Отправляем событие об успешном логине для продолжения бронирования
+                const event = new Event('loginFromBookingSuccess');
+                document.dispatchEvent(event);
+            } else {
+                closeModal();
+                location.reload();
+            }
+        }
+        else if (data.next_step) {
             loadModalContent(data.next_step, data.phone_number);
         } else if (data.error) {
             document.getElementById('verify-response').innerHTML = '<p>' + data.error + '</p>';
@@ -497,7 +519,7 @@ function submitEnterPassword() {
                 document.dispatchEvent(event);
             } else {
                 closeModal();
-                window.location.href = '/';
+                location.reload();
             }
         } else if (data.error) {
             document.getElementById('enter-password-response').innerHTML = `<p style="color: red;">${data.error}</p>`;
