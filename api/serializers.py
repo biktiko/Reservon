@@ -13,27 +13,39 @@ class ServiceSerializer(serializers.ModelSerializer):
         model = Service
         fields = ['id', 'name', 'price', 'duration', 'category', 'status']
 
-
-class ServiceCategorySerializer(serializers.ModelSerializer):
-    services = ServiceSerializer(many=True, read_only=True)
+class BarberServiceSerializer(serializers.ModelSerializer):
+    """
+    Сериализатор для BarberService (услуг мастера),
+    используется внутри BarberSerializer.
+    """
+    category = serializers.StringRelatedField()
 
     class Meta:
-        model = ServiceCategory
-        fields = ['id', 'name', 'default_duration', 'services']
+        model = BarberService
+        fields = ['id', 'name', 'image', 'price', 'duration', 'category', 'status']
 
 
 class BarberSerializer(serializers.ModelSerializer):
+    """
+    Сериализатор мастера, включает:
+      - services (обычные услуги из модели Service, связанные ManyToMany)
+      - barber_services (персональные услуги мастера из модели BarberService)
+    """
+    services = ServiceSerializer(many=True, read_only=True)
+    barber_services = BarberServiceSerializer(many=True, read_only=True)
+
     class Meta:
         model = Barber
         fields = [
             'id',
-            'services',
             'name',
             'avatar',
             'description',
             'categories',
+            'services',
             'barber_services'
         ]
+
 
 class SalonSerializer(serializers.ModelSerializer):
     class Meta:
@@ -45,19 +57,17 @@ class SalonSerializer(serializers.ModelSerializer):
             'description_hy', 'description_ru', 'description_eng'
         ]
 
-class BarberServiceSerializer(serializers.ModelSerializer):
-    category = serializers.StringRelatedField()
-
-    class Meta:
-        model = BarberService
-        fields = ['id', 'name', 'image', 'price', 'duration', 'category', 'status']
 
 class SalonDetailSerializer(serializers.ModelSerializer):
-    # Убираем поле 'salon', так как оно дублирует сам Salon
-    barbers = BarberSerializer(many=True, read_only=True)
-    barber_services = BarberServiceSerializer(many=True, read_only=True)  # Включаем BarberService
+    """
+    Детальный сериализатор салона:
+    - services (обычные услуги, связанные через related_name='services')
+    - barbers (список мастеров, у каждого - barber_services, если есть)
+    """
     services = ServiceSerializer(many=True, read_only=True)
-    # Если нужно, добавьте корректный метод для service_categories
+    barbers = BarberSerializer(many=True, read_only=True)
+    
+    # Если понадобится список категорий, раскомментируйте и реализуйте метод
     # service_categories = serializers.SerializerMethodField()
 
     class Meta:
@@ -67,15 +77,14 @@ class SalonDetailSerializer(serializers.ModelSerializer):
             'IsCheckDays', 'reservDays',
             'shortDescription_hy', 'shortDescription_ru', 'shortDescription_eng',
             'description_hy', 'description_ru', 'description_eng',
-            'services',       
+            'services',
             'barbers'
-            # 'service_categories',  # Удалите или раскомментируйте при необходимости
+            # 'service_categories'
         ]
 
-    # service_categories:
     # def get_service_categories(self, obj):
-    #     categories = ServiceCategory.objects.filter(services__salon=obj).distinct()
-    #     return ServiceCategorySerializer(categories, many=True).data
+    #     qs = ServiceCategory.objects.filter(services__salon=obj).distinct()
+    #     return ServiceCategorySerializer(qs, many=True).data
 
 
 class BookingServiceSerializer(serializers.Serializer):
@@ -104,12 +113,7 @@ class CreateBookingSerializer(serializers.Serializer):
         return value
 
     def validate_booking_details(self, value):
-        # Дополнительная валидация, если требуется
         return value
 
     def create(self, validated_data):
-        # Логика создания бронирования
-        # Здесь можно интегрировать вашу существующую функцию `book_appointment`
-        # Однако для чистоты API лучше перенести логику сюда или адаптировать существующую
-        # Для простоты мы вернем данные без сохранения
         return validated_data
