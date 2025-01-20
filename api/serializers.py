@@ -31,20 +31,37 @@ class BarberSerializer(serializers.ModelSerializer):
 class SalonSerializer(serializers.ModelSerializer):
     class Meta:
         model = Salon
-        fields = ['id', 'name', 'logo', 'address', 'status']
+        fields = [
+            'id', 'name', 'logo', 'address', 'status', 'mod',
+            'IsCheckDays', 'reservDays',
+            'shortDescription_hy', 'shortDescription_ru', 'shortDescription_eng',
+            'description_hy', 'description_ru', 'description_eng'
+        ]
 
 
 class SalonDetailSerializer(serializers.ModelSerializer):
-    service_categories = ServiceCategorySerializer(many=True, source='servicecategory_set', read_only=True)
+    # Убираем поле 'salon', так как оно дублирует сам Salon
     barbers = BarberSerializer(many=True, read_only=True)
     services = ServiceSerializer(many=True, read_only=True)
+    # Если нужно, добавьте корректный метод для service_categories
+    # service_categories = serializers.SerializerMethodField()
 
     class Meta:
         model = Salon
         fields = [
-            'id', 'name', 'logo', 'address', 'status',
-            'service_categories', 'barbers'
+            'id', 'name', 'logo', 'address', 'status', 'mod',
+            'IsCheckDays', 'reservDays',
+            'shortDescription_hy', 'shortDescription_ru', 'shortDescription_eng',
+            'description_hy', 'description_ru', 'description_eng',
+            'services',        # Добавляем services
+            'barbers'          # Удаляем service_categories, если не используем
+            # 'service_categories',  # Удалите или раскомментируйте при необходимости
         ]
+
+    # Если хотите добавить service_categories:
+    # def get_service_categories(self, obj):
+    #     categories = ServiceCategory.objects.filter(services__salon=obj).distinct()
+    #     return ServiceCategorySerializer(categories, many=True).data
 
 
 class BookingServiceSerializer(serializers.Serializer):
