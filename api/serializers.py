@@ -37,6 +37,7 @@ class SalonSerializer(serializers.ModelSerializer):
 class SalonDetailSerializer(serializers.ModelSerializer):
     service_categories = ServiceCategorySerializer(many=True, source='servicecategory_set', read_only=True)
     barbers = BarberSerializer(many=True, read_only=True)
+    services = ServiceSerializer(many=True, read_only=True)
 
     class Meta:
         model = Salon
