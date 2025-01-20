@@ -25,8 +25,15 @@ class ServiceCategorySerializer(serializers.ModelSerializer):
 class BarberSerializer(serializers.ModelSerializer):
     class Meta:
         model = Barber
-        fields = ['id', 'services', 'name', 'avatar', 'description', 'categories']
-
+        fields = [
+            'id',
+            'services',
+            'name',
+            'avatar',
+            'description',
+            'categories',
+            'barber_services'
+        ]
 
 class SalonSerializer(serializers.ModelSerializer):
     class Meta:
