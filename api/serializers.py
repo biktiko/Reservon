@@ -2,7 +2,7 @@
 
 from rest_framework import serializers
 from salons.models import (
-    Salon, Service, ServiceCategory, Barber,
+    Salon, Service, ServiceCategory, Barber, BarberService,
     Appointment, AppointmentBarberService, BarberAvailability
 )
 from django.contrib.auth.models import User
@@ -25,7 +25,7 @@ class ServiceCategorySerializer(serializers.ModelSerializer):
 class BarberSerializer(serializers.ModelSerializer):
     class Meta:
         model = Barber
-        fields = ['id', 'name', 'avatar', 'description', 'categories']
+        fields = ['id', 'services', 'name', 'avatar', 'description', 'categories']
 
 
 class SalonSerializer(serializers.ModelSerializer):
@@ -38,10 +38,17 @@ class SalonSerializer(serializers.ModelSerializer):
             'description_hy', 'description_ru', 'description_eng'
         ]
 
+class BarberServiceSerializer(serializers.ModelSerializer):
+    category = serializers.StringRelatedField()
+
+    class Meta:
+        model = BarberService
+        fields = ['id', 'name', 'image', 'price', 'duration', 'category', 'status']
 
 class SalonDetailSerializer(serializers.ModelSerializer):
     # Убираем поле 'salon', так как оно дублирует сам Salon
     barbers = BarberSerializer(many=True, read_only=True)
+    barber_services = BarberServiceSerializer(many=True, read_only=True)  # Включаем BarberService
     services = ServiceSerializer(many=True, read_only=True)
     # Если нужно, добавьте корректный метод для service_categories
     # service_categories = serializers.SerializerMethodField()
@@ -53,12 +60,12 @@ class SalonDetailSerializer(serializers.ModelSerializer):
             'IsCheckDays', 'reservDays',
             'shortDescription_hy', 'shortDescription_ru', 'shortDescription_eng',
             'description_hy', 'description_ru', 'description_eng',
-            'services',        # Добавляем services
-            'barbers'          # Удаляем service_categories, если не используем
+            'services',       
+            'barbers'
             # 'service_categories',  # Удалите или раскомментируйте при необходимости
         ]
 
-    # Если хотите добавить service_categories:
+    # service_categories:
     # def get_service_categories(self, obj):
     #     categories = ServiceCategory.objects.filter(services__salon=obj).distinct()
     #     return ServiceCategorySerializer(categories, many=True).data
