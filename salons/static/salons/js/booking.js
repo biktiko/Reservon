@@ -410,7 +410,7 @@ document.addEventListener('DOMContentLoaded', function() {
         minuteSelect.innerHTML = '';
         summaryText.innerText = 'Час и минута не выбраны';
 
-        const startHour = 8;
+        const startHour = 9;
         const endHour = 22;
         const chosenDateObj = new Date(dateString);
         const chosenDate = chosenDateObj.toISOString().split('T')[0];
@@ -467,6 +467,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (uncachedHours.length > 0) {
             try {
                 const formData = collectBookingFormData();
+                console.log(formData)
                 const responseData = JSON.stringify({
                     salon_id: salonId,
                     date: date,

@@ -70,8 +70,8 @@ def api_create_booking(request, salon_id):
     
     return response
 
+# @permission_classes([IsAuthenticatedOrReadOnly])
 @api_view(['POST'])
-@permission_classes([IsAuthenticatedOrReadOnly])
 def api_get_available_minutes(request):
     """
     Uses the existing logic of get_available_minutes but adapted for DRF.
