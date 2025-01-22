@@ -483,11 +483,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     },
                     body: responseData
                 });
-    
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
-    
+                
                 const data = await response.json();
                 const fetchedMinutes = data.available_minutes || {};
     
@@ -862,7 +861,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 total += getCategoryDefaultDuration(categoryId);
             }
         });
-    
+        
+        if (total === 0) {
+            total = salonDefaultDuration;
+        }
+        
         return total;
     }
     

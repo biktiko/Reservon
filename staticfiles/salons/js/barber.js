@@ -1,4 +1,5 @@
 // C:\Reservon\Reservon\salons\static\salons\js\barber.js
+
 document.addEventListener('DOMContentLoaded', function() {
 
     const salonModInput = document.getElementById('salon-mod');
@@ -143,7 +144,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const barberCards = barberList.querySelectorAll('.barber-card');
         barberCards.forEach(card => {
             card.addEventListener('click', function() {
-                console.log('clicked')
                 const barberId = this.getAttribute('data-barber-id');
                 selectBarberForCurrentCategory(barberId);
             });

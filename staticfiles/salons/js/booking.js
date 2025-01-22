@@ -410,7 +410,7 @@ document.addEventListener('DOMContentLoaded', function() {
         minuteSelect.innerHTML = '';
         summaryText.innerText = 'Час и минута не выбраны';
 
-        const startHour = 8;
+        const startHour = 9;
         const endHour = 22;
         const chosenDateObj = new Date(dateString);
         const chosenDate = chosenDateObj.toISOString().split('T')[0];
@@ -467,6 +467,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (uncachedHours.length > 0) {
             try {
                 const formData = collectBookingFormData();
+                console.log(formData)
                 const responseData = JSON.stringify({
                     salon_id: salonId,
                     date: date,
@@ -482,11 +483,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     },
                     body: responseData
                 });
-    
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
-    
+                
                 const data = await response.json();
                 const fetchedMinutes = data.available_minutes || {};
     
@@ -861,7 +861,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 total += getCategoryDefaultDuration(categoryId);
             }
         });
-    
+        
+        if (total === 0) {
+            total = salonDefaultDuration;
+        }
+        
         return total;
     }
     
