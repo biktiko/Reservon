@@ -75,6 +75,8 @@ def api_create_booking(request, salon_id):
 @csrf_exempt
 @api_view(['POST'])
 def api_get_available_minutes(request):
+    logger.debug(">>> GOT BODY: %s", request.data)
+    
     """
     Uses the existing logic of get_available_minutes but adapted for DRF.
     """
