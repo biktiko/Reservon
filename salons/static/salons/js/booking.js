@@ -1056,8 +1056,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if(bookingDateTime){
             bookingDateTime.innerHTML = `<h2 class="booking-date-time"><strong>Дата:</strong> ${data.date} <br> <strong>Время:</strong> ${data.time} - ${data.endTime} </h2>`;
         }else{
-            alert('Ваше бронирование уже подтверждено. Спасибо!');
-
+            location.reload()
         }
         
         // Очищаем контейнер
