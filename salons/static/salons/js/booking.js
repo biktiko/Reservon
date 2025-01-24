@@ -467,7 +467,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (uncachedHours.length > 0) {
             try {
                 const formData = collectBookingFormData();
-                console.log(formData)
+                // console.log(formData)
                 const responseData = JSON.stringify({
                     salon_id: salonId,
                     date: date,
@@ -475,6 +475,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     booking_details: formData.booking_details,
                     total_service_duration: formData.total_service_duration
                 });
+                console.log(responseData)
                 const response = await fetch('/salons/get_available_minutes/', {
                     method: 'POST',
                     headers: {

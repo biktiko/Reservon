@@ -21,6 +21,7 @@ from .serializers import (
 )
 import logging
 from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
 
 logger = logging.getLogger('booking')
 
@@ -71,6 +72,7 @@ def api_create_booking(request, salon_id):
     return response
 
 # @permission_classes([IsAuthenticatedOrReadOnly])
+@csrf_exempt
 @api_view(['POST'])
 def api_get_available_minutes(request):
     """
