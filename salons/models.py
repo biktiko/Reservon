@@ -102,7 +102,18 @@ class Barber(models.Model):
     categories = models.ManyToManyField(ServiceCategory, related_name='barbers')
     default_duration = models.IntegerField('Default duration (minutes)', default=20)
 
-    # Убираем "through='BarberService'", т.к. теперь BarberService не хранит FK на Service
+    STATUS_CHOICES = [
+        ('active', 'Active'),
+        ('suspend', 'Suspend'),
+    ]
+
+    status = models.CharField(
+        max_length=10,
+        choices=STATUS_CHOICES,
+        default='active',
+        verbose_name="Status"
+    )
+    
     services = models.ManyToManyField(
         Service,
         related_name='barbers',

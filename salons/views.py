@@ -90,7 +90,7 @@ def salon_detail(request, id):
 
         # Подготовка данных для передачи в JavaScript (если необходимо)
         barbers_by_category_json = json.dumps(barbers_by_category, cls=DjangoJSONEncoder)
-        print('barbersByCategory', barbers_by_category_json)
+        # print('barbersByCategory', barbers_by_category_json)
         context = {
             'salon': salon,
             'categories_with_services': categories_with_services,
@@ -228,13 +228,14 @@ def get_available_minutes(request):
                 'is_available': interval.is_available
             })
         barber_availability[barber.id] = availability
-
+    
+    logger.info('barber_availability', barber_availability)
     # Подгружаем занятость барберов **за весь день** (убираем фильтр по часам!)
     busy_appointments = AppointmentBarberService.objects.filter(
         barber__salon=salon,
         start_datetime__date=date
     ).select_related('barber')
-
+    
     barber_busy_times = defaultdict(list)
     for appointment in busy_appointments:
         barber_busy_times[appointment.barber_id].append(
@@ -248,7 +249,12 @@ def get_available_minutes(request):
             category_id = category_detail.get('categoryId')
             services = category_detail.get('services', [])
             barber_id = category_detail.get('barberId', 'any')
-            duration = int(category_detail.get('duration', 0))
+
+            try:
+                duration = int(category_detail.get('duration', 0))
+            except (ValueError, TypeError):
+                logger.error("Некорректный формат duration в booking_details.")
+                return Response({...}, status=400)
 
             active_categories.append({
                 'category_id': category_id,
@@ -258,7 +264,8 @@ def get_available_minutes(request):
             })
 
     available_minutes = defaultdict(set)  # hour -> set of minutes
-    
+    logger.info('available_minutes', available_minutes)
+
     from django.utils import timezone
     now = timezone.now()  # Текущее время (aware)
 
@@ -396,7 +403,8 @@ def get_available_minutes(request):
 
         else:
             # Если нет booking_details: общий duration = total_service_duration или salon.default_duration
-            duration = total_service_duration or salon.default_duration
+            duration = total_service_duration or salon.default_duration or 20
+            
             for minute in range(0, 60, 5):
                 minute_start_datetime = start_datetime + timedelta(minutes=minute)
                 minute_end_datetime = minute_start_datetime + timedelta(minutes=duration)
