@@ -454,20 +454,25 @@ document.addEventListener('DOMContentLoaded', function() {
     async function getAvailableMinutesBatch(salonId, date, hours) {
         const uncachedHours = [];
         const result = {};
-        
+    
+        // Закомментируем чтение из кэша
+        // hours.forEach(hour => {
+        //     const key = `${date}_${hour}`;
+        //     if (availableMinutesCache[key]) {
+        //         result[hour] = availableMinutesCache[key];
+        //     } else {
+        //         uncachedHours.push(hour);
+        //     }
+        // });
+    
+        // Вместо этого — просто считаем все часы "не кэшированными"
         hours.forEach(hour => {
-            const key = `${date}_${hour}`;
-            if (availableMinutesCache[key]) {
-                result[hour] = availableMinutesCache[key];
-            } else {
-                uncachedHours.push(hour);
-            }
+            uncachedHours.push(hour);
         });
-        
+    
         if (uncachedHours.length > 0) {
             try {
                 const formData = collectBookingFormData();
-                // console.log(formData)
                 const responseData = JSON.stringify({
                     salon_id: salonId,
                     date: date,
@@ -475,7 +480,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     booking_details: formData.booking_details,
                     total_service_duration: formData.total_service_duration
                 });
-                console.log(responseData)
+                console.log(responseData);
+    
                 const response = await fetch('/salons/get_available_minutes/', {
                     method: 'POST',
                     headers: {
@@ -484,28 +490,35 @@ document.addEventListener('DOMContentLoaded', function() {
                     },
                     body: responseData
                 });
+    
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
-                
+    
                 const data = await response.json();
                 const fetchedMinutes = data.available_minutes || {};
+                console.log(fetchedMinutes);
     
-                // Сохраняем в кэш
+                // Закомментируем запись в кэш
+                // Object.keys(fetchedMinutes).forEach(hour => {
+                //     const key = `${date}_${hour}`;
+                //     availableMinutesCache[key] = fetchedMinutes[hour];
+                //     result[hour] = fetchedMinutes[hour];
+                // });
+    
+                // Вместо этого просто наполняем result без кэша:
                 Object.keys(fetchedMinutes).forEach(hour => {
-                    const key = `${date}_${hour}`;
-                    availableMinutesCache[key] = fetchedMinutes[hour];
                     result[hour] = fetchedMinutes[hour];
                 });
+    
             } catch (error) {
                 console.error('Ошибка при получении доступных минут:', error);
-                // В случае ошибки добавляем пустые массивы для затронутых часов
+                // В случае ошибки добавляем пустые массивы
                 uncachedHours.forEach(hour => {
                     result[hour] = [];
                 });
             }
         }
-    
         return result;
     }
     
