@@ -21,14 +21,10 @@ from .serializers import (
 )
 import logging
 from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
 
 logger = logging.getLogger('booking')
 
-
-from salons.views import (
-    is_barber_available_in_memory,
-    generate_safe_cache_key
-)
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
@@ -71,15 +67,17 @@ def api_create_booking(request, salon_id):
     return response
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticatedOrReadOnly])
 def api_get_available_minutes(request):
-    """
-    Uses the existing logic of get_available_minutes but adapted for DRF.
-    """
-    # If you already have get_available_minutes in salons/views, import and call it:
+    # DRF Request -> Django HttpRequest
+    django_request = request._request  
+
+    # Возможные случаи, если старая вьюшка ожидает request.POST:
+    # нужно подложить в django_request.POST нужные данные (не всегда обязательно).
+    # django_request.POST = request.data  # иногда может помочь, если в старой вьюшке используется request.POST[...]
     from salons.views import get_available_minutes as get_available_minutes_view
-    response = get_available_minutes_view(request)
-    
+    response = get_available_minutes_view(django_request)
+
     if isinstance(response, JsonResponse):
         return Response(response.json(), status=response.status_code)
     return response
+

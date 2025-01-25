@@ -35,6 +35,7 @@ class Salon(models.Model):
     description_eng = models.TextField('description_eng', blank=True)
     reservDays = models.IntegerField('Reserv days', default=9)
     mod = models.CharField(choices=MOD_CHOICES, max_length=10, default='category')
+    IsCheckDays = models.BooleanField('Is Check Days', default=True)
 
     status = models.CharField(
         max_length=10,
@@ -99,8 +100,20 @@ class Barber(models.Model):
     avatar = models.ImageField(upload_to='salons/barbers', blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     categories = models.ManyToManyField(ServiceCategory, related_name='barbers')
+    default_duration = models.IntegerField('Default duration (minutes)', default=20)
+
+    STATUS_CHOICES = [
+        ('active', 'Active'),
+        ('suspend', 'Suspend'),
+    ]
+
+    status = models.CharField(
+        max_length=10,
+        choices=STATUS_CHOICES,
+        default='active',
+        verbose_name="Status"
+    )
     
-    # Убираем "through='BarberService'", т.к. теперь BarberService не хранит FK на Service
     services = models.ManyToManyField(
         Service,
         related_name='barbers',
@@ -128,7 +141,7 @@ class BarberService(models.Model):
     name = models.CharField(max_length=100, default='Service name')
     image = models.ImageField(upload_to='salons/barberservices', blank=True, null=True)
     price = models.DecimalField(max_digits=8, decimal_places=2, blank=True, null=True)
-    duration = models.DurationField(blank=True, null=True)
+    duration = models.DurationField(blank=True, null=True, default=20)
 
     category = models.ForeignKey(
         ServiceCategory, 

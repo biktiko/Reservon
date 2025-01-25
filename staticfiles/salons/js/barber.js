@@ -1,4 +1,5 @@
 // C:\Reservon\Reservon\salons\static\salons\js\barber.js
+
 document.addEventListener('DOMContentLoaded', function() {
 
     const salonModInput = document.getElementById('salon-mod');

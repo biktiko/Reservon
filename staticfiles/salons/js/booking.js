@@ -5,11 +5,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // Сначала объявляем salonDataElement, а затем salonId
     const salonDataElement = document.getElementById('salon-data');
     const salonId = parseInt(salonDataElement.dataset.salonId, 10);
+
     const salonModInput = document.getElementById('salon-mod');
-    let salonMod = 'null';
-    if (salonModInput) {
-        salonMod = salonModInput.value;
-    }
+    const salonMod = salonModInput.value;
+
+    const isCheckDays = salonDataElement.dataset.ischeckdays
+    console.log(isCheckDays)
+    
     console.log('Salon mod is ', salonMod)
 
     const serviceDurationElement = document.getElementById('service-duration');
@@ -312,6 +314,62 @@ document.addEventListener('DOMContentLoaded', function() {
         daySelect.appendChild(dayOption);
     }
 
+    // Комментируем код на английском:
+    async function populateDays() {
+        console.log('populate')
+        daySelect.innerHTML = '';
+        const daysToCheck = [];
+        for (let i = 0; i < reservDays; i++) {
+            const dateObj = new Date(today);
+            dateObj.setDate(today.getDate() + i);
+            daysToCheck.push(dateObj);
+        }
+
+        let anyAvailableDay = false;
+        // Перебираем все дни и проверяем их доступность
+        for (const dateObj of daysToCheck) {
+            const chosenDate = dateObj.toISOString().split('T')[0];
+            
+            // Проверяем доступность хотя бы одного часа (8..22)
+            const isAvailable = await hasDayAvailability(salonId, chosenDate, 9, 20);
+            if (!isAvailable) {
+                continue; // Пропускаем день, если ни одного часа нет
+            }
+            
+            // Если доступен, рисуем
+            anyAvailableDay = true;
+            const dayOption = document.createElement('div');
+            dayOption.dataset.date = chosenDate;
+            dayOption.innerText = dateObj.toLocaleDateString('ru-RU', { day: 'numeric', month: 'numeric', weekday: 'short' });
+            dayOption.classList.add('day-option');
+            dayOption.onclick = () => handleDayClick(dayOption);
+            daySelect.appendChild(dayOption);
+        }
+
+        // Если вообще нет доступных дней
+        if (!anyAvailableDay) {
+            daySelect.innerHTML = '<div> Hет достаточно свободного времени для бронирования․ Попробуйте с другим мастером </div>';
+        }
+
+        initializeBoookingDay()
+    }
+
+    if(isCheckDays==true || isCheckDays=="True"){
+        populateDays()
+    }else{
+        initializeBoookingDay()
+    }
+
+    // Вспомогательная функция - проверяет есть ли хоть один час
+    async function hasDayAvailability(salonId, dateStr, startHour, endHour) {
+        const hoursRange = [];
+        for (let h = startHour; h < endHour; h++) hoursRange.push(h);
+        const data = await getAvailableMinutesBatch(salonId, dateStr, hoursRange);
+        
+        // Если хотя бы в одном часу есть массив минут
+        return Object.values(data).some(minutesArray => minutesArray && minutesArray.length > 0);
+    }
+
     // Active first day button
     function initializeBoookingDay(){
         // Получаем элемент с ID 'day-select'
@@ -329,8 +387,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     }
-    initializeBoookingDay()
 
+    
     function handleDayClick(dayOption) {
         clearSelection(daySelect);
         dayOption.classList.add('selected');
@@ -352,7 +410,7 @@ document.addEventListener('DOMContentLoaded', function() {
         minuteSelect.innerHTML = '';
         summaryText.innerText = 'Час и минута не выбраны';
 
-        const startHour = 8;
+        const startHour = 9;
         const endHour = 22;
         const chosenDateObj = new Date(dateString);
         const chosenDate = chosenDateObj.toISOString().split('T')[0];
@@ -409,6 +467,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (uncachedHours.length > 0) {
             try {
                 const formData = collectBookingFormData();
+                // console.log(formData)
                 const responseData = JSON.stringify({
                     salon_id: salonId,
                     date: date,
@@ -425,11 +484,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     },
                     body: responseData
                 });
-    
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
-    
+                
                 const data = await response.json();
                 const fetchedMinutes = data.available_minutes || {};
     
@@ -578,6 +636,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 populateAvailableMinutes(availableMinutes, date, hour);
             }
         }
+        
+        isCheckDays==true ? populateDays() : initializeBoookingDay()
     });
 
     if (!bookingForm) {
@@ -592,7 +652,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Обработчик клика на кнопку бронирования
     bookingButton.addEventListener('click', function(event) {
-        console.log('clicked')
+
         // Проверяем, заполнены ли необходимые поля
         if (!canSubmitForm()) {
 
@@ -802,7 +862,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 total += getCategoryDefaultDuration(categoryId);
             }
         });
-    
+        
+        if (total === 0) {
+            total = salonDefaultDuration;
+        }
+        
         return total;
     }
     
@@ -992,8 +1056,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if(bookingDateTime){
             bookingDateTime.innerHTML = `<h2 class="booking-date-time"><strong>Дата:</strong> ${data.date} <br> <strong>Время:</strong> ${data.time} - ${data.endTime} </h2>`;
         }else{
-            alert('Ваше бронирование уже подтверждено. Спасибо!');
-
+            location.reload()
         }
         
         // Очищаем контейнер
