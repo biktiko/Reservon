@@ -100,7 +100,8 @@ class Barber(models.Model):
     avatar = models.ImageField(upload_to='salons/barbers', blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     categories = models.ManyToManyField(ServiceCategory, related_name='barbers')
-    
+    default_duration = models.IntegerField('Default duration (minutes)', default=20)
+
     # Убираем "through='BarberService'", т.к. теперь BarberService не хранит FK на Service
     services = models.ManyToManyField(
         Service,
@@ -129,7 +130,7 @@ class BarberService(models.Model):
     name = models.CharField(max_length=100, default='Service name')
     image = models.ImageField(upload_to='salons/barberservices', blank=True, null=True)
     price = models.DecimalField(max_digits=8, decimal_places=2, blank=True, null=True)
-    duration = models.DurationField(blank=True, null=True)
+    duration = models.DurationField(blank=True, null=True, default=20)
 
     category = models.ForeignKey(
         ServiceCategory, 

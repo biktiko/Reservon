@@ -26,11 +26,6 @@ from django.views.decorators.csrf import csrf_exempt
 logger = logging.getLogger('booking')
 
 
-from salons.views import (
-    is_barber_available_in_memory,
-    generate_safe_cache_key
-)
-
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def api_salons_list(request):
