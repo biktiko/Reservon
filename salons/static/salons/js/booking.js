@@ -1108,7 +1108,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function submitBookingData(formData) {
         const salonIdForBooking = parseInt(salonDataElement.dataset.salonId, 10);
-        console.log(formData)
+        console.log('formdata', formData)
         fetch(`/salons/${salonIdForBooking}/book/`, {
             method: 'POST',
             headers: {
