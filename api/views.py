@@ -56,14 +56,17 @@ def api_salon_detail(request, salon_id):
 
 @api_view(['POST'])
 def api_create_booking(request, salon_id):
+
+    django_request = request._request  
+
     # Просто вызываем вашу существующую логику
     from salons.views import book_appointment
-    response = book_appointment(request, id=salon_id)
+    response = book_appointment(django_request, id=salon_id)
     
     # Если возвращается JsonResponse, можно сконвертировать в DRF Response
     if isinstance(response, JsonResponse):
         return Response(response.json(), status=response.status_code)
-    
+
     return response
 
 @api_view(['POST'])
