@@ -22,6 +22,7 @@ from django.views.decorators.cache import never_cache
 from django.conf import settings
 from reservon.utils.twilio_service import send_whatsapp_message
 from authentication.models import Profile, User
+from django.db import IntegrityError
 
 import logging
 
@@ -581,15 +582,22 @@ def book_appointment(request, id):
             try:
                 profile = Profile.objects.get(phone_number=phone_number)
                 user = profile.user
+                logger.debug(f"Найден существующий profile {profile.id} => user={user}")
             except Profile.DoesNotExist:
-                # Создаём нового пользователя
-                user = User.objects.create_user(username=phone_number, password=None)
-                # Создаём профиль
-                profile = Profile.objects.create(
-                    user=user,
-                    phone_number=phone_number,
-                    status='verified'
-                )
+                # Ниже - потенциальная гонка
+                try:
+                    user = User.objects.create_user(username=phone_number, password=None)
+                    profile = Profile.objects.create(
+                        user=user,
+                        phone_number=phone_number,
+                        status='verified'
+                    )
+                    logger.info(f"Создан user+profile для телефона={phone_number}")
+                except IntegrityError:
+                    # Кто-то успел вставить profile с тем же phone_number
+                    profile = Profile.objects.get(phone_number=phone_number)
+                    user = profile.user
+                    logger.warning("Profile был создан параллельно, берем уже существующий.")
 
         print('user', user)
 
