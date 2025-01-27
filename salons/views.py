@@ -578,18 +578,18 @@ def book_appointment(request, id):
         print('phone_number', phone_number)
         user = None
         if phone_number:
-            profile, created = Profile.objects.get_or_create(
-                phone_number=phone_number,
-                defaults={'status': 'verified'}
-            )
-            if created:
-                # Создаём User
-                user = User.objects.create_user(username=phone_number, password=None)
-                profile.user = user
-                profile.save()
-                logger.info(f"Создан user+profile для телефона={phone_number}")
-            else:
+            try:
+                profile = Profile.objects.get(phone_number=phone_number)
                 user = profile.user
+            except Profile.DoesNotExist:
+                # Создаём нового пользователя
+                user = User.objects.create_user(username=phone_number, password=None)
+                # Создаём профиль
+                profile = Profile.objects.create(
+                    user=user,
+                    phone_number=phone_number,
+                    status='verified'
+                )
 
         print('user', user)
 
