@@ -21,6 +21,7 @@ from authentication.models import PushSubscription
 from django.views.decorators.cache import never_cache
 from django.conf import settings
 from reservon.utils.twilio_service import send_whatsapp_message
+from authentication.models import Profile, User
 
 import logging
 
@@ -572,13 +573,39 @@ def book_appointment(request, id):
     
         end_datetime = start_datetime + timedelta(minutes=total_service_duration)
 
+        phone_number = data.get("phone_number")  # <-- BOT передаёт так
+        print('phone_number', phone_number)
+        # 2) Ищем / создаём User + Profile
+        user = None
+
+        if phone_number:
+            try:
+                profile = Profile.objects.get(phone_number=phone_number)
+                user = profile.user
+                logger.debug(f"Найден существующий Profile с номером {phone_number}. User={user.username}")
+            except Profile.DoesNotExist:
+                # Создаём нового Django-пользователя
+                from django.contrib.auth.models import User
+                random_username = phone_number  # Или любой уникальный
+                user = User.objects.create_user(username=random_username, password=None)
+                # Создаём профиль
+                profile = Profile.objects.create(
+                    user=user,
+                    phone_number=phone_number,
+                    status='verified'  # или как вам нужно
+                )
+                logger.info(f"Создан новый user+profile для телефона: {phone_number}")
+
+        print('user', user)
+
         # Создаем Appointment
         appointment = Appointment(
             salon=salon,
-            user=request.user if request.user.is_authenticated else None,
+            user=user,
+            # user=request.user if request.user.is_authenticated else None,
             start_datetime=initial_start_datetime,
             end_datetime=end_datetime,
-            user_comment=user_comment,
+            user_comment=user_comment
         )
         appointment.save()
         logger.debug(f"Создано Appointment: {appointment}")
