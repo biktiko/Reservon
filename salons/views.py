@@ -573,28 +573,23 @@ def book_appointment(request, id):
     
         end_datetime = start_datetime + timedelta(minutes=total_service_duration)
 
-        phone_number = data.get("phone_number")  # <-- BOT передаёт так
-        print('phone_number', phone_number)
         # 2) Ищем / создаём User + Profile
+        phone_number = data.get("phone_number")
+        print('phone_number', phone_number)
         user = None
-
         if phone_number:
-            try:
-                profile = Profile.objects.get(phone_number=phone_number)
+            profile, created = Profile.objects.get_or_create(
+                phone_number=phone_number,
+                defaults={'status': 'verified'}
+            )
+            if created:
+                # Создаём User
+                user = User.objects.create_user(username=phone_number, password=None)
+                profile.user = user
+                profile.save()
+                logger.info(f"Создан user+profile для телефона={phone_number}")
+            else:
                 user = profile.user
-                logger.debug(f"Найден существующий Profile с номером {phone_number}. User={user.username}")
-            except Profile.DoesNotExist:
-                # Создаём нового Django-пользователя
-                from django.contrib.auth.models import User
-                random_username = phone_number  # Или любой уникальный
-                user = User.objects.create_user(username=random_username, password=None)
-                # Создаём профиль
-                profile = Profile.objects.create(
-                    user=user,
-                    phone_number=phone_number,
-                    status='verified'  # или как вам нужно
-                )
-                logger.info(f"Создан новый user+profile для телефона: {phone_number}")
 
         print('user', user)
 
