@@ -584,12 +584,14 @@ def book_appointment(request, id):
         # Создаем Appointment
         appointment = Appointment(
             salon=salon,
-            user=user,
+            user=user if phone_number else request.user,
             # user=request.user if request.user.is_authenticated else None,
             start_datetime=initial_start_datetime,
             end_datetime=end_datetime,
             user_comment=user_comment
         )
+
+
         appointment.save()
         logger.debug(f"Создано Appointment: {appointment}")
         # Список для хранения созданных AppointmentBarberService
