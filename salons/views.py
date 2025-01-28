@@ -576,30 +576,10 @@ def book_appointment(request, id):
 
         # 2) Ищем / создаём User + Profile
         phone_number = data.get("phone_number")
-        print('phone_number', phone_number)
-        user = None
-        if phone_number:
-            try:
-                profile = Profile.objects.get(phone_number=phone_number)
-                user = profile.user
-                logger.debug(f"Найден существующий profile {profile.id} => user={user}")
-            except Profile.DoesNotExist:
-                # Ниже - потенциальная гонка
-                try:
-                    user = User.objects.create_user(username=phone_number, password=None)
-                    profile = Profile.objects.create(
-                        user=user,
-                        phone_number=phone_number,
-                        status='verified'
-                    )
-                    logger.info(f"Создан user+profile для телефона={phone_number}")
-                except IntegrityError:
-                    # Кто-то успел вставить profile с тем же phone_number
-                    profile = Profile.objects.get(phone_number=phone_number)
-                    user = profile.user
-                    logger.warning("Profile был создан параллельно, берем уже существующий.")
+        
+        user, profile = get_or_create_user_by_phone(phone_number)
 
-        print('user', user)
+        print('user', user, profile)
 
         # Создаем Appointment
         appointment = Appointment(
@@ -849,6 +829,42 @@ def book_appointment(request, id):
     except Exception as e:
         logger.error(f"Необработанное исключение при бронировании: {e}", exc_info=True)
         return JsonResponse({'error': 'Внутренняя ошибка сервера.'}, status=500)
+
+
+def get_or_create_user_by_phone(phone_number: str):
+    """
+    Возвращает (user, profile). Гарантированно не ломает транзакцию
+    при гонках. Использует локальный savepoint.
+    """
+    if not phone_number:
+        return (None, None)
+    
+    # Сначала пробуем get(...)
+    try:
+        profile = Profile.objects.get(phone_number=phone_number)
+        return (profile.user, profile)
+    except Profile.DoesNotExist:
+        pass
+
+    # Если точно не нашли - пробуем создать
+    # оборачиваем в локальный atomic, чтобы если случится IntegrityError,
+    # мы словили rollback только здесь, а не ломали "внешний" atomic
+    with transaction.atomic(savepoint=True):
+        try:
+            user = User.objects.create_user(username=phone_number, password=None)
+            profile = Profile.objects.create(
+                user=user,
+                phone_number=phone_number,
+                status='verified'
+            )
+            return (user, profile)
+        except IntegrityError:
+            # Кто-то успел вставить параллельно => rollback
+            transaction.set_rollback(True)
+    
+    # Повторяем get — теперь точно должен найти
+    profile = Profile.objects.get(phone_number=phone_number)
+    return (profile.user, profile)
 
 def is_barber_available(barber, start_datetime, end_datetime):
     day_code = start_datetime.strftime('%A').lower()
