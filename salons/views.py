@@ -580,7 +580,7 @@ def book_appointment(request, id):
         user, profile = get_or_create_user_by_phone(phone_number)
 
         print('user', user, profile)
-
+        print('phone_number', phone_number)
         # Создаем Appointment
         appointment = Appointment(
             salon=salon,
