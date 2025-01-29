@@ -579,8 +579,8 @@ def book_appointment(request, id):
         
         user, profile = get_or_create_user_by_phone(phone_number)
 
-        print('user', user, profile)
-        print('phone_number', phone_number)
+        logger.info('user', user, profile)
+        logger.info('phone_number', phone_number)
         # Создаем Appointment
         appointment = Appointment(
             salon=salon,
@@ -833,40 +833,67 @@ def book_appointment(request, id):
         return JsonResponse({'error': 'Внутренняя ошибка сервера.'}, status=500)
 
 
-def get_or_create_user_by_phone(phone_number: str):
-    """
-    Возвращает (user, profile). Гарантированно не ломает транзакцию
-    при гонках. Использует локальный savepoint.
-    """
-    if not phone_number:
-        return (None, None)
+# def get_or_create_user_by_phone(phone_number: str):
+#     """
+#     Возвращает (user, profile). Гарантированно не ломает транзакцию
+#     при гонках. Использует локальный savepoint.
+#     """
+#     if not phone_number:
+#         return (None, None)
     
-    # Сначала пробуем get(...)
-    try:
-        profile = Profile.objects.get(phone_number=phone_number)
-        return (profile.user, profile)
-    except Profile.DoesNotExist:
-        pass
+#     # Сначала пробуем get(...)
+#     try:
+#         profile = Profile.objects.get(phone_number=phone_number)
+#         return (profile.user, profile)
+#     except Profile.DoesNotExist:
+#         pass
 
-    # Если точно не нашли - пробуем создать
-    # оборачиваем в локальный atomic, чтобы если случится IntegrityError,
-    # мы словили rollback только здесь, а не ломали "внешний" atomic
-    with transaction.atomic(savepoint=True):
-        try:
-            user = User.objects.create_user(username=phone_number, password=None)
-            profile = Profile.objects.create(
-                user=user,
-                phone_number=phone_number,
-                status='verified'
-            )
-            return (user, profile)
-        except IntegrityError:
-            # Кто-то успел вставить параллельно => rollback
-            transaction.set_rollback(True)
+#     # Если точно не нашли - пробуем создать
+#     # оборачиваем в локальный atomic, чтобы если случится IntegrityError,
+#     # мы словили rollback только здесь, а не ломали "внешний" atomic
+#     with transaction.atomic(savepoint=True):
+#         try:
+#             user = User.objects.create_user(username=phone_number, password=None)
+#             profile = Profile.objects.create(
+#                 user=user,
+#                 phone_number=phone_number,
+#                 status='verified'
+#             )
+#             return (user, profile)
+#         except IntegrityError:
+#             # Кто-то успел вставить параллельно => rollback
+#             transaction.set_rollback(True)
     
-    # Повторяем get — теперь точно должен найти
-    profile = Profile.objects.get(phone_number=phone_number)
-    return (profile.user, profile)
+#     # Повторяем get — теперь точно должен найти
+#     profile = Profile.objects.get(phone_number=phone_number)
+#     return (profile.user, profile)
+
+def get_or_create_user_by_phone(phone_number: str): 
+    for attempt in range(3):
+        try:
+            profile = Profile.objects.get(phone_number=phone_number)
+            return (profile.user, profile)
+        except Profile.DoesNotExist:
+            pass
+
+        with transaction.atomic(savepoint=True):
+            try:
+                user = User.objects.create_user(username=phone_number, password=None)
+                profile = Profile.objects.create(user=user, phone_number=phone_number, status='verified')
+                return (user, profile)
+            except IntegrityError:
+                # Кто-то успел вставить
+                transaction.set_rollback(True)
+        # Делаем еще один get вне атомика:
+        try:
+            profile = Profile.objects.get(phone_number=phone_number)
+            return (profile.user, profile)
+        except Profile.DoesNotExist:
+            if attempt < 2:
+                time.sleep(0.05) # небольшой sleep
+                continue
+            raise
+
 
 def is_barber_available(barber, start_datetime, end_datetime):
     day_code = start_datetime.strftime('%A').lower()
