@@ -864,32 +864,44 @@ def book_appointment(request, id):
 #     profile = Profile.objects.get(phone_number=phone_number)
 #     return (profile.user, profile)
 
-def get_or_create_user_by_phone(phone_number: str): 
+def get_or_create_user_by_phone(phone_number: str):
+    logger.info("Entering get_or_create_user_by_phone with %r", phone_number)
     for attempt in range(3):
+        logger.info("Attempt %d for phone_number=%s", attempt + 1, phone_number)
         try:
             profile = Profile.objects.get(phone_number=phone_number)
+            logger.info("Found existing profile id=%r for phone_number=%s", profile.id, phone_number)
             return (profile.user, profile)
         except Profile.DoesNotExist:
-            pass
+            logger.info("Profile.DoesNotExist for phone_number=%s, going to create", phone_number)
 
         with transaction.atomic(savepoint=True):
             try:
+                logger.info("Creating user with username=%s", phone_number)
                 user = User.objects.create_user(username=phone_number, password=None)
+                logger.info("User created: id=%r", user.id)
                 profile = Profile.objects.create(user=user, phone_number=phone_number, status='verified')
+                logger.info("Profile created: id=%r", profile.id)
                 return (user, profile)
-            except IntegrityError:
-                # Кто-то успел вставить
+            except IntegrityError as ie:
                 transaction.set_rollback(True)
-        # Делаем еще один get вне атомика:
+                logger.warning("IntegrityError: %s", ie)
+            except Exception as e:
+                transaction.set_rollback(True)
+                logger.error("Unexpected error: %s", e, exc_info=True)
+
+        logger.info("After atomic block: re-check profile with phone_number=%s", phone_number)
         try:
             profile = Profile.objects.get(phone_number=phone_number)
+            logger.info("Now found profile id=%r for phone_number=%s", profile.id, phone_number)
             return (profile.user, profile)
         except Profile.DoesNotExist:
+            logger.info("Still DoesNotExist for phone_number=%s", phone_number)
             if attempt < 2:
-                time.sleep(0.05) # небольшой sleep
+                time.sleep(0.05)
                 continue
+            logger.error("Giving up after 3 attempts for phone_number=%s", phone_number)
             raise
-
 
 def is_barber_available(barber, start_datetime, end_datetime):
     day_code = start_datetime.strftime('%A').lower()
