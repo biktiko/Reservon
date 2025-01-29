@@ -568,12 +568,14 @@ def book_appointment(request, id):
 
         # 2) Ищем / создаём User + Profile
         phone_number = data.get("phone_number")
-        
-        logger.info(f"user={user}, profile={profile}")
-        logger.info("phone_number=%s", phone_number)
-        
-        user, profile = get_or_create_user_by_phone(phone_number)
 
+        if phone_number:
+            logger.info("phone_number=%s", phone_number)
+            user, profile = get_or_create_user_by_phone(phone_number)
+            logger.info("User: %r", user)   
+        else:
+            logger.info("Номер телефона не указан.")
+        
 
         # Создаем Appointment
         appointment = Appointment(
