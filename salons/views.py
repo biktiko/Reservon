@@ -867,10 +867,12 @@ def book_appointment(request, id):
 def get_or_create_user_by_phone(phone_number: str):
 
     # 1) создаём/находим user
-    user, _ = User.objects.get_or_create(
-        username=phone_number,
-        defaults={'password': None}
+    user, created = User.objects.get_or_create(
+        username=phone_number
     )
+    if created:
+        user.set_unusable_password()
+        user.save()
 
     # 2) создаём/находим profile
     # В случае параллельного обращения может выдать IntegrityError, придётся ловить
