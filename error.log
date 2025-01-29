@@ -964,3 +964,5 @@ Traceback (most recent call last):
     msg = msg % self.args
           ~~~~^~~~~~~~~~~
 TypeError: not all arguments converted during string formatting
+ERROR 2025-01-29 21:47:38,249 log Internal Server Error: /salons/1/book/
+ERROR 2025-01-29 21:48:53,952 log Internal Server Error: /salons/1/book/

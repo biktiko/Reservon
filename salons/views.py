@@ -6,7 +6,8 @@ from django.http import JsonResponse
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
-from datetime import datetime, timedelta, time, timezone as dt_timezone
+from datetime import datetime, timedelta, timezone as dt_timezone
+import time
 from django.utils import timezone
 from django.db.models import Q
 from django.db import transaction
@@ -167,7 +168,6 @@ def get_barber_availability(request, barber_id):
         return JsonResponse({'error': 'Barber not found'}, status=404)
     
 from collections import defaultdict
-from datetime import datetime, timedelta
 from django.core.cache import cache
 from django.db.models import Prefetch
 from django.utils import timezone
@@ -175,14 +175,6 @@ from django.http import JsonResponse
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
-import logging
-
-from salons.models import (
-    Salon, BarberAvailability,
-    AppointmentBarberService, ServiceCategory, Barber
-)
-# Если у вас есть настройки логгера
-logger = logging.getLogger(__name__)
 
 @api_view(['POST'])
 def get_available_minutes(request):
@@ -579,8 +571,10 @@ def book_appointment(request, id):
         
         user, profile = get_or_create_user_by_phone(phone_number)
 
-        logger.info('user', user, profile)
-        logger.info('phone_number', phone_number)
+
+        logger.info(f"user={user}, profile={profile}")
+        logger.info("phone_number=%s", phone_number)
+
         # Создаем Appointment
         appointment = Appointment(
             salon=salon,
