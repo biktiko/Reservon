@@ -865,40 +865,25 @@ def book_appointment(request, id):
 #     return (profile.user, profile)
 
 def get_or_create_user_by_phone(phone_number: str):
-    logger.info("Entering get_or_create_user_by_phone with %r", phone_number)
+
+    # 1) создаём/находим user
+    user, _ = User.objects.get_or_create(
+        username=phone_number,
+        defaults={'password': None}
+    )
+
+    # 2) создаём/находим profile
+    # В случае параллельного обращения может выдать IntegrityError, придётся ловить
     for attempt in range(5):
-        logger.info("Attempt %d for phone_number=%s", attempt + 1, phone_number)
-        # 1) Сначала пробуем найти
         try:
-            profile = Profile.objects.get(phone_number=phone_number)
-            logger.info("Found existing profile id=%r for phone_number=%s", profile.id, phone_number)
-            return (profile.user, profile)
-        except Profile.DoesNotExist:
-            logger.info("Profile.DoesNotExist for phone_number=%s, going to create", phone_number)
+            profile, created = Profile.objects.get_or_create(
+                phone_number=phone_number,
+                defaults={'user': user, 'status': 'verified'}
+            )
+            return profile.user, profile
+        except IntegrityError:
+            time.sleep(0.2)
 
-        # 2) Пытаемся создать
-        with transaction.atomic(savepoint=True):
-            try:
-                user = User.objects.create_user(username=phone_number, password=None)
-                profile = Profile.objects.create(user=user, phone_number=phone_number, status='verified')
-                logger.info("New user & profile created: user=%r, profile.id=%r", user.id, profile.id)
-                return (user, profile)
-            except IntegrityError as ie:
-                logger.warning("IntegrityError for phone_number=%s: %s", phone_number, ie)
-                transaction.set_rollback(True)
-
-        # 3) Повторно проверяем — может, запись уже появилась
-        try:
-            profile = Profile.objects.get(phone_number=phone_number)
-            logger.info("Found profile after IntegrityError. id=%r", profile.id)
-            return (profile.user, profile)
-        except Profile.DoesNotExist:
-            logger.info("Still no profile with phone_number=%s after IntegrityError", phone_number)
-
-        # 4) Делаем паузу, вдруг другая транзакция ещё не закоммитила
-        time.sleep(0.2)  # можно побольше
-    logger.error("Giving up after multiple attempts for phone_number=%s", phone_number)
-    raise Profile.DoesNotExist("Profile matching query does not exist (race).")
 
 
 def is_barber_available(barber, start_datetime, end_datetime):
