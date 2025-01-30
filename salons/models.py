@@ -18,6 +18,16 @@ class Salon(models.Model):
         ('barber', 'Barber'),      # Режим, где услуги берутся из BarberService
     ]
 
+    APPOINTMENT_MOD_CHOICES = [
+        ('services', 'Services'),  # Режим в телеграме, где в начале услуги, потом мастера
+        ('barbers', 'Barbers'),    # Режим в телеграме, где в начале мастера, потом услуги
+    ]
+
+    BARBERS_MOD_CHOICES = [
+        ('without_images', 'Without images'),  # Мастера без изображений
+        ('with_images', 'With images'),        # Мастера с изображениями
+    ]
+
     name = models.CharField('Salon name', max_length=50)
     logo = models.ImageField('Logo', upload_to='salon_logos/', blank=True, null=True)
     address = models.CharField('Address', max_length=100)
@@ -36,6 +46,20 @@ class Salon(models.Model):
     reservDays = models.IntegerField('Reserv days', default=9)
     mod = models.CharField(choices=MOD_CHOICES, max_length=10, default='category')
     IsCheckDays = models.BooleanField('Is Check Days', default=True)
+
+    telegram_appointmentMod = models.CharField(
+        max_length=10,
+        choices=APPOINTMENT_MOD_CHOICES,
+        default='services',
+        verbose_name="Telegram Appointment Mod"
+    )
+
+    telegram_barbersMod = models.CharField(
+        max_length=15,
+        choices=BARBERS_MOD_CHOICES,
+        default='services',
+        verbose_name="Telegram Barbers Bod"
+    )
 
     status = models.CharField(
         max_length=10,
