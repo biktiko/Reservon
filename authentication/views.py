@@ -148,8 +148,7 @@ def login_view(request):
 
             try:
                 profile = Profile.objects.get(user=user)
-                print('profile')
-                print(profile)
+                print('profile', profile)
             except Profile.DoesNotExist:
                 if Profile.objects.filter(phone_number=phone_number).exists():
                     return JsonResponse({'error': 'Этот номер уже используется другим профилем.'}, status=400)
@@ -160,8 +159,7 @@ def login_view(request):
             
             if profile.status == 'unverified' or profile.login_method == 'sms':
                 try:
-                    # send_verification_code(phone_number, profile
-                    generate_and_send_otp(profile)  # <-- наша новая функция
+                    generate_and_send_otp(profile)
 
                     request.session['phone_number'] = phone_number
                     return JsonResponse({'next_step': 'verify_code', 'phone_number': phone_number})
@@ -189,8 +187,6 @@ def login_view(request):
                 # Пользователь верифицирован, но логин_method не google, значит можно задать пароль или выбрать Google
                 request.session['phone_number'] = phone_number
                 return JsonResponse({'next_step': 'set_password', 'user_exists': False, 'phone_number': phone_number})
-
-            
 
         except json.JSONDecodeError:
             logger.error("JSON decode error in login_view")

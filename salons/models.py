@@ -57,7 +57,7 @@ class Salon(models.Model):
     telegram_barbersMod = models.CharField(
         max_length=15,
         choices=BARBERS_MOD_CHOICES,
-        default='services',
+        default='without_images',
         verbose_name="Telegram Barbers Bod"
     )
 
