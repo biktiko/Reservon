@@ -221,14 +221,14 @@ class BarberInline(admin.StackedInline):
 @admin.register(Salon)
 class SalonAdmin(ImportExportModelAdmin):
     form = SalonAdminForm
-    list_display = ('name', 'status', 'default_price', 'default_duration', 'reservDays', 'coordinates', 'IsCheckDays', 'mod', 'telegram_appointmentMod', 'telegram_barbersMod')
+    list_display = ('name', 'status', 'address', 'admins', 'mod')
     list_filter = ('status', 'mod')
     search_fields = ('name', 'address')
     inlines = [ServiceInline, SalonImageInline, BarberInline, NoteInline]
     autocomplete_fields = ['admins']
     fieldsets = (
         (None, {
-            'fields': ('name', 'logo', 'address', 'coordinates', 'reservDays', 'status', 'admins', 'IsCheckDays', 'mod')
+            'fields': ('name', 'logo', 'address', 'coordinates', 'reservDays', 'status', 'admins', 'IsCheckDays', 'mod', 'telegram_appointmentMod', 'telegram_barbersMod')
         }),
         ('Описание', {
             'fields': (
