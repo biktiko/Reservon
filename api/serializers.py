@@ -45,8 +45,6 @@ class BarberSerializer(serializers.ModelSerializer):
             'services',
             'barber_services'
         ]
-
-
 class SalonSerializer(serializers.ModelSerializer):
     class Meta:
         model = Salon
@@ -56,8 +54,6 @@ class SalonSerializer(serializers.ModelSerializer):
             'shortDescription_hy', 'shortDescription_ru', 'shortDescription_eng',
             'description_hy', 'description_ru', 'description_eng'
         ]
-
-
 class SalonDetailSerializer(serializers.ModelSerializer):
     """
     Детальный сериализатор салона:
@@ -78,25 +74,17 @@ class SalonDetailSerializer(serializers.ModelSerializer):
             'shortDescription_hy', 'shortDescription_ru', 'shortDescription_eng',
             'description_hy', 'description_ru', 'description_eng',
             'services',
-            'barbers'
-            # 'service_categories'
+            'barbers',
+            'telegram_appointmentMod',
+            'telegram_barbersMod'
         ]
-
-    # def get_service_categories(self, obj):
-    #     qs = ServiceCategory.objects.filter(services__salon=obj).distinct()
-    #     return ServiceCategorySerializer(qs, many=True).data
-
-
 class BookingServiceSerializer(serializers.Serializer):
     serviceId = serializers.IntegerField()
     duration = serializers.IntegerField()
-
-
 class BookingDetailSerializer(serializers.Serializer):
     categoryId = serializers.IntegerField()
     services = BookingServiceSerializer(many=True)
     barberId = serializers.CharField()
-
 
 class CreateBookingSerializer(serializers.Serializer):
     salon_id = serializers.IntegerField(required=True)

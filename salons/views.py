@@ -6,7 +6,8 @@ from django.http import JsonResponse
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
-from datetime import datetime, timedelta, time, timezone as dt_timezone
+from datetime import datetime, timedelta, timezone as dt_timezone
+import time
 from django.utils import timezone
 from django.db.models import Q
 from django.db import transaction
@@ -21,6 +22,8 @@ from authentication.models import PushSubscription
 from django.views.decorators.cache import never_cache
 from django.conf import settings
 from reservon.utils.twilio_service import send_whatsapp_message
+from authentication.models import Profile, User
+from django.db import IntegrityError
 
 import logging
 
@@ -165,7 +168,6 @@ def get_barber_availability(request, barber_id):
         return JsonResponse({'error': 'Barber not found'}, status=404)
     
 from collections import defaultdict
-from datetime import datetime, timedelta
 from django.core.cache import cache
 from django.db.models import Prefetch
 from django.utils import timezone
@@ -173,14 +175,6 @@ from django.http import JsonResponse
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
-import logging
-
-from salons.models import (
-    Salon, BarberAvailability,
-    AppointmentBarberService, ServiceCategory, Barber
-)
-# Если у вас есть настройки логгера
-logger = logging.getLogger(__name__)
 
 @api_view(['POST'])
 def get_available_minutes(request):
@@ -297,7 +291,7 @@ def get_available_minutes(request):
         barber__salon=salon,
         start_datetime__date=date
     ).select_related('barber')
-
+    
     barber_busy_times = defaultdict(list)
     for appbs in busy_appointments:
         barber_busy_times[appbs.barber_id].append((appbs.start_datetime, appbs.end_datetime))
@@ -506,28 +500,6 @@ def is_barber_available_in_memory(barber, start_t, end_t, barber_availability):
                 return True
     return False
 
-
-
-
-def is_barber_busy(barber_id, start_dt, end_dt, barber_busy_times):
-    """Проверяем, заняты ли у барбера промежутки [start_dt, end_dt)."""
-    busy_list = barber_busy_times.get(barber_id, [])
-    for busy_start, busy_end in busy_list:
-        # Если пересекаются
-        if busy_start < end_dt and busy_end > start_dt:
-            return True
-    return False
-
-
-def has_overlap(schedules, start_dt, end_dt):
-    """Проверка перекрытия в рамках уже добавленных интервалов schedules 
-       (список словарей [{start: dt, end: dt}, ...])."""
-    for sched in schedules:
-        if sched['start'] < end_dt and sched['end'] > start_dt:
-            return True
-    return False
-
-
 @transaction.atomic
 def book_appointment(request, id):
     logger.debug("Начало обработки запроса на бронирование")
@@ -594,14 +566,28 @@ def book_appointment(request, id):
     
         end_datetime = start_datetime + timedelta(minutes=total_service_duration)
 
+        # 2) Ищем / создаём User + Profile
+        phone_number = data.get("phone_number")
+
+        if phone_number:
+            logger.info("phone_number=%s", phone_number)
+            user, profile = get_or_create_user_by_phone(phone_number)
+            logger.info("User: %r", user)   
+        else:
+            logger.info("Номер телефона не указан.")
+        
+
         # Создаем Appointment
         appointment = Appointment(
             salon=salon,
-            user=request.user if request.user.is_authenticated else None,
+            user=user if phone_number else request.user,
+            # user=request.user if request.user.is_authenticated else None,
             start_datetime=initial_start_datetime,
             end_datetime=end_datetime,
-            user_comment=user_comment,
+            user_comment=user_comment
         )
+
+
         appointment.save()
         logger.debug(f"Создано Appointment: {appointment}")
         # Список для хранения созданных AppointmentBarberService
@@ -841,6 +827,66 @@ def book_appointment(request, id):
     except Exception as e:
         logger.error(f"Необработанное исключение при бронировании: {e}", exc_info=True)
         return JsonResponse({'error': 'Внутренняя ошибка сервера.'}, status=500)
+
+
+# def get_or_create_user_by_phone(phone_number: str):
+#     """
+#     Возвращает (user, profile). Гарантированно не ломает транзакцию
+#     при гонках. Использует локальный savepoint.
+#     """
+#     if not phone_number:
+#         return (None, None)
+    
+#     # Сначала пробуем get(...)
+#     try:
+#         profile = Profile.objects.get(phone_number=phone_number)
+#         return (profile.user, profile)
+#     except Profile.DoesNotExist:
+#         pass
+
+#     # Если точно не нашли - пробуем создать
+#     # оборачиваем в локальный atomic, чтобы если случится IntegrityError,
+#     # мы словили rollback только здесь, а не ломали "внешний" atomic
+#     with transaction.atomic(savepoint=True):
+#         try:
+#             user = User.objects.create_user(username=phone_number, password=None)
+#             profile = Profile.objects.create(
+#                 user=user,
+#                 phone_number=phone_number,
+#                 status='verified'
+#             )
+#             return (user, profile)
+#         except IntegrityError:
+#             # Кто-то успел вставить параллельно => rollback
+#             transaction.set_rollback(True)
+    
+#     # Повторяем get — теперь точно должен найти
+#     profile = Profile.objects.get(phone_number=phone_number)
+#     return (profile.user, profile)
+
+def get_or_create_user_by_phone(phone_number: str):
+
+    # 1) создаём/находим user
+    user, created = User.objects.get_or_create(
+        username=phone_number
+    )
+    if created:
+        user.set_unusable_password()
+        user.save()
+
+    # 2) создаём/находим profile
+    # В случае параллельного обращения может выдать IntegrityError, придётся ловить
+    for attempt in range(5):
+        try:
+            profile, created = Profile.objects.get_or_create(
+                phone_number=phone_number,
+                defaults={'user': user, 'status': 'verified'}
+            )
+            return profile.user, profile
+        except IntegrityError:
+            time.sleep(0.2)
+
+
 
 def is_barber_available(barber, start_datetime, end_datetime):
     day_code = start_datetime.strftime('%A').lower()

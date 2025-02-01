@@ -1,27 +1,21 @@
 # api/views.py
 
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny, IsAuthenticatedOrReadOnly
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework import status
 from django.shortcuts import get_object_or_404
-from django.db import transaction, models
-from django.db.models import Q, Prefetch
+from django.db.models import Q
 from django.http import JsonResponse
-from django.core.cache import cache
-from collections import defaultdict
 from datetime import datetime, timedelta, time as dt_time
-from salons.models import (
-    Salon, Service, ServiceCategory, Barber,
-    Appointment, AppointmentBarberService, BarberAvailability
-)
+from salons.models import Salon
+
 from .serializers import (
     SalonSerializer, SalonDetailSerializer,
-    CreateBookingSerializer
 )
+import json
+
 import logging
-from django.utils import timezone
-from django.views.decorators.csrf import csrf_exempt
 
 logger = logging.getLogger('booking')
 
@@ -56,15 +50,33 @@ def api_salon_detail(request, salon_id):
 
 @api_view(['POST'])
 def api_create_booking(request, salon_id):
+
+    django_request = request._request  
+
     # Просто вызываем вашу существующую логику
     from salons.views import book_appointment
-    response = book_appointment(request, id=salon_id)
+    response = book_appointment(django_request, id=salon_id)
     
     # Если возвращается JsonResponse, можно сконвертировать в DRF Response
     if isinstance(response, JsonResponse):
         return Response(response.json(), status=response.status_code)
-    
+
     return response
+
+@api_view(['POST'])
+def api_create_booking(request, salon_id):
+    django_request = request._request
+
+    from salons.views import book_appointment
+    django_response = book_appointment(django_request, id=salon_id)
+    
+    if isinstance(django_response, JsonResponse):
+        # Django JsonResponse => content is a bytes with JSON
+        content_dict = json.loads(django_response.content)
+        return Response(content_dict, status=django_response.status_code)
+    # Иначе return django_response
+    return django_response
+
 
 @api_view(['POST'])
 def api_get_available_minutes(request):

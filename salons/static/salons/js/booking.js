@@ -473,6 +473,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (uncachedHours.length > 0) {
             try {
                 const formData = collectBookingFormData();
+                // console.log(formData)
                 const responseData = JSON.stringify({
                     salon_id: salonId,
                     date: date,
@@ -490,11 +491,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     },
                     body: responseData
                 });
-    
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
-    
+                
                 const data = await response.json();
                 const fetchedMinutes = data.available_minutes || {};
                 console.log(fetchedMinutes);
@@ -1108,7 +1108,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function submitBookingData(formData) {
         const salonIdForBooking = parseInt(salonDataElement.dataset.salonId, 10);
-        console.log(formData)
+        console.log('formdata', formData)
         fetch(`/salons/${salonIdForBooking}/book/`, {
             method: 'POST',
             headers: {

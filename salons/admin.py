@@ -221,32 +221,41 @@ class BarberInline(admin.StackedInline):
 @admin.register(Salon)
 class SalonAdmin(ImportExportModelAdmin):
     form = SalonAdminForm
-    list_display = ('name', 'status', 'default_price', 'default_duration', 'reservDays', 'coordinates', 'IsCheckDays', 'mod')
+    # Используем метод display_admins вместо поля admins
+    list_display = ('name', 'status', 'address', 'telegram_status', 'mod')
     list_filter = ('status', 'mod')
     search_fields = ('name', 'address')
     inlines = [ServiceInline, SalonImageInline, BarberInline, NoteInline]
     autocomplete_fields = ['admins']
     fieldsets = (
         (None, {
-            'fields': ('name', 'logo', 'address', 'coordinates', 'reservDays', 'status', 'admins', 'IsCheckDays', 'mod')
+            'fields': ('name', 'logo', 'address', 'coordinates')
         }),
-        ('Описание', {
+        ('Descriptions', {
             'fields': (
                 'shortDescription_hy', 'shortDescription_ru', 'shortDescription_eng',
                 'description_hy', 'description_ru', 'description_eng'
             )
         }),
-        ('Настройки по умолчанию', {
-            'fields': ('default_duration', 'default_price')
+        ('Telegram settings', {
+            'fields': ('telegram_status', 'telegram_appointmentMod', 'telegram_barbersMod')
         }),
+        ('Salon settings', {
+            'fields': ('appointment_mod', 'reservDays', 'admins', 'IsCheckDays', 'mod', 'default_duration', 'default_price', 'status')
+        })
     )
 
     def formfield_for_manytomany(self, db_field, request, **kwargs):
         if db_field.name == 'admins':
-            # Если хотите ограничить выбор пользователей, например, только активные сотрудники, раскомментируйте следующую строку:
+            # Uncomment the next line to restrict the queryset:
             # kwargs['queryset'] = User.objects.filter(is_staff=True, is_active=True)
             pass
         return super().formfield_for_manytomany(db_field, request, **kwargs)
+
+    def display_admins(self, obj):
+        # Return a comma-separated list of admins
+        return ", ".join([str(admin) for admin in obj.admins.all()])
+    display_admins.short_description = "Admins"
 
 # --- Настройка админки для SalonImage ---
 
