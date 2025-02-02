@@ -9,6 +9,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const salonModInput = document.getElementById('salon-mod');
     const salonMod = salonModInput.value;
 
+    const salonAppointmentMod = salonDataElement.dataset.appointment_mod
+    console.log('Salon appointment mod is ', salonAppointmentMod)
+
     const isCheckDays = salonDataElement.dataset.ischeckdays
     console.log(isCheckDays)
     
@@ -36,9 +39,10 @@ document.addEventListener('DOMContentLoaded', function() {
     
     const servicesBarbersContainer = document.querySelector('.selected-services-barbers');
     
-    // Обработка клика на кнопку бронирования через событие submit формы
-    const bookingForm = document.getElementById('booking-form');
-    const bookingButton = bookingForm.querySelector('.booking-button');
+    const bookingButton = document.getElementById('booking-button');
+
+    const bookingButtonBefore = document.getElementById('booking-before');
+    const bookingButtonAfter = document.getElementById('booking-after');
 
     function getCategoryNameById(categoryId) {
         const categoriesCards = Array.from(document.querySelectorAll('.category-button'));
@@ -278,7 +282,24 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Обработка события обновления услуг
+    // // Обновлённая функция updateBookingButtonState
+    // function updateBookingButtonState() {
+    //     if (canSubmitForm()) {
+    //         bookingButton.disabled = false;
+    //         bookingButton.classList.remove('disabled');
+    //         bookingMessage.style.display = 'none';
+    //     } else {
+    //         bookingButton.disabled = true;
+    //         bookingButton.classList.add('disabled');
+    
+    //         let message = 'Пожалуйста, выберите дату и время.';
+    //         bookingMessage.innerText = message;
+    //         bookingMessage.classList.remove('info');
+    //         bookingMessage.classList.add('error');
+    //         bookingMessage.style.display = 'block';
+    //     }
+    // }
+    
     document.addEventListener('servicesUpdated', function(e) {
         const { totalPrice, totalDuration } = e.detail;
         let totalServiceDuration = 0;
@@ -438,9 +459,13 @@ document.addEventListener('DOMContentLoaded', function() {
             const availableMinutes = availableMinutesData[hour];
             if (availableMinutes && availableMinutes.length > 0) {
                 const hourOption = document.createElement('div');
+              
                 hourOption.innerText = `≈ ${hour}:00`;
                 hourOption.classList.add('hour-option');
-                hourOption.onclick = () => handleHourClick(hourOption, chosenDate, hour, availableMinutes);
+                hourOption.onclick = () =>{
+                    console.log('hourOption clicked')
+                    handleHourClick(hourOption, chosenDate, hour, availableMinutes);
+                } 
                 hourSelect.appendChild(hourOption);
                 anyAvailable = true;
             }
@@ -525,8 +550,12 @@ document.addEventListener('DOMContentLoaded', function() {
     function handleHourClick(hourOption, date, hour, availableMinutes) {
         clearSelection(hourSelect);
         hourOption.classList.add('selected');
-        summaryText.innerText = `Дата: ${date}, Время: ${hour}:00`;
 
+        if(salonAppointmentMod=='handle'){
+            summaryText.innerText = `Дата: ${date}, Время: ${hour}:00`;
+        }else{
+            summaryText.style.display = 'none';
+        }
         // Очищаем 'selectedTimeInput' при выборе часа
         if (selectedTimeInput) {
             selectedTimeInput.value = ''; // Оставляем пустым до выбора минуты
@@ -536,7 +565,11 @@ document.addEventListener('DOMContentLoaded', function() {
         updateBookingButtonState();
 
         // Показываем доступные минуты без дополнительного запроса
-        populateAvailableMinutes(availableMinutes, date, hour);
+        if(salonAppointmentMod=='handle'){
+            populateAvailableMinutes(availableMinutes, date, hour);
+        }else{
+            getNearestAvailableTime(salonId, date, hour)
+        }
     }
 
     function populateAvailableMinutes(availableMinutes, date, hour) {
@@ -582,7 +615,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const minuteOption = document.createElement('div');
             minuteOption.innerHTML = `<b>${formattedHour}:${formattedMinute}</b> - ${formattedEndHour}:${formattedEndMinute}`;
 
-            minuteOption.classList.add('minute-option'); // Добавьте класс для стилизации
+            minuteOption.classList.add('minute-option');
             minuteOption.onclick = () => handleMinuteClick(minuteOption, minute);
             minuteSelect.appendChild(minuteOption);
         });
@@ -610,6 +643,39 @@ document.addEventListener('DOMContentLoaded', function() {
         // Вызов функции обновления состояния кнопки
         updateBookingButtonState();
     }
+
+    // Функция для вызова API get_nearest_available_time (возвращает Promise)
+    async function getNearestAvailableTime(salonId, date, chosenHour) {
+        var formData = collectBookingFormData(); // Ваша функция сбора данных из формы
+        var requestData = {
+            salon_id: salonId,
+            date: date,
+            chosen_hour: chosenHour,
+            booking_details: formData.booking_details,
+            total_service_duration: formData.total_service_duration
+        };
+        console.log("Request data (nearest available time) =", JSON.stringify(requestData));
+        try {
+            var response = await fetch('/salons/get_nearest_available_time/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify(requestData)
+            });
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            var data = await response.json();
+            console.log("Найденные варианты:", data);
+            return data;
+        } catch (error) {
+            console.error('Ошибка при получении ближайшего времени:', error);
+            throw error;
+        }
+    }
+    
 
     function hideHourOption(hour) {
         const hourOptions = hourSelect.querySelectorAll('.hour-option');
@@ -653,50 +719,74 @@ document.addEventListener('DOMContentLoaded', function() {
         isCheckDays==true ? populateDays() : initializeBoookingDay()
     });
 
-    if (!bookingForm) {
-        console.error('Element with id "booking-form" not found.');
-        return;
-    }
-
-    if (!bookingButton) {
-        console.error('Element with class "booking-button" not found within the booking form.');
-        return;
-    }
-
     // Обработчик клика на кнопку бронирования
-    bookingButton.addEventListener('click', function(event) {
+    if(bookingButton){
+        bookingButton.addEventListener('click', function(event) {
 
-        // Проверяем, заполнены ли необходимые поля
-        if (!canSubmitForm()) {
+            // Проверяем, заполнены ли необходимые поля
+            if (!canSubmitForm()) {
 
-            event.preventDefault();
-            // Сохраняем данные формы в localStorage
-            saveBookingFormData();
-
-            alert('Пожалуйста, выберите дату и время для бронирования.');
-        } else {
-            event.preventDefault(); // Предотвращаем стандартную отправку формы
-            // Получаем информацию об авторизации пользователя
-
-            const isAuthenticated = bookingButton.dataset.isAuthenticated === 'true';
-            if (!isAuthenticated) {
+                event.preventDefault();
                 // Сохраняем данные формы в localStorage
                 saveBookingFormData();
-                // Открываем модальное окно логина и передаём действие
-                openAuthModal('login_from_booking', salonId);
+
+                alert('Пожалуйста, выберите дату и время для бронирования.');
             } else {
-                // Пользователь авторизован, отправляем форму через AJAX
-                submitBookingForm();
+                event.preventDefault(); // Предотвращаем стандартную отправку формы
+                // Получаем информацию об авторизации пользователя
+
+                const isAuthenticated = bookingButton.dataset.isAuthenticated === 'true';
+                if (!isAuthenticated) {
+                    // Сохраняем данные формы в localStorage
+                    saveBookingFormData();
+                    // Открываем модальное окно логина и передаём действие
+                    openAuthModal('login_from_booking', salonId);
+                } else {
+                    // Пользователь авторизован, отправляем форму через AJAX
+                    submitBookingForm();
+                }
             }
+        });
+    }
+
+    bookingButtonBefore.addEventListener('click', handleAutoBooking);
+    bookingButtonAfter.addEventListener('click', handleAutoBooking);
+
+    function handleAutoBooking(event) {
+        const btn = event.target;
+        const match = btn.innerText.match(/(\d{2}:\d{2})/);
+
+        if (!match) {
+            alert('Невозможно определить выбранное время.');
+            return;
         }
-    });
+        const chosenTime = match[1];
+        if (!canSubmitForm()) {
+            alert('Пожалуйста, выберите дату и время для бронирования.');
+            return;
+        }
+        const isAuthenticated = btn.dataset.isAuthenticated === 'true';
+        if (!isAuthenticated) {
+            saveBookingFormData();
+            openAuthModal('login_from_booking', salonId);
+            return;
+        }
+
+        // Устанавливаем выбранное время в скрытый input
+        if (selectedTimeInput) {
+            selectedTimeInput.value = chosenTime;
+        }
+        // Теперь данные, собранные функцией collectBookingFormData(), будут содержать поле time
+        submitBookingForm();
+    }
+    
 
     function collectBookingFormData() {
 
         const formData = {
             salon_id: salonId,
             date: selectedDateInput.value,
-            time: selectedTimeInput.value,
+            time: selectedTimeInput ? selectedTimeInput.value : '',
             booking_details: [],
             total_service_duration: 0
         };
@@ -811,32 +901,133 @@ document.addEventListener('DOMContentLoaded', function() {
         localStorage.setItem('bookingFormData', JSON.stringify(formData));
     }
 
-    // Функция проверки возможности отправки формы
     function canSubmitForm() {
         const date = selectedDateInput.value;
-        const time = selectedTimeInput.value;
-        // Мы разрешаем бронирование без выбранных услуг, поэтому проверяем только дату и время
-        return date !== '' && time !== '';
+        const time = selectedTimeInput ? selectedTimeInput.value : ''; // для handler-режима
+
+        // Разрешаем бронирование, если выбрана дата и (либо время, либо для auto режима мы можем его получить)
+        return date !== '' && (salonAppointmentMod === 'auto' || time !== '');
     }
 
-    // Обновлённая функция updateBookingButtonState
+
+
+    // Обновлённая функция обновления состояния кнопок
     function updateBookingButtonState() {
-        if (canSubmitForm()) {
-            bookingButton.disabled = false;
-            bookingButton.classList.remove('disabled');
-            bookingMessage.style.display = 'none';
-        } else {
-            bookingButton.disabled = true;
-            bookingButton.classList.add('disabled');
-    
-            let message = 'Пожалуйста, выберите дату и время.';
-            bookingMessage.innerText = message;
-            bookingMessage.classList.remove('info');
-            bookingMessage.classList.add('error');
-            bookingMessage.style.display = 'block';
+        // Если отсутствует элемент для сообщений – ничего не делаем (или можно создать его динамически)
+        if (!bookingMessage) {
+            console.warn("Элемент сообщения ('.booking-message') не найден");
         }
+        
+        if (!canSubmitForm()) {
+            // Форма не заполнена: показываем сообщение и отключаем кнопки
+            if (salonAppointmentMod === 'auto') {
+                if (bookingButtonBefore) {
+                    bookingButtonBefore.disabled = true;
+                    bookingButtonBefore.classList.add('disabled');
+                }
+                if (bookingButtonAfter) {
+                    bookingButtonAfter.disabled = true;
+                    bookingButtonAfter.classList.add('disabled');
+                }
+                // Скрываем контейнер кнопок (если есть)
+                var container = document.getElementById('booking-buttons-container');
+                if (container) { container.style.display = 'none'; }
+            } else {
+                if (bookingButton) {
+                    bookingButton.disabled = true;
+                    bookingButton.classList.add('disabled');
+                }
+            }
+            if (bookingMessage) {
+                bookingMessage.innerText = 'Пожалуйста, выберите дату и время.';
+                bookingMessage.classList.remove('info');
+                bookingMessage.classList.add('error');
+                bookingMessage.style.display = 'block';
+            }
+            return;
+        } else {
+            if (bookingMessage) {
+                bookingMessage.style.display = 'none';
+            }
+        }
+        
+        // Если режим handler – просто активируем кнопку
+        if (salonAppointmentMod !== 'auto') {
+            if (bookingButton) {
+                bookingButton.disabled = false;
+                bookingButton.classList.remove('disabled');
+            }
+        } else {
+            // Режим auto: пытаемся получить выбранный час из элемента с классом .hour-option.selected
+            var hourSelectedEl = document.querySelector('.hour-option.selected');
+            if (!hourSelectedEl) {
+                // Если час не выбран – скрываем контейнер кнопок
+                var container = document.getElementById('booking-buttons-container');
+                if (container) { container.style.display = 'none'; }
+                return;
+            }
+            // Извлекаем число из innerText (например, "≈ 11:00" или "11:00")
+            var hourText = hourSelectedEl.innerText;
+            var match = hourText.match(/(\d{1,2})/);
+            if (!match) {
+                console.error("Невозможно извлечь выбранный час из текста:", hourText);
+                return;
+            }
+            var selectedHour = parseInt(match[1], 10);
+            // Вызываем API для получения ближайших вариантов
+            getNearestAvailableTime(salonId, selectedDateInput.value, selectedHour).then(function(data) {
+                if (!data.nearest_before) {
+                    console.error("Время недоступно");
+                    return;
+                }
+                
+                // Преобразуем nearest_before
+                const [h1, m1] = data.nearest_before.replace('։', ':').split(':').map(Number);
+                let diffMinutes = 0;
+                if (data.nearest_after) {
+                    const [h2, m2] = data.nearest_after.replace('։', ':').split(':').map(Number);
+                    diffMinutes = (h2 * 60 + m2) - (h1 * 60 + m1);
+                }
+                
+                console.log("Ближайшее время:", data.nearest_before, data.nearest_after, diffMinutes);
+                
+                // Если второй вариант существует и либо равен первому, либо разница менее 30 минут,
+                // считаем, что доступен только один вариант.
+                if (data.nearest_after && (data.nearest_before === data.nearest_after || diffMinutes < 30)) {
+                    bookingButtonBefore.innerText = 'Забронировать в ' + data.nearest_before;
+                    bookingButtonBefore.disabled = false;
+                    bookingButtonBefore.classList.remove('disabled');
+                    // Скрываем вторую кнопку
+                    bookingButtonAfter.style.display = 'none';
+                } else {
+                    // Иначе, если варианты различаются, показываем обе кнопки:
+                    if (data.nearest_before) {
+                        bookingButtonBefore.innerText = 'Забронировать в ' + data.nearest_before;
+                        bookingButtonBefore.disabled = false;
+                        bookingButtonBefore.classList.remove('disabled');
+                        bookingButtonBefore.style.display = '';
+                    } else {
+                        bookingButtonBefore.style.display = 'none';
+                    }
+                    if (data.nearest_after) {
+                        bookingButtonAfter.innerText = 'Забронировать в ' + data.nearest_after;
+                        bookingButtonAfter.disabled = false;
+                        bookingButtonAfter.classList.remove('disabled');
+                        bookingButtonAfter.style.display = '';
+                    } else {
+                        bookingButtonAfter.style.display = 'none';
+                    }
+                }
+                
+                const container = document.getElementById('booking-buttons-container');
+                if (container) { container.style.display = 'block'; }
+            })
+            .catch(function(err) {
+                console.error("Ошибка получения ближайшего времени:", err);
+            });
+
+            }
     }
-    
     // Инициализация состояния кнопки бронирования
     updateBookingButtonState();
 
@@ -1046,7 +1237,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
                 formData.user_comment = userComment;
                 formData.salonMod = salonMod
-    
+                
+                console.log('Отправляем данные бронирования:', formData);
                 submitBookingData(formData);
             };
         }
@@ -1067,7 +1259,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const bookingDateTime = modal.querySelector('.booking-date-time')
         if(bookingDateTime){
-            bookingDateTime.innerHTML = `<h2 class="booking-date-time"><strong>Дата:</strong> ${data.date} <br> <strong>Время:</strong> ${data.time} - ${data.endTime} </h2>`;
+            bookingDateTime.innerHTML = `<h1 class="booking-date-time"><strong>Дата:</strong> ${data.date} <br> <strong>Время:</strong> ${data.time} - ${data.endTime} </h1>`;
         }else{
             location.reload()
         }
@@ -1108,7 +1300,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function submitBookingData(formData) {
         const salonIdForBooking = parseInt(salonDataElement.dataset.salonId, 10);
-        console.log(formData)
+        console.log('Отправляем данные бронирования:', JSON.stringify(formData));
         fetch(`/salons/${salonIdForBooking}/book/`, {
             method: 'POST',
             headers: {
@@ -1119,30 +1311,26 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => {
             if (!response.ok) {
-                const modal = document.getElementById('booking-confirmation-modal');
-                showBookingSErrorMessage(modal)
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             return response.json();
         })
         .then(data => {
-            const modal = document.getElementById('booking-confirmation-modal');
             if (data.success) {
-                // Booking was successful
-                showBookingSuccessMessage(modal);
-                // **Clear booking data from localStorage**
+                // Бронирование успешно выполнено
+                showBookingSuccessMessage(document.getElementById('booking-confirmation-modal'));
                 localStorage.removeItem('bookingFormData');
             } else if (data.error) {
-                showBookingSErrorMessage(modal)
+                showBookingSErrorMessage(document.getElementById('booking-confirmation-modal'));
                 alert(`Ошибка при бронировании: ${data.error}`);
             }
         })
         .catch(error => {
-            const modal = document.getElementById('booking-confirmation-modal');
-            showBookingSErrorMessage(modal)
+            showBookingSErrorMessage(document.getElementById('booking-confirmation-modal'));
             console.error('Ошибка при бронировании:', error);
         });
     }
+    
     
     function showBookingSuccessMessage(modal) {
         const modalBody = modal.querySelector('.modal-body.booking-modal-body');
