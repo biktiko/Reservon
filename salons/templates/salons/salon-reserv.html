@@ -28,7 +28,8 @@
         data-salon-id="{{ salon.id }}" 
         data-reserv-days="{{ salon.reservDays }}" 
         data-salon-mod="{{salon.mod}}"
-        data-isCheckDays = "{{salon.IsCheckDays}}">
+        data-isCheckDays = "{{salon.IsCheckDays}}"
+        data-appointment_mod = "{{salon.appointment_mod}}">
     </div>
 
     <!-- Длительность услуги по умолчанию -->
@@ -38,5 +39,15 @@
     <div id="booking-message" class="booking-message" style="display: none;"></div>
 
     <!-- Кнопка бронирования -->
-    <button type="submit" class="booking-button disabled" data-is-authenticated="{{ user.is_authenticated|yesno:'true,false' }}">Забронировать</button>
+     <!-- Контейнер для кнопок бронирования (для режима auto) -->
+
+     {% if salon.appointment_mod == "auto" %}
+        <div id="booking-buttons-container">
+            <button type="button" id="booking-before" class="booking-button disabled" data-is-authenticated="{{ user.is_authenticated|yesno:'true,false' }}"></button>
+            <button type="button" id="booking-after" class="booking-button disabled" data-is-authenticated="{{ user.is_authenticated|yesno:'true,false' }}"></button>
+        </div>
+    {% else %}
+        <button type="submit" id="booking-button" class="booking-button disabled" data-is-authenticated="{{ user.is_authenticated|yesno:'true,false' }}">Забронировать</button>
+    {% endif %}
+
 </form>

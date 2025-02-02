@@ -75,18 +75,24 @@
                 <div class="date-time-selection">
                     <h3>{% trans "Выберите дату и время" %}</h3>
                     <div class="date-row" id="day-select"></div>
-                    <p class="hours-info" style="display: none;">Выберите примерный, удобный вам час</p>
+
+                    {% if salon.appointment_mod == "auto" %}
+                        <p class="hours-info" style="display: none;">Выберите удобное время, а программа подберет ближайшее свободное</p>
+                    {% else %}
+                        <p class="hours-info" style="display: none;">Выберите примерное, удобное вам время</p>
+                    {% endif %}
                     <div class="hour-row" id="hour-select"></div>
-                    <p class="minutes-info" style="display: none;">Выберите точное, удобное вам время</p>
+                    <p class="minutes-info" style="display: none;">Выберите точное время бронирования</p>
                     <div class="minute-row" id="minute-select"></div>
+                    
                     <p id="summary-text">{% trans "Время не выбрано" %}</p>
                 </div>
             
                 <!-- Итоговая цена и длительность -->
                 <div class="total-summary">
                     <h3>Итоговая информация</h3>
-                    <p>Итоговая цена: <span id="total-price">{{ salon.default_price }}</span>{% trans "драм" %}</p>
-                    <p>Общее время: <span id="total-duration">{{ salon.default_duration }}</span>{% trans "минут" %}</p>
+                    <p>Итоговая цена: <span id="total-price">{{ salon.default_price }}</span>&nbsp;{% trans "драм" %}</p>
+                    <p>Общее время: <span id="total-duration">{{ salon.default_duration }}</span>&nbsp;{% trans "минут" %}</p>
                 </div>
             
                 <!-- Форма бронирования -->
