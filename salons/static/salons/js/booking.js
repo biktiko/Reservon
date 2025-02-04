@@ -827,6 +827,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     formData.total_service_duration += duration;
                 }
             });
+
+            if (formData.booking_details.length === 0) {
+                formData.total_service_duration = salonDefaultDuration;
+            }
     
         } else {
             
@@ -886,6 +890,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (formData.booking_details.length === 0) {
                 formData.total_service_duration = salonDefaultDuration;
             }
+            console.log('formData.total_service_duration', formData.total_service_duration)
         }
         return formData;
     }
