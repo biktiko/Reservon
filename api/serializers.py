@@ -77,7 +77,6 @@ class SalonDetailSerializer(serializers.ModelSerializer):
             'barbers',
             'appointment_mod',
             'telegram_status', 'telegram_appointmentMod', 'telegram_barbersMod',
-
         ]
 class BookingServiceSerializer(serializers.Serializer):
     serviceId = serializers.IntegerField()
