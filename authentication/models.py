@@ -15,9 +15,9 @@ class Profile(models.Model):
     avatar = models.ImageField(upload_to='avatars/', null=True, blank=True)
     login_method = models.CharField(max_length=20, choices=[('password', 'Password'), ('google', 'Google'), ('sms', 'SMS')], default='sms')
     google_uid = models.CharField(max_length=255, null=True, blank=True)
-    whatsapp = models.BooleanField(default=False)
+    whatsapp = models.BooleanField(default=True)
     whatsapp_phone_number = models.CharField(max_length=15, unique=True, null=True, blank=True, default=None)
-    push_subscribe = models.BooleanField(default=True)
+    push_subscribe = models.BooleanField(default=False)
     otp_code = models.CharField(max_length=6, null=True, blank=True)
     otp_expires = models.DateTimeField(null=True, blank=True)
 

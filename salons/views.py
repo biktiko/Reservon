@@ -338,7 +338,13 @@ def get_available_minutes(request):
 
         if booking_details:
             # Общая длительность
-            total_cat_duration = sum(c['duration'] for c in active_categories)
+            # total_cat_duration = sum(c['duration'] for c in active_categories)
+
+            try:
+                total_cat_duration = sum(int(category.get('duration', 0)) for category in booking_details)
+            except Exception as e:
+                logger.error("Ошибка при расчёте общей длительности услуг: %r", e)
+                total_cat_duration = salon.default_duration or 30
 
             for minute in range(0, 60, 5):
                 minute_start = start_of_hour + timedelta(minutes=minute)
@@ -356,9 +362,10 @@ def get_available_minutes(request):
                 local_start = minute_start
                 for cat_obj in active_categories:
                     cat_id = cat_obj['category_id']
-                    dur_cat = cat_obj['duration']
-                    barb_id = cat_obj['barber_id']
+                    dur_cat = int(cat_obj.get('duration', 0))
                     end_cat = local_start + timedelta(minutes=dur_cat)
+                    barb_id = cat_obj['barber_id']
+                    local_start = end_cat
 
                     if barb_id != 'any':
                         # Конкретный барбер
@@ -999,7 +1006,7 @@ def book_appointment(request, id):
         if appointments_to_create:
             appointment.barber_services.set(appointments_to_create)
 
-        if not settings.DEBUG or settings.DEBUG:
+        if not settings.DEBUG:
             notified_barber_ids = set()
             # Итерируем по созданным AppointmentBarberService (appointments_to_create)
             unique_barbers = {abs_obj.barber for abs_obj in appointments_to_create}
