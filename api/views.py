@@ -7,9 +7,10 @@ from rest_framework import status
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
 from django.http import JsonResponse
+from django.contrib.auth import get_user_model
 from datetime import datetime, timedelta, time as dt_time
 from salons.models import Salon
-
+from django.views.decorators.csrf import csrf_exempt
 from .serializers import (
     SalonSerializer, SalonDetailSerializer,
 )
@@ -19,6 +20,8 @@ import logging
 
 logger = logging.getLogger('booking')
 
+# Get the custom User model
+User = get_user_model()
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
@@ -107,3 +110,40 @@ def api_get_nearest_available_time(request):
     if isinstance(response, JsonResponse):
         return Response(response.json(), status=response.status_code)
     return response
+
+@csrf_exempt  # For API requests, consider alternative CSRF protection in production
+def admin_verify(request):
+    # Check for POST method
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Метод не поддерживается'}, status=405)
+    try:
+        # Parse JSON from request body
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'Некорректный JSON'}, status=400)
+
+    # Extract phone number from payload
+    phone_number = data.get('phone_number')
+    if not phone_number:
+        return JsonResponse({'success': False, 'error': 'Телефон не указан'}, status=400)
+    
+    # Normalize phone number: remove spaces and add '+' if missing
+    phone_number = phone_number.strip()
+    if not phone_number.startswith('+'):
+        phone_number = '+' + phone_number
+
+    # Try to get user by phone number
+    try:
+        user = User.objects.get(phone_number=phone_number)
+    except User.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Пользователь не найден'}, status=404)
+    
+    # Get the salons administered by the user
+    salons = user.administered_salons.all()
+    salons_list = [{'id': salon.id, 'name': salon.name} for salon in salons]
+    
+    if not salons_list:
+        return JsonResponse({'success': False, 'error': 'Пользователь не является администратором ни одного салона'}, status=403)
+    
+    # Return successful response with list of salons
+    return JsonResponse({'success': True, 'salons': salons_list})
