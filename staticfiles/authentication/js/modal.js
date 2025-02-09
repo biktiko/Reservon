@@ -3,6 +3,28 @@
  * Открывает модальное окно авторизации с заданным действием.
  * @param {string} action - Действие для загрузки соответствующего контента (например, 'login').
  */
+
+const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+const singleCodeWrapper = document.getElementById('single-code-wrapper');
+const fourCodeWrapper = document.getElementById('four-code-wrapper');
+
+window.addEventListener('DOMContentLoaded', function() {
+    const singleCodeWrapper = document.getElementById('single-code-wrapper');
+    const fourCodeWrapper = document.getElementById('four-code-wrapper');
+
+    if (isIOS) {
+        // Показываем одно поле (iOS)
+        singleCodeWrapper.style.display = 'block';
+        // Скрываем четыре поля
+        fourCodeWrapper.style.display = 'none';
+    } else {
+        // Показываем четыре поля (Android, Desktop)
+        singleCodeWrapper.style.display = 'none';
+        fourCodeWrapper.style.display = 'flex';
+    }
+});
+
 function openAuthModal(action, salonId="") {
     var modal = document.getElementById('auth-modal');
     var modalBody = document.getElementById('modal-body');
@@ -352,22 +374,30 @@ function loadModalContent(step, phone_number) {
  * Отправляет запрос на подтверждение введённого кода.
  */
 function submitVerifyCode() {
-    var phone_number = document.getElementById('id_phone_number').value;
-    var code = 
-        document.getElementById('code-1').value +
-        document.getElementById('code-2').value +
-        document.getElementById('code-3').value +
-        document.getElementById('code-4').value;
-    var submitButton = document.getElementById('submit-verify-btn');
 
-    console.log('submitVerifyCode called with code:', code);
+    const phone_number = document.getElementById('id_phone_number').value;
+    let code = '';
 
+    if (isIOS) {
+        // Собираем код из одного поля
+        code = document.getElementById('single-code-input').value;
+    } else {
+        // Собираем код из 4 полей
+        code =
+            document.getElementById('code-1').value +
+            document.getElementById('code-2').value +
+            document.getElementById('code-3').value +
+            document.getElementById('code-4').value;
+    }
+
+    // Дополнительная проверка: 4 или 6 цифр — зависит от того, какой длины у вас фактический код
+    // Ниже пример на 4 цифры:
     if (code.length !== 4 || !/^\d{4}$/.test(code)) {
         document.getElementById('verify-response').innerHTML = '<p>Пожалуйста, введите корректный код из 4 цифр.</p>';
         return;
     }
 
-    // Отключаем кнопку, чтобы предотвратить повторные клики
+    const submitButton = document.getElementById('submit-verify-btn');
     submitButton.disabled = true;
     submitButton.innerText = 'Подтверждение...';
 
@@ -380,8 +410,6 @@ function submitVerifyCode() {
         body: JSON.stringify({ 'phone_number': phone_number, 'code': code })
     })
     .then(response => {
-        console.log('Response status:', response.status);
-        // Проверяем, успешен ли ответ
         if (!response.ok) {
             return response.json().then(errData => {
                 throw new Error(errData.error || 'Неизвестная ошибка');
@@ -390,20 +418,19 @@ function submitVerifyCode() {
         return response.json();
     })
     .then(data => {
-        console.log(data)
-        if(data.success) {
-            console.log('success')
+        if (data.success) {
             if (data.redirect_to_booking) {
-                closeModal();
-                // Отправляем событие об успешном логине для продолжения бронирования
+                // Закрываем модалку
+                closeModal(); 
+                // Доп. действия...
                 const event = new Event('loginFromBookingSuccess');
                 document.dispatchEvent(event);
             } else {
                 closeModal();
                 location.reload();
             }
-        }
-        else if (data.next_step) {
+        } else if (data.next_step) {
+            // Переход к следующему шагу
             loadModalContent(data.next_step, data.phone_number);
         } else if (data.error) {
             document.getElementById('verify-response').innerHTML = '<p>' + data.error + '</p>';
@@ -414,7 +441,6 @@ function submitVerifyCode() {
         document.getElementById('verify-response').innerHTML = '<p>Не удалось подтвердить код. Пожалуйста, попробуйте позже.</p>';
     })
     .finally(() => {
-        // Включаем кнопку обратно
         submitButton.disabled = false;
         submitButton.innerText = 'Подтвердить';
     });
