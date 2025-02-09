@@ -4,12 +4,14 @@
  * @param {string} action - Действие для загрузки соответствующего контента (например, 'login').
  */
 
-const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
 const singleCodeWrapper = document.getElementById('single-code-wrapper');
 const fourCodeWrapper = document.getElementById('four-code-wrapper');
 
 window.addEventListener('DOMContentLoaded', function() {
+    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    logger.info(navigator.userAgent)
+    logger.info(isIOS)
     const singleCodeWrapper = document.getElementById('single-code-wrapper');
     const fourCodeWrapper = document.getElementById('four-code-wrapper');
 
