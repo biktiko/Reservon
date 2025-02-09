@@ -4,10 +4,11 @@
 
 
 {% block content %}
-    <!-- Отображаем заголовок в зависимости от наличия поискового запроса -->
+
     {% if q %}
-        <h2>Результаты поиска для "{{ q }}"</h2>
+        <h2 style="text-align: center;">Результаты поиска для "{{ q }}"</h2>
     {% endif %}
+
 
     <div class="salon-list">
         <link rel="stylesheet" href="{% static 'salons/css/salons.css' %}">

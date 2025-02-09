@@ -83,6 +83,7 @@
     width: 100%;
     max-width: 300px;
     border-radius: 8px;
+    margin-top: 8px;
 }
 
 .thumbnail-images img.selected {
@@ -121,6 +122,44 @@
 
 .salon-description, .salon-hours {
     margin-top: 20px;
+}
+
+.contact-bar {
+    display: flex;
+    flex-wrap: wrap;      /* Если места мало, иконки перенесутся на новую строку */
+    gap: 20px;            /* Расстояние между элементами */
+    justify-content: center; 
+    margin-top: 15px;     /* Отступ сверху */
+    margin-bottom: 5px;
+}
+
+.contact-item {
+    display: inline-flex; /* Иконка + текст в одной линии */
+    align-items: center;
+    gap: 8px;             /* Отступ между иконкой и текстом */
+    color: #fff;
+    text-decoration: none;
+    font-size: 0.95rem;   /* Можно слегка уменьшить шрифт, чтобы был аккуратнее */
+    background-color: #333; /* Опционально: можно задать небольшой фон */
+    padding: 6px 12px;    /* и сделать «плашку» */
+    border-radius: 6px;
+    transition: background-color 0.3s, transform 0.3s;
+}
+
+.contact-item:hover {
+    background-color: #f0a500;
+    color: #222;
+    transform: translateY(-2px);
+}
+
+.contact-item i {
+    font-size: 1.2rem;   /* Размер иконки */
+    color: #f0a500;      /* Акцентный цвет иконки */
+    transition: color 0.3s;
+}
+
+.contact-item:hover i {
+    color: #222;
 }
 
 .salon-hours ul {
@@ -219,6 +258,3 @@
         justify-content: flex-start; /* Выравниваем элементы по началу */
     }
 }
-
-
-

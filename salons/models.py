@@ -34,8 +34,6 @@ class Salon(models.Model):
         ('with_images', 'With images'),        # Мастера с изображениями
     ]
 
-    
-
     name = models.CharField('Salon name', max_length=50)
     logo = models.ImageField('Logo', upload_to='salon_logos/', blank=True, null=True)
     address = models.CharField('Address', max_length=100)
@@ -51,6 +49,9 @@ class Salon(models.Model):
     description_hy = models.TextField('description_hy', blank=True)
     description_ru = models.TextField('description_ru', blank=True)
     description_eng = models.TextField('description_eng', blank=True)
+    phone_number = models.CharField('Phone number', max_length=20, blank=True, null=True)
+    instagram = models.CharField('Instagram', max_length=100, blank=True, null=True)
+    facebook = models.CharField('Facebook', max_length=100, blank=True, null=True)
     reservDays = models.IntegerField('Reserv days', default=9)
     mod = models.CharField(choices=MOD_CHOICES, max_length=10, default='category')
     appointment_mod = models.CharField(choices=APPOINTMENT_MOD_CHOICES, max_length=10, default='auto')
@@ -109,6 +110,7 @@ class Service(models.Model):
     duration = models.DurationField()
     salon = models.ForeignKey(Salon, on_delete=models.CASCADE, related_name='services')
     category = models.ForeignKey(ServiceCategory, on_delete=models.SET_NULL, null=True, blank=True, related_name='services')
+    description = models.TextField(blank=True, null=True)
 
     status = models.CharField(
         max_length=10,
@@ -142,6 +144,7 @@ class Barber(models.Model):
     STATUS_CHOICES = [
         ('active', 'Active'),
         ('suspend', 'Suspend'),
+        ('disable', 'Disable'),
     ]
 
     status = models.CharField(
@@ -179,6 +182,7 @@ class BarberService(models.Model):
     image = models.ImageField(upload_to='salons/barberservices', blank=True, null=True)
     price = models.DecimalField(max_digits=8, decimal_places=2, blank=True, null=True)
     duration = models.DurationField(blank=True, null=True, default=20)
+    description = models.TextField(blank=True, null=True)
 
     category = models.ForeignKey(
         ServiceCategory, 

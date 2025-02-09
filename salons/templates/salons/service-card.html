@@ -28,6 +28,7 @@
         {% endif %}
         <div class="service-info">
             <h4 class="service-name">{{ barber_service.name }}</h4>
+            {% if barber_service.description %} <h5 class="service-description">{{ barber_service.description }}</h5> {% endif %}
             <p class="service-details">{{ barber_service.price|floatformat:0 }} драм • {{ barber_service.duration|duration_minutes }} минут</p>
         </div>
     </div>

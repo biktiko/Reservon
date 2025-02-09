@@ -15,6 +15,6 @@
         </div>
     </div>
     <div class="salon-description">
-        <p class="description">{{ salon.shortDescription_hy }}</p>
+        {% if salon.shortDescription_hy %} <p class="description">{{ salon.shortDescription_hy }}</p> {% endif %}
     </div>
 </a>

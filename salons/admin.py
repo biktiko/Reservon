@@ -161,19 +161,19 @@ class BarberAvailabilityInline(admin.TabularInline):
 class BarberServiceInline(admin.TabularInline):
     model = BarberService
     extra = 1
-    fields = ('name', 'image', 'price', 'duration', 'category', 'status')
+    fields = ('name', 'image', 'description', 'price', 'duration', 'category', 'status')
     show_change_link = True
 
 
 @admin.register(Barber)
 class BarberAdmin(ImportExportModelAdmin):
     form = BarberAdminForm
-    list_display = ('user', 'name', 'salon', 'get_categories', 'get_services', 'get_barber_services_names')
+    list_display = ('user', 'name', 'salon', 'get_categories', 'get_services', 'get_barber_services_names', 'status')
     list_filter = ('salon', 'categories')
     search_fields = ('name', 'salon__name')
     filter_horizontal = ('categories', 'services')
     autocomplete_fields = ['salon', 'categories', 'user']
-    fields = ('salon', 'user', 'name', 'avatar', 'description', 'categories', 'services')
+    fields = ('salon', 'user', 'name', 'avatar', 'description', 'categories', 'services', 'status')
     inlines = [BarberAvailabilityInline, BarberServiceInline]
 
     def get_categories(self, obj):
@@ -236,6 +236,9 @@ class SalonAdmin(ImportExportModelAdmin):
                 'shortDescription_hy', 'shortDescription_ru', 'shortDescription_eng',
                 'description_hy', 'description_ru', 'description_eng'
             )
+        }),
+        ('Salon contacts', {
+            'fields': ('phone_number', 'instagram', 'facebook')
         }),
         ('Telegram settings', {
             'fields': ('telegram_status', 'telegram_appointmentMod', 'telegram_barbersMod')
