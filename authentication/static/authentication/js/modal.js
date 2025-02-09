@@ -8,12 +8,14 @@
 const singleCodeWrapper = document.getElementById('single-code-wrapper');
 const fourCodeWrapper = document.getElementById('four-code-wrapper');
 
-window.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function() {
     const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
     logger.info('navigator', navigator.userAgent)
     logger.info('isIOS', isIOS)
     const singleCodeWrapper = document.getElementById('single-code-wrapper');
     const fourCodeWrapper = document.getElementById('four-code-wrapper');
+    logger.info('singleCodeWrapper', singleCodeWrapper)
+    logger.info('fourCodeWrapper', fourCodeWrapper)
 
     if (isIOS) {
         // Показываем одно поле (iOS)
