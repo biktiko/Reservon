@@ -15,5 +15,5 @@ urlpatterns = [
     path('salons/<int:salon_id>/book/', api_create_booking, name='api_create_booking'),
     path('salons/availability/', api_get_available_minutes, name='api_salon_availability'),
     path('salons/get_nearest_available_time/', api_get_nearest_available_time, name='api_salon_availability'),
-    path('admin/admin/verify/', admin_verify, name='api_salon_availability'),
+    path('admin/verify/', admin_verify, name='admin_verify'),
 ]
