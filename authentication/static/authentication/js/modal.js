@@ -5,29 +5,31 @@
  */
 
 
-const singleCodeWrapper = document.getElementById('single-code-wrapper');
-const fourCodeWrapper = document.getElementById('four-code-wrapper');
 
-document.addEventListener('DOMContentLoaded', function() {
-    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-    logger.info('navigator', navigator.userAgent)
-    logger.info('isIOS', isIOS)
+const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+function applyIOSCheck() {
     const singleCodeWrapper = document.getElementById('single-code-wrapper');
     const fourCodeWrapper = document.getElementById('four-code-wrapper');
-    logger.info('singleCodeWrapper', singleCodeWrapper)
-    logger.info('fourCodeWrapper', fourCodeWrapper)
+
+    // Если на странице нет таких элементов — выходим
+    if (!singleCodeWrapper || !fourCodeWrapper) {
+        return;
+    }
 
     if (isIOS) {
-        // Показываем одно поле (iOS)
+        // Показываем поле для iOS
         singleCodeWrapper.style.display = 'block';
-        // Скрываем четыре поля
         fourCodeWrapper.style.display = 'none';
     } else {
-        // Показываем четыре поля (Android, Desktop)
+        // Показываем четыре поля для Android/Desktop
         singleCodeWrapper.style.display = 'none';
         fourCodeWrapper.style.display = 'flex';
     }
-});
+}
+
+console.log('navigator', navigator.userAgent)
+console.log('isIOS', isIOS)
 
 function openAuthModal(action, salonId="") {
     var modal = document.getElementById('auth-modal');
@@ -365,6 +367,10 @@ function loadModalContent(step, phone_number) {
             modalBody.innerHTML = data.html;
             // Переназначаем обработчики событий
             attachModalEventListeners();
+
+            // Переключаем поля iOS/Android
+            applyIOSCheck();
+
             // Инициализируем автофокусировку для новых полей ввода кода
             initializeCodeInputFocus();
         } else if (data.error) {
