@@ -338,7 +338,13 @@ def get_available_minutes(request):
 
         if booking_details:
             # Общая длительность
-            total_cat_duration = sum(c['duration'] for c in active_categories)
+            # total_cat_duration = sum(c['duration'] for c in active_categories)
+
+            try:
+                total_cat_duration = sum(int(category.get('duration', 0)) for category in booking_details)
+            except Exception as e:
+                logger.error("Ошибка при расчёте общей длительности услуг: %r", e)
+                total_cat_duration = salon.default_duration or 30
 
             for minute in range(0, 60, 5):
                 minute_start = start_of_hour + timedelta(minutes=minute)
@@ -356,9 +362,10 @@ def get_available_minutes(request):
                 local_start = minute_start
                 for cat_obj in active_categories:
                     cat_id = cat_obj['category_id']
-                    dur_cat = cat_obj['duration']
-                    barb_id = cat_obj['barber_id']
+                    dur_cat = int(cat_obj.get('duration', 0))
                     end_cat = local_start + timedelta(minutes=dur_cat)
+                    barb_id = cat_obj['barber_id']
+                    local_start = end_cat
 
                     if barb_id != 'any':
                         # Конкретный барбер
@@ -1000,35 +1007,43 @@ def book_appointment(request, id):
             appointment.barber_services.set(appointments_to_create)
 
         if not settings.DEBUG:
-            admins = salon.admins.all()
-            for admin in admins:
-                profile = admin.main_profile  # вот объект Profile
+            notified_barber_ids = set()
+            # Итерируем по созданным AppointmentBarberService (appointments_to_create)
+            unique_barbers = {abs_obj.barber for abs_obj in appointments_to_create}
+            master_names = ", ".join(b.name for b in unique_barbers)
+            for abs_obj in appointments_to_create:
+                barber = abs_obj.barber
+                if barber.id in notified_barber_ids:
+                    continue  # уже уведомляли этого барбера
+                notified_barber_ids.add(barber.id)
+                
+                # Получаем профиль барбера через связанного пользователя
+                try:
+                    profile = barber.user.main_profile  # объект Profile
+                except AttributeError:
+                    logger.warning("Профиль барбера %r не найден.", barber)
+                    continue
 
-                 # Получаем номер телефона пользователя
+                # Получаем номер телефона клиента (если пользователь аутентифицирован)
                 if request.user.is_authenticated:
                     try:
-                        user_phone_number = request.user.main_profile.phone_number
+                        client_phone_number = request.user.main_profile.phone_number
                     except AttributeError:
-                        logger.warning("Профиль пользователя не найден.")
-                        user_phone_number = "Неизвестен"
+                        logger.warning("Профиль клиента не найден.")
+                        client_phone_number = "Неизвестен"
                 else:
-                    user_phone_number = "Неизвестен"
+                    client_phone_number = "Неизвестен"
 
-                # whatsapp
+                # Отправка уведомления через WhatsApp, если профиль барбера подписан на WhatsApp
                 if profile.whatsapp:
                     TEMPLATE_SID = "HXa27885cd64b14637a00e845fbbfaa326"
-       
                     datetime_str = (
-                        appointment.start_datetime.strftime("%d.%m %H:%M")
-                        + "-" +
+                        appointment.start_datetime.strftime("%d.%m %H:%M") +
+                        "-" +
                         appointment.end_datetime.strftime("%H:%M")
                     )
-
-                    barbers_qs = appointment.barbers.all()
-                    master_names = ", ".join(b.name for b in barbers_qs) if barbers_qs else "Без мастера"
-
                     dataTest = {
-                        "client_phoneNumber": user_phone_number,
+                        "client_phoneNumber": client_phone_number if client_phone_number else "Неизвестен",
                         "datetime": datetime_str,
                         "master_name": master_names,
                         "admin_number": profile.whatsapp_phone_number
@@ -1039,16 +1054,19 @@ def book_appointment(request, id):
                         "2": dataTest["master_name"],
                         "3": dataTest["client_phoneNumber"]
                     }
-
-                    # Преобразуем словарь в JSON
+                    logger.info('dataTest[admin_number]')
+                    logger.info(dataTest["admin_number"])
                     variables_str = json.dumps(content_variables_dict, ensure_ascii=False)
+                    logger.info("ContentVariables JSON: %s", variables_str)
 
-                    # Вызываем нашу функцию из twilio_service.py
-                    send_whatsapp_message(dataTest["admin_number"], TEMPLATE_SID, variables_str)
+                    try:
+                        send_whatsapp_message(dataTest["admin_number"], TEMPLATE_SID, variables_str)
+                    except Exception as e:
+                        logger.error("Ошибка при отправке WhatsApp уведомления для барбера %r: %s", barber, e)
 
-                # push-уведомления
+                # Отправка push-уведомлений для барбера (а не админа)
                 if profile.push_subscribe:
-                    push_subscriptions = PushSubscription.objects.filter(user=admin)
+                    push_subscriptions = PushSubscription.objects.filter(user=barber.user)
                     for subscription in push_subscriptions:
                         subscription_info = {
                             "endpoint": subscription.endpoint,
@@ -1059,11 +1077,18 @@ def book_appointment(request, id):
                         }
                         payload = {
                             "head": "Новое бронирование",
-                            "body": f"Пользователь успешно забронировал услугу.",
+                            "body": f"Пользователь успешно забронировал услугу для {barber.name}.",
                             "icon": "/static/main/img/notification-icon.png",
-                            "url": "/user-account/bookings/"                }
-                        send_push_notification_task.delay(subscription_info, json.dumps(payload))
-                        logger.info(f"Задача на отправку уведомления создана для {admin.username}.")
+                            "url": "/user-account/bookings/"
+                        }
+                        try:
+                            # Обратите внимание: ошибка "Missing 'aud' from claims" возникает, если в настройках VAPID
+                            # не указан параметр "aud". Для исправления необходимо в настройках вашего сервиса
+                            # (например, в settings.py или при инициализации pywebpush) установить 'aud' равным URL вашего сайта.
+                            send_push_notification_task.delay(subscription_info, json.dumps(payload))
+                            logger.info(f"Задача на отправку push уведомления создана для барбера {barber.name}.")
+                        except Exception as e:
+                            logger.error("Ошибка при отправке push уведомления для барбера %r: %s", barber, e)
 
             logger.info(f"Бронирование успешно создано для пользователя - {request.user if request.user.is_authenticated else 'Анонимный пользователь'}")
         else:
@@ -1207,3 +1232,18 @@ def increment_cache_version_on_appointment_change(sender, instance, **kwargs):
     current_version = cache.get(f"available_minutes_version_{salon_id}", 1)
     cache.set(f"available_minutes_version_{salon_id}", current_version + 1, None)
     logger.debug(f"Версия кэша для салона {salon_id} увеличена до {current_version + 1} из-за изменения бронирования.")
+
+def normalize_phone(phone: str) -> str:
+    """
+    Нормализует номер телефона в формат E.164 (например, +374...), 
+    удаляя лишние символы и пробелы.
+    """
+    if not phone:
+        return ""
+    phone = phone.strip()
+    allowed_chars = set("0123456789+")
+    phone = "".join(ch for ch in phone if ch in allowed_chars)
+    # Если телефон не начинается с '+', добавляем
+    if not phone.startswith("+"):
+        phone = "+" + phone
+    return phone

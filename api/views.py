@@ -93,3 +93,17 @@ def api_get_available_minutes(request):
         return Response(response.json(), status=response.status_code)
     return response
 
+@api_view(['POST'])
+def api_get_nearest_available_time(request):
+    # DRF Request -> Django HttpRequest
+    django_request = request._request  
+
+    # Возможные случаи, если старая вьюшка ожидает request.POST:
+    # нужно подложить в django_request.POST нужные данные (не всегда обязательно).
+    # django_request.POST = request.data  # иногда может помочь, если в старой вьюшке используется request.POST[...]
+    from salons.views import get_nearest_available_time as get_nearest_available_time_view
+    response = get_nearest_available_time_view(django_request)
+
+    if isinstance(response, JsonResponse):
+        return Response(response.json(), status=response.status_code)
+    return response

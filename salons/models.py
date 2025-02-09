@@ -267,3 +267,4 @@ class AppointmentBarberService(models.Model):
 
     def __str__(self):
         return f"{self.appointment} - {self.barber.name if self.barber else 'Любой мастер'}"
+
