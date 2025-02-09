@@ -111,7 +111,7 @@ def api_get_nearest_available_time(request):
         return Response(response.json(), status=response.status_code)
     return response
 
-@csrf_exempt  # For API requests, consider alternative CSRF protection in production
+@api_view(['POST'])
 def admin_verify(request):
     # Check for POST method
     if request.method != 'POST':
