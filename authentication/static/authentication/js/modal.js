@@ -10,8 +10,8 @@ const fourCodeWrapper = document.getElementById('four-code-wrapper');
 
 window.addEventListener('DOMContentLoaded', function() {
     const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-    logger.info(navigator.userAgent)
-    logger.info(isIOS)
+    logger.info('navigator', navigator.userAgent)
+    logger.info('isIOS', isIOS)
     const singleCodeWrapper = document.getElementById('single-code-wrapper');
     const fourCodeWrapper = document.getElementById('four-code-wrapper');
 
