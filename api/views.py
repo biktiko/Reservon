@@ -111,39 +111,36 @@ def api_get_nearest_available_time(request):
         return Response(response.json(), status=response.status_code)
     return response
 
+@csrf_exempt
 @api_view(['POST'])
 def admin_verify(request):
-    # Check for POST method
     if request.method != 'POST':
         return JsonResponse({'success': False, 'error': 'Метод не поддерживается'}, status=405)
     try:
-        # Parse JSON from request body
         data = json.loads(request.body)
     except json.JSONDecodeError:
         return JsonResponse({'success': False, 'error': 'Некорректный JSON'}, status=400)
 
-    # Extract phone number from payload
     phone_number = data.get('phone_number')
     if not phone_number:
         return JsonResponse({'success': False, 'error': 'Телефон не указан'}, status=400)
     
-    # Normalize phone number: remove spaces and add '+' if missing
     phone_number = phone_number.strip()
     if not phone_number.startswith('+'):
         phone_number = '+' + phone_number
 
-    # Try to get user by phone number
     try:
-        user = User.objects.get(phone_number=phone_number)
+        # Поиск пользователя по полю phone_number в связанном профиле main_profile
+        user = User.objects.get(main_profile__phone_number=phone_number)
     except User.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Пользователь не найден'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
     
-    # Get the salons administered by the user
     salons = user.administered_salons.all()
     salons_list = [{'id': salon.id, 'name': salon.name} for salon in salons]
     
     if not salons_list:
         return JsonResponse({'success': False, 'error': 'Пользователь не является администратором ни одного салона'}, status=403)
     
-    # Return successful response with list of salons
     return JsonResponse({'success': True, 'salons': salons_list})
