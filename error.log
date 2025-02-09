@@ -997,3 +997,8 @@ Traceback (most recent call last):
     candidate_slots = [slot for slot in candidate_slots if slot <= overall_allowed]
                                                            ^^^^^^^^^^^^^^^^^^^^^^^
 TypeError: can't compare offset-naive and offset-aware datetimes
+ERROR 2025-02-05 23:37:09,513 log Internal Server Error: /salons/1/book/
+ERROR 2025-02-05 23:41:33,406 log Internal Server Error: /salons/1/book/
+ERROR 2025-02-05 23:42:29,159 log Internal Server Error: /salons/1/book/
+ERROR 2025-02-06 21:38:26,524 log Internal Server Error: /salons/1/book/
+ERROR 2025-02-06 21:39:14,199 log Internal Server Error: /salons/1/book/
