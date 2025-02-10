@@ -252,8 +252,6 @@ class Appointment(models.Model):
             item.get_total_duration() for item in self.barber_services.all()
         )
         return total_duration
-
-
 class AppointmentBarberService(models.Model):
     """Таблица для хранения связки Appointment - Barber - [Services].
     Предполагается, что здесь services - это обычные 'Service' (режим category)."""
