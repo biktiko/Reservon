@@ -1,0 +1,25 @@
+.telegram-bot-box {
+    display: block;            /* Чтобы ссылка была блочной, во всю ширину */
+    background-color: #0088cc; /* «Телеграм-голубой» */
+    color: #fff;
+    text-decoration: none;     /* Убираем подчеркивание */
+    border-radius: 8px;
+    padding: 20px;
+    margin: 20px 0;
+    text-align: center;
+    font-size: 1.1rem;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+/* Иконка Телеграм + небольшой отступ */
+.telegram-bot-box i {
+    margin-right: 10px;
+    font-size: 1.4em;
+    vertical-align: middle;
+}
+
+/* При наведении меняем фон/цвет текста */
+.telegram-bot-box:hover {
+    background-color: #0099dd;
+    color: #eef;
+}

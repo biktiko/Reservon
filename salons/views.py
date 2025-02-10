@@ -80,7 +80,7 @@ def salon_detail(request, id):
         for entry in categories_with_services:
             category = entry['category']
 
-            barbers = Barber.objects.filter(categories=category, salon=salon)
+            barbers = Barber.objects.filter(categories=category, salon=salon, status='active')
 
             barbers_list = []
             for barber in barbers:
@@ -88,7 +88,7 @@ def salon_detail(request, id):
                     'id': barber.id,
                     'name': barber.name,
                     'avatar': barber.get_avatar_url(),
-                    'description': barber.description or ''
+                    'description': barber.description or '',
                 })
             barbers_by_category[category.id] = barbers_list
 
@@ -129,9 +129,10 @@ def salon_detail(request, id):
             barbers = Barber.objects.filter(
                 categories=category,
                 salon=salon,
-                barber_services__category=category
+                barber_services__category=category,
+                status='active'
             ).distinct()
-
+            
             barbers_list = []
 
             for barber in barbers:
@@ -139,7 +140,7 @@ def salon_detail(request, id):
                     'id': barber.id,
                     'name': barber.name,
                     'avatar': barber.get_avatar_url(),
-                    'description': barber.description or ''
+                    'description': barber.description or '',
                 })
             barbers_by_category[category.id] = barbers_list
 
@@ -162,7 +163,7 @@ def salon_detail(request, id):
 
 def get_barber_availability(request, barber_id):
     try:
-        barber = Barber.objects.get(id=barber_id)
+        barber = Barber.objects.get(id=barber_id, status='active')
         availability = barber.availability
         return JsonResponse({'availability': availability})
     except Barber.DoesNotExist:
@@ -860,7 +861,8 @@ def book_appointment(request, id):
                 availabilities__day_of_week=start_datetime.strftime('%A').lower(),
                 availabilities__start_time__lte=start_datetime.time(),
                 availabilities__end_time__gte=end_datetime.time(),
-                availabilities__is_available=True
+                availabilities__is_available=True,
+                status='active'
             ).exclude(
                 id__in=busy_barber_ids
             ).order_by('id').first()
@@ -903,7 +905,7 @@ def book_appointment(request, id):
     
                 if barber_id != 'any':
                     try:
-                        barber = Barber.objects.select_for_update().get(id=barber_id, salon=salon)
+                        barber = Barber.objects.select_for_update().get(id=barber_id, salon=salon, status='active')
                         logger.debug(f"Выбран барбер {barber.name} (ID: {barber.id}) для категории {category_id}")
                     except Barber.DoesNotExist:
                         logger.warning(f"Барбер с ID {barber_id} не найден в салоне {salon}")
@@ -942,7 +944,8 @@ def book_appointment(request, id):
                         availabilities__day_of_week=start_datetime.strftime('%A').lower(),
                         availabilities__start_time__lte=start_datetime.time(),
                         availabilities__end_time__gte=interval_end.time(),
-                        availabilities__is_available=True
+                        availabilities__is_available=True,
+                        status='active'
                     ).exclude(
                         id__in=busy_barber_ids
                     ).first()

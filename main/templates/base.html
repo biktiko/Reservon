@@ -1,6 +1,7 @@
 <!-- C:\Reservon\Reservon\main\templates\base.html -->
 {% load static %}
 {% load socialaccount %}
+{% load i18n %}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -42,13 +43,24 @@
           <div id="modal-body"></div>
       </div>
     </div>
-  
+    
+    <!-- <section class="intro-section" id="intro-section">
+      <div class="intro-content">
+          <span class="close-icon" id="close-intro">&times;</span>
+          
+          <p>{% trans "Reservon — это ваш лучший помощник для онлайн бронирования в салонах красоты." %}</p>
+
+          <a href="/about/" class="btn learn-more">{% trans "Узнать больше" %}</a>
+      </div>
+  </section> -->
+
     {% if request.path == "/salons/" %}
       {% include "main/search.html" with q=q %}
     {% endif %}
 
+
     <main>
-      {% block section %}{% endblock %}
+      
       {% block content %} {% endblock %}
     </main>
 
@@ -65,6 +77,7 @@
     <script src="{% static 'authentication/js/modal.js' %}"></script>
     <script src="{% static 'user_account/js/edit_booking.js' %}"></script>
     <script src="{% static 'main/js/push_subscription.js' %}"></script>
+    <script src="{% static 'main/js/section.js' %}"></script>
 
 
   </body>

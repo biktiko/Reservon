@@ -1,18 +1,34 @@
-<!-- authentication/templates/authentication/verify_code.html -->
+<!-- verify_code.html -->
 {% load static %}
+
 <link rel="stylesheet" href="{% static 'authentication/css/modal.css' %}">
 
 <h2>Введите код подтверждения</h2>
+
 <form id="verify-code-form">
     <input type="hidden" id="id_phone_number" value="{{ phone_number }}">
-    <div class="code-inputs">
+
+    <!-- Поле для iOS -->
+    <div id="single-code-wrapper" style="display: none;">
+        <input
+            type="text"
+            id="single-code-input"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            maxlength="4"
+            autocomplete="one-time-code"
+            placeholder="Код из SMS"
+        />
+    </div>
+
+    <!-- Поля для Android / Desktop -->
+    <div class="code-inputs" id="four-code-wrapper" style="display: none;">
         <input
             type="text"
             inputmode="numeric"
             pattern="[0-9]*"
             maxlength="1"
             class="code-input"
-            autofocus
             id="code-1"
         />
         <input
@@ -21,7 +37,6 @@
             pattern="[0-9]*"
             maxlength="1"
             class="code-input"
-            autofocus
             id="code-2"
         />
         <input
@@ -30,7 +45,6 @@
             pattern="[0-9]*"
             maxlength="1"
             class="code-input"
-            autofocus
             id="code-3"
         />
         <input
@@ -39,12 +53,13 @@
             pattern="[0-9]*"
             maxlength="1"
             class="code-input"
-            autofocus
             id="code-4"
         />
     </div>
-    <button type="button" id="submit-verify-btn">Подтвердить</button>
+
+    <button type="button" id="submit-verify-btn" onclick="submitVerifyCode()">Подтвердить</button>
 </form>
 
 <div id="verify-response"></div>
+
 <p>Не получили код? <button type="button" id="resend-code-btn">Отправить заново</button></p>

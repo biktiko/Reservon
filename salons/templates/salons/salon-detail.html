@@ -6,6 +6,7 @@
 {% load duration_extras %}
 {% load custom_tags %}
 {% block content %}
+{% load facebook_extras %}
 {% load i18n %}
 {% get_current_language as LANGUAGE_CODE %}
 {% get_available_languages as LANGUAGES %}
@@ -15,6 +16,7 @@
 <link rel="stylesheet" href="{% static 'salons/css/salon_detail.css' %}">
 <link rel="stylesheet" href="{% static 'salons/css/barber-selection.css' %}">
 <link rel="stylesheet" href="{% static 'salons/css/booking.css' %}">
+<link rel="stylesheet" href="{% static 'salons/css/telegram_bot.css' %}">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
 <script src="{% static 'salons/js/map.js' %}"></script>
@@ -53,6 +55,37 @@
                     <p>{{ salon.description_hy }}</p>
                 </div>
 
+                <div class="contact-bar">
+                    {% if salon.phone_number %}
+                        <a href="tel:{{ salon.phone_number }}" class="contact-item">
+                            <i class="fas fa-phone-alt"></i>
+                            <span>{{ salon.phone_number }}</span>
+                        </a>
+                    {% endif %}
+                
+                    {% if salon.instagram %}
+                        <a href="https://instagram.com/{{ salon.instagram }}" target="_blank" rel="noopener" class="contact-item">
+                            <i class="fab fa-instagram"></i>
+                            {{ salon.instagram }}
+                        </a>
+                    {% endif %}
+                    
+                    {% if salon.facebook %}
+                    <a href="{{ salon.facebook }}" target="_blank" rel="noopener" class="contact-item">
+                        <i class="fab fa-facebook"></i>
+                        {% with user_name=salon.facebook|facebook_username %}
+                            {% if user_name %}
+                                {{ user_name }}
+                            {% else %}
+                                Facebook
+                            {% endif %}
+                        {% endwith %}
+                    </a>
+                {% endif %}
+
+                </div>
+                
+                
             </div>
 
             <!-- Правая часть -->
@@ -101,6 +134,11 @@
         </div>
     </div>
 
+    <a href="https://t.me/Reservon_bot" target="_blank" rel="noopener" class="telegram-bot-box">
+        <i class="fab fa-telegram-plane"></i>
+        Вы также можете записаться через наш Telegram бот: @reservon_bot
+    </a>
+    
     <div id="map" class="map-container"></div>
 
      <!-- Элемент для хранения данных барберов в JSON -->
