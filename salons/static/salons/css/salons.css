@@ -150,6 +150,7 @@
     .salon-info h2 {
         font-size: 1.2em;
         margin: 0 0 5px;
+        text-align: left;
     }
 
     .salon-info .address {
