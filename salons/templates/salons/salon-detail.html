@@ -121,15 +121,14 @@
                     <p id="summary-text">{% trans "Время не выбрано" %}</p>
                 </div>
             
+                <!-- Форма бронирования -->
+                {% include 'salons/salon-reserv.html' %}
+
                 <!-- Итоговая цена и длительность -->
                 <div class="total-summary">
-                    <h3>Итоговая информация</h3>
                     <p>Итоговая цена: <span id="total-price">{{ salon.default_price }}</span>&nbsp;{% trans "драм" %}</p>
                     <p>Общее время: <span id="total-duration">{{ salon.default_duration }}</span>&nbsp;{% trans "минут" %}</p>
                 </div>
-            
-                <!-- Форма бронирования -->
-                {% include 'salons/salon-reserv.html' %}
             </div>
         </div>
     </div>

@@ -57,6 +57,10 @@ h1, h2, h3, h4, p {
   margin-bottom: 15px;
 }
 
+h1, h2, h3 {
+  text-align: center;
+}
+
 a {
     text-decoration: none;
 }
@@ -77,8 +81,4 @@ button, .btn, input[type="submit"] {
   font-size: 1rem;
   transition: background-color 0.3s;
   margin-bottom: 10px;
-}
-
-button:hover, .btn:hover, input[type="submit"]:hover {
-  background-color: #e0a500; /* чуть светлее вариант */
 }

@@ -40,7 +40,7 @@
 .booking-button {
     width: 100%;
     padding: 15px;
-    background: #f39c12;
+    background: #124df3;
     color: #fff;
     border: none;
     border-radius: 8px;
@@ -50,8 +50,8 @@
     margin-top: 20px;
 }
 
-.booking-button:hover {
-    background: #e67e22;
+.booking-button:hover{
+    transform: scale(1.02)
 }
 
 #user-comment{

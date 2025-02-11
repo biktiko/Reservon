@@ -13,6 +13,18 @@
     width: 100%;
 }
 
+
+.salon-info,
+.right-section {
+    /* background-color: #444; */
+    background-color: #43424291;
+    padding: 10px 20px; /* Отступы: 10px сверху и снизу, 20px слева и справа */
+}
+
+.right-section h2 h3{
+    text-align: center;
+}
+
 .salon-container {
     display: flex;
     flex-direction: column;
@@ -122,15 +134,12 @@
 }
 
 .contact-item {
-    display: inline-flex; /* Иконка + текст в одной линии */
+    display: inline-flex;
     align-items: center;
-    gap: 8px;             /* Отступ между иконкой и текстом */
+    gap: 8px;
     color: #fff;
     text-decoration: none;
-    font-size: 0.95rem;   /* Можно слегка уменьшить шрифт, чтобы был аккуратнее */
-    padding: 6px 4px;    /* и сделать «плашку» */
-    border-radius: 10px;
-    transition: background-color 0.3s, transform 0.3s;
+    font-size: 0.85rem;
 }
 
 .contact-item:hover {
@@ -150,19 +159,6 @@
 
 .salon-hours li {
     margin: 5px 0;
-}
-
-.total-summary {
-    background: #222;
-    padding: 15px;
-    border-radius: 8px;
-    margin-top: 20px;
-    font-size: 1.2em;
-}
-
-.total-summary h3 {
-    margin: 0;
-    font-size: 1.4em;
 }
 
 .date-time-selection {
@@ -210,7 +206,7 @@
 
 .options div.selected, .date-row div.selected, .hour-row div.selected, .minute-row div.selected {
     /* background-color: #28a745; */
-    background-color: #4ea8adc2;
+    background-color: #124df3cf;
     color: #fff;
 }
 
@@ -220,13 +216,6 @@
     color: #ccc;
     margin-top: 15px;
     font-style: italic;
-}
-
-.salon-info,
-.right-section {
-    /* background-color: #444; */
-    background-color: #434242c2;
-    padding: 10px 20px; /* Отступы: 10px сверху и снизу, 20px слева и справа */
 }
 
 /* Стили для мобильных устройств */
