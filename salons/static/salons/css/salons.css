@@ -2,12 +2,11 @@
 .salon-list {
     width: 80%;
     margin: 0 auto;
-    padding: 20px 0;
 }
 
 /* Стили карточки салона */
 .salon-card {
-    background-color: #1a1a1a;
+    background-color: #312f2fad;
     border: 1px solid #333;
     border-radius: 8px;
     margin: 20px 0;
@@ -29,12 +28,6 @@
 .salon-info .description {
     color: #fff;
     transition: color 0.3s ease;
-}
-
-.salon-card:hover .salon-info h2,
-.salon-card:hover .salon-info .address,
-.salon-card:hover .salon-info .description {
-    color: #f0a500;
 }
 
 .salon-card:visited {
@@ -68,58 +61,21 @@
     font-size: 1.6em;
 }
 
+.salon-info p {
+    margin-top: 0px;
+}
+
 .salon-info .address {
     font-size: 0.9em;
     color: #ccc;
-    margin-bottom: 10px;
-}
 
-/* Описание салона */
-.salon-description {
-    padding: 15px;
 }
 
 .salon-description .description {
     color: #fff;
     line-height: 1.4em;
-}
-
-/* Адаптивные стили для мобильных устройств */
-@media (max-width: 600px) {
-    .salon-top {
-        display: flex;
-        flex-direction: row; /* Оставляем изображение и информацию в ряд */
-        align-items: center; /* Центрируем по вертикали */
-        justify-content: flex-start; /* Выравниваем по левому краю */
-    }
-
-    .salon-image img {
-        width: 130px; 
-        height: auto;
-    }
-
-    .salon-info {
-        padding: 10px;
-    }
-
-    .salon-info h2 {
-        font-size: 1.2em;
-        margin: 0 0 5px;
-    }
-
-    .salon-info .address {
-        font-size: 0.9em;
-        margin-bottom: 5px;
-    }
-
-    .salon-description {
-        padding: 10px;
-    }
-
-    .salon-description .description {
-        font-size: 0.9em;
-        line-height: 1.2em;
-    }
+    padding: 15px;
+    padding-top: 0px;
 }
 
 /* Стили для контейнера услуг */
@@ -167,3 +123,47 @@
         width: 100%; /* Одна карточка в ряд на маленьких экранах */
     }
 }
+
+/* Адаптивные стили для мобильных устройств */
+@media (max-width: 600px) {
+
+    .salon-list{
+        width: 90%;
+    }
+
+    .salon-top {
+        display: flex;
+        flex-direction: row; /* Оставляем изображение и информацию в ряд */
+        align-items: center; /* Центрируем по вертикали */
+        justify-content: flex-start; /* Выравниваем по левому краю */
+    }
+
+    .salon-image img {
+        width: 130px; 
+        height: auto;
+    }
+
+    .salon-info {
+        padding: 10px;
+    }
+
+    .salon-info h2 {
+        font-size: 1.2em;
+        margin: 0 0 5px;
+    }
+
+    .salon-info .address {
+        font-size: 0.9em;
+        margin-bottom: 5px;
+    }
+
+    .salon-description {
+        padding: 10px;
+    }
+
+    .salon-description .description {
+        font-size: 0.9em;
+        line-height: 1.2em;
+    }
+}
+

@@ -14,12 +14,10 @@
 
 /* Стили для поля ввода */
 .search-container input[type="text"] {
-    width: 70%;
     padding: 12px 15px 12px 40px; /* Добавляем отступ для иконки */
     font-size: 1rem;
-    border: 1px solid #333;
     border-radius: 5px;
-    background-color: #1a1a1a;
+    background-color: #312f2fad;
     color: #fff;
     outline: none;
     transition: border-color 0.3s ease;
@@ -35,8 +33,11 @@
 
 /* Адаптивные стили для мобильных устройств */
 @media (max-width: 600px) {
+    .search-container {
+        width: 90%;
+    }
+
     .search-container input[type="text"] {
-        width: 60%;
         font-size: 0.9rem;
     }
 

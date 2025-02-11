@@ -1,43 +1,16 @@
 /* unified.css */
 
 /* Основные цвета и стили */
-body {
+/* body {
     background-color: #333;
     color: #fff;
     font-family: 'Arial', sans-serif;
     margin: 0;
     padding: 0;
-}
+} */
 
 #content, .page-content {
     padding: 20px;
-}
-
-h1, h2, h3, h4 {
-    color: #fff;
-    margin-bottom: 15px;
-}
-
-a {
-    color: rgb(240,165,0);
-    text-decoration: none;
-}
-
-
-button, .btn, input[type="submit"] {
-    background-color: rgb(240,165,0);
-    border: none;
-    border-radius: 4px;
-    color: #fff;
-    padding: 8px 12px;
-    cursor: pointer;
-    font-size: 1rem;
-    transition: background-color 0.3s;
-    margin-bottom: 10px;
-}
-
-button:hover, .btn:hover, input[type="submit"]:hover {
-    background-color: #e0a500; /* чуть светлее вариант */
 }
 
 #form-errors .alert {

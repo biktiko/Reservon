@@ -30,16 +30,7 @@
     flex: 1;
     padding: 20px;
     box-sizing: border-box;
-    border-radius: 8px; /* Добавляем закругленные углы */
-}
-
-.salon-info {
-    background-color: #222;
-}
-
-.right-section {
-    background-color: #444;
-    color: #fff;
+    border-radius: 15px;
 }
 
 .map-container {
@@ -63,7 +54,6 @@
     top: 50%;
     transform: translateY(-50%);
     font-size: 1.5em;
-    color: #f0a500;
     background: none;
     border: none;
     cursor: pointer;
@@ -87,7 +77,6 @@
 }
 
 .thumbnail-images img.selected {
-    border: 2px solid #f0a500; /* Выбранная миниатюра будет иметь обводку */
     transform: scale(1.1); /* Немного увеличим выбранную миниатюру */
 }
 
@@ -117,7 +106,6 @@
 
 .salon-main-info h1 {
     font-size: 1.8em;
-    color: #f0a500;
 }
 
 .salon-description, .salon-hours {
@@ -140,27 +128,20 @@
     color: #fff;
     text-decoration: none;
     font-size: 0.95rem;   /* Можно слегка уменьшить шрифт, чтобы был аккуратнее */
-    background-color: #333; /* Опционально: можно задать небольшой фон */
-    padding: 6px 12px;    /* и сделать «плашку» */
-    border-radius: 6px;
+    padding: 6px 4px;    /* и сделать «плашку» */
+    border-radius: 10px;
     transition: background-color 0.3s, transform 0.3s;
 }
 
 .contact-item:hover {
-    background-color: #f0a500;
-    color: #222;
     transform: translateY(-2px);
 }
 
 .contact-item i {
     font-size: 1.2rem;   /* Размер иконки */
-    color: #f0a500;      /* Акцентный цвет иконки */
     transition: color 0.3s;
 }
 
-.contact-item:hover i {
-    color: #222;
-}
 
 .salon-hours ul {
     list-style: none;
@@ -182,19 +163,17 @@
 .total-summary h3 {
     margin: 0;
     font-size: 1.4em;
-    color: #f0a500;
 }
 
 .date-time-selection {
     margin-top: 20px;
-    background: #333;
+    background: #312f2fad;
     padding: 15px;
     border-radius: 8px;
 }
 
 .date-time-selection h3 {
     font-size: 1.4em;
-    color: #f0a500;
     margin-bottom: 10px;
     text-align: center;
 }
@@ -226,12 +205,12 @@
 }
 
 .options div:hover, .date-row div:hover, .hour-row div:hover, .minute-row div:hover {
-    background-color: #f0a500;
     transform: scale(1.05);
 }
 
 .options div.selected, .date-row div.selected, .hour-row div.selected, .minute-row div.selected {
-    background-color: #28a745;
+    /* background-color: #28a745; */
+    background-color: #4ea8adc2;
     color: #fff;
 }
 
@@ -243,15 +222,17 @@
     font-style: italic;
 }
 
+.salon-info,
+.right-section {
+    /* background-color: #444; */
+    background-color: #434242c2;
+    padding: 10px 20px; /* Отступы: 10px сверху и снизу, 20px слева и справа */
+}
+
 /* Стили для мобильных устройств */
 @media (max-width: 768px) {
     .info-sections {
         flex-direction: column; /* Переводим колонки в колонку */
-    }
-
-    .salon-info,
-    .right-section {
-        padding: 10px 20px; /* Отступы: 10px сверху и снизу, 20px слева и справа */
     }
 
     .date-row, .hour-row, .minute-row {

@@ -1,6 +1,7 @@
 /* Основные стили для header */
 header {
-  background: linear-gradient(90deg, #000, #333);
+  /* background: linear-gradient(30deg, #333333f7, #444); */
+  background: #333333f7;
   color: #fff;
   padding: 10px 0;
   position: sticky;
