@@ -43,7 +43,7 @@
 }
 
 .category-button.selected {
-    background-color: #124df3cf;
+    background-color: #3390ec;
     color: #fff;
 }
 
@@ -93,7 +93,7 @@
 }
 
 .service-card.selected {
-    background-color: #124df3cf;
+    background-color: #3390ec;
     color: #fff;
 }
 
@@ -161,7 +161,7 @@
 }
 
 .pagination-button.active {
-    background-color: #124df3cf;
+    background-color: #3390ec;
     color: #fff;
     transform: scale(1.1);
 }
