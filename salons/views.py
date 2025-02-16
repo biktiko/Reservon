@@ -31,20 +31,23 @@ import logging
 logger = logging.getLogger('booking')
 
 # @cache_page(60 * 15)
-@never_cache
 def main(request):
     query = request.GET.get('q', '')
+    city_filter = request.GET.get('city', '')
     if query:
         salons = Salon.objects.filter(
             Q(name__icontains=query) | Q(address__icontains=query)
         )
     else:
         salons = Salon.objects.filter(status='active')
+    if city_filter:
+        salons = salons.filter(city=city_filter)
     context = {
         'salons': salons,
         'q': query,
     }
     return render(request, 'salons/salons.html', context)
+
 
 def get_cache_version(salon_id):
     version = cache.get(f"available_minutes_version_{salon_id}", 1)

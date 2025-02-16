@@ -28,9 +28,6 @@ function applyIOSCheck() {
     }
 }
 
-console.log('navigator', navigator.userAgent)
-console.log('isIOS', isIOS)
-
 function openAuthModal(action, salonId="") {
     var modal = document.getElementById('auth-modal');
     var modalBody = document.getElementById('modal-body');
@@ -57,6 +54,8 @@ function openAuthModal(action, salonId="") {
             modal.style.display = 'block';
             // Переназначаем обработчики событий
             attachModalEventListeners();
+            // Инициализация дропдауна для страны
+            attachCountryDropdownListeners()
             // Инициализируем автофокусировку для полей ввода кода
             initializeCodeInputFocus();
             // Устанавливаем фокус на первый интерактивный элемент
@@ -229,24 +228,71 @@ document.addEventListener('DOMContentLoaded', function() {
             openSetPasswordModal();
         });
     }
-
     // Обработчики для полей ввода кода (если модальное окно уже загружено)
     initializeCodeInputFocus();
 });
+
+function attachCountryDropdownListeners() {
+    const countryToggle = document.getElementById('countryToggle');
+    const countryMenu = document.getElementById('countryMenu');
+    const selectedFlag = document.getElementById('selectedFlag');
+    const selectedCode = document.getElementById('selectedCode');
+    const phoneInput = document.getElementById('id_phone_number');
+
+    // Если элементов нет, выходим
+    if (!countryToggle || !countryMenu || !selectedFlag || !selectedCode) return;
+
+    // Обработчик для показа/скрытия меню
+    countryToggle.addEventListener('click', function(event) {
+        event.stopPropagation();
+        countryMenu.classList.toggle('show');
+    });
+
+    // Обработчик для выбора пункта меню
+    countryMenu.addEventListener('click', function(event) {
+        const li = event.target.closest('li');
+        if (!li) return;
+        
+        // Получаем URL флага и код страны
+        const flagUrl = li.getAttribute('data-flag-url');
+        const code = li.getAttribute('data-code');
+    
+        // Обновляем кнопку: ставим картинку и код
+        selectedFlag.src = flagUrl;
+        selectedFlag.alt = li.querySelector('img').alt;
+        selectedCode.textContent = code;
+    
+        // Закрываем меню
+        countryMenu.classList.remove('show');
+    });
+    
+
+    // Закрываем меню при клике вне дропдауна
+    document.addEventListener('click', function(e) {
+        const countryDropdown = document.getElementById('countryDropdown');
+        if (countryDropdown && !countryDropdown.contains(e.target)) {
+            countryMenu.classList.remove('show');
+        }
+    });
+}
+
 
 /**
  * Отправляет запрос на вход пользователя с указанным номером телефона.
  */
 function submitLogin() {
-    var phone_number = document.getElementById('id_phone_number').value;
-    var submitButton = document.getElementById('submit-login-btn');
-    
-    if (!validatePhoneNumber(phone_number)) {
-        document.getElementById('login-response').innerHTML = '<p>Неверный формат номера телефона.</p>';
-        return;
+
+    var phoneInput = document.getElementById('id_phone_number');
+    var codeElement = document.getElementById('selectedCode');
+    var phone_number = phoneInput.value.trim();
+
+    // Если элемент с кодом страны найден, объединяем его со значением номера
+    if (codeElement) {
+        var countryCode = codeElement.textContent.trim();
+        phone_number = countryCode + phone_number;
     }
 
-    // Отключаем кнопку, чтобы предотвратить повторные клики
+    var submitButton = document.getElementById('submit-login-btn');
     submitButton.disabled = true;
     submitButton.innerText = 'Отправка...';
 
@@ -352,6 +398,12 @@ function startResendCooldown(button) {
 function loadModalContent(step, phone_number) {
     var modal = document.getElementById('auth-modal');
     var modalBody = document.getElementById('modal-body');
+
+   
+    if(phone_number[0]==0){
+        phone_number = phone_number.slice(1);
+    }
+   
 
     fetch('/auth/get_form/', {
         method: 'POST',
@@ -577,11 +629,6 @@ function submitEnterPassword() {
  * @param {string} phone_number - Номер телефона для валидации.
  * @returns {boolean} - Возвращает true, если номер валиден, иначе false.
  */
-function validatePhoneNumber(phone_number) {
-    var regex = /^\+374\d{8}$/;
-    var isValid = regex.test(phone_number) || phone_number === "+15005550007";
-    return isValid;
-}
 
 /**
  * Получает значение cookie по имени.

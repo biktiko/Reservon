@@ -24,8 +24,9 @@ from .utils import send_verification_code, check_verification_code
 logger = logging.getLogger('authentication')
 
 def normalize_phone_number(phone_number):
-    # Приводим номер к формату +374xxxxxxxx
     phone_number = phone_number.strip()
+    if phone_number.startswith('0'):
+        phone_number = phone_number[1:]  # убираем первый 0
     if not phone_number.startswith('+'):
         phone_number = '+' + phone_number
     return phone_number

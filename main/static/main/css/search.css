@@ -1,47 +1,132 @@
-/* Стили для контейнера поиска */
-.search-container {
+:root {
+    --form-element-height: 40px;  /* Задаём общую высоту элементов */
+  }
+  
+  /* Контейнер поиска */
+  .search-container {
     width: 80%;
-    margin: 20px auto 10px auto; /* Уменьшаем нижний отступ */
+    margin: 20px auto 10px auto;
     text-align: center;
-}
-
-/* Стили для формы поиска */
-.search-container form {
+  }
+  
+  /* Форма – всегда в колонку, внутри неё два ряда */
+  #search-form {
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  /* Первый ряд: inline-раскладка для ПК */
+  .row-1 {
+    display: flex;
     align-items: center;
-}
-
-/* Стили для поля ввода */
-.search-container input[type="text"] {
-    padding: 12px 15px 12px 40px; /* Добавляем отступ для иконки */
+    gap: 10px;
+  }
+  
+  /* Второй ряд скрываем по умолчанию (на ПК) */
+  .row-2 {
+    display: none;
+  }
+  
+  /* Общие стили для элементов */
+  #search-input,
+  #city-select,
+  .search-button {
+    height: var(--form-element-height);
+    box-sizing: border-box;
+  }
+  
+  /* Строка поиска */
+  #search-input {
+    flex: 1;
+    padding: 0 15px;
     font-size: 1rem;
     border-radius: 5px;
     background-color: #312f2fad;
     color: #fff;
     outline: none;
     transition: border-color 0.3s ease;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%23888' viewBox='0 0 24 24'%3E%3Cpath d='M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.92.92l.27.28v.79l5 5L20.5 19l-5-5zm-6 0A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z'/%3E%3C/svg%3E");
+    /* Убираем лишние отступы, чтобы высота была ровной */
+    margin: 0;
+  }
+  
+  /* Стили для селекта (фильтр) */
+  .filter-wrapper {
+    /* На ПК можно задать фиксированную ширину */
+    width: 108px;
+    flex-shrink: 0;
+  }
+  
+  #city-select {
+    width: 101%;
+    padding: 0 10px;
+    font-size: 1rem;
+    border: 1px solid #444;
+    border-radius: 5px;
+    background-color: #444;
+    color: #fff;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("{% static 'main/img/arrow-down.svg' %}");
     background-repeat: no-repeat;
-    background-position: 10px center;
-    background-size: 20px 20px;
-}
-
-.search-container input[type="text"]::placeholder {
-    color: #888;
-}
-
-/* Адаптивные стили для мобильных устройств */
-@media (max-width: 600px) {
-    .search-container {
-        width: 90%;
+    background-position: right 10px center;
+    background-size: 16px;
+    margin-bottom: 0px;
+  }
+  
+  /* Кнопка поиска inline (ПК) */
+  .search-button {
+    padding: 0 16px;
+    font-size: 1rem;
+    border: none;
+    border-radius: 5px;
+    background-color: #fff;
+    color: #444;
+    cursor: pointer;
+    margin-bottom: 0px;
+  }
+  
+  /* По умолчанию inline-кнопка видна */
+  #search-btn-inline {
+    display: block;
+  }
+  
+  /* Мобильные стили */
+  @media (max-width: 600px) {
+    /* Первый ряд: превращаем в flex, где фильтр и инпут на одной линии */
+    .row-1 {
+      display: flex;
+      align-items: center;
+    }
+    
+    /* На мобильном inline-кнопку скрываем */
+    #search-btn-inline {
+      display: none;
+    }
+    
+    /* Второй ряд делаем видимым и кнопка занимает 100% ширины */
+    .row-2 {
+      display: block;
+    }
+    
+    .row-2 .search-button.full {
+      width: 100%;
+    }
+    
+    /* В первом ряду фильтр делаем меньше */
+    .filter-wrapper {
+      width: 80px;  /* уменьшили ширину */
+    }
+    
+    /* Поле поиска занимает оставшееся пространство */
+    #search-input {
+      flex: 1;
     }
 
-    .search-container input[type="text"] {
-        font-size: 0.9rem;
+    #city-select {
+      width: 83px;
     }
-
-    .search-container button {
-        font-size: 0.9rem;
-    }
-}
+  }
+  

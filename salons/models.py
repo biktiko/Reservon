@@ -36,6 +36,7 @@ class Salon(models.Model):
 
     name = models.CharField('Salon name', max_length=50)
     logo = models.ImageField('Logo', upload_to='salon_logos/', blank=True, null=True)
+    city = models.CharField('City', max_length=20, default='Yerevan', blank=False)
     address = models.CharField('Address', max_length=100)
     coordinates = models.CharField('Coordinates', max_length=50, blank=True, null=True)
     default_duration = models.IntegerField('Default duration (minutes)', default=20)

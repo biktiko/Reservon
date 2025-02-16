@@ -1,6 +1,4 @@
-<!-- authentication/templates/authentication/login_modal.html -->
 {% load static %}
-
 <link rel="stylesheet" href="{% static 'authentication/css/modal.css' %}">
 
 <h2>Вход в систему</h2>
@@ -10,12 +8,47 @@
 <form id="login-form">
     {% csrf_token %}
     <p>
-        <label for="id_phone_number">Номер телефона:</label>
-        <input type="tel" name="phone_number" id="id_phone_number" value="+374" required >
+        <label for="id_phone_number">Номер телефона</label>
+        
+        <!-- Обёртка для кнопки выбора страны и поля ввода -->
+        <div class="phone-input-wrapper">
+            
+            <!-- Кнопка-дропдаун с флагом и кодом -->
+            <div class="country-dropdown" id="countryDropdown">
+                <button class="country-dropdown-toggle" type="button" id="countryToggle">
+                    <!-- Флаг и код по умолчанию (Армения) -->
+                    <img src="{% static 'img/armenianFlag.png' %}" alt="Armenia" id="selectedFlag" class="flag-icon">
+                    <span class="country-code" id="selectedCode">+374</span>
+                    <span class="dropdown-arrow">▼</span>
+                </button>
+                
+                <!-- Меню (скрыто по умолчанию) -->
+                <ul class="country-dropdown-menu" id="countryMenu">
+                    <li data-flag-url="{% static 'img/armenianFlag.png' %}" data-code="+374">
+                        <img src="{% static 'img/armenianFlag.png' %}" alt="Armenia" class="flag-icon">
+                        +374
+                    </li>
+                    <li data-flag-url="{% static 'img/russianFlag.jpg' %}" data-code="+7">
+                        <img src="{% static 'img/russianFlag.jpg' %}" alt="Russia" class="flag-icon">
+                        +7
+                    </li>
+                </ul>
+                
+            </div>
+            
+            <!-- Поле ввода номера (без префикса) -->
+            <input 
+                type="tel" 
+                name="phone_number" 
+                id="id_phone_number" 
+                placeholder="Введите номер" 
+                required 
+            >
+            
+        </div><!-- .phone-input-wrapper -->
     </p>
+    
     <button type="button" id="submit-login-btn">Далее</button>
 </form>
 
 <div id="login-response"></div>
-
-

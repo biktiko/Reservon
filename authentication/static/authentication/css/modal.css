@@ -9,7 +9,6 @@
     --inpit-color: black;
     --error-color: #FF4B4B;
     --close-button-color: #888888;
-    --close-button-hover-color: #333333;
 }
 
 .modal {
@@ -66,11 +65,6 @@
     transition: color 0.2s ease;
 }
 
-.close-button:hover,
-.close-button:focus {
-    color: var(--close-button-hover-color);
-}
-
 .modal-content h2 {
     margin-top: 0;
     font-size: 1.8rem;
@@ -86,11 +80,9 @@
 .modal-content form p {
     display: flex;
     align-items: center;
-    margin-bottom: 20px;
 }
 
 .modal-content form p label {
-    width: 150px; /* Фиксированная ширина для всех меток на десктопах */
     flex-shrink: 0; /* Предотвращает сжатие меток */
     text-align: right; /* Выравнивание текста меток по правому краю */
     margin-right: 10px; /* Отступ справа от меток */
@@ -126,10 +118,6 @@
     width: 100%; /* Кнопка занимает всю ширину формы */
 }
 
-.modal-content form button:hover {
-    background-color: var(--button-hover-background);
-}
-
 #login-response p {
     color: var(--error-color);
     font-size: 0.9rem;
@@ -151,11 +139,6 @@
     transition: background-color 0.3s ease;
 }
 
-#submit-set-password-btn:hover,
-#submit-enter-password-btn:hover {
-    background-color: var(--button-hover-background);
-}
-
 #resend-code-btn {
     background: none;
     border: none;
@@ -163,10 +146,6 @@
     cursor: pointer;
     text-decoration: underline;
     font-size: 0.9rem;
-}
-
-#resend-code-btn:hover {
-    color: var(--button-hover-background);
 }
 
 /* Адаптивные стили */
@@ -356,10 +335,6 @@
     margin-bottom: 10px;
 }
 
-#enter-password-form button:hover {
-    background-color: var(--button-hover-background);
-}
-
 #enter-password-form .forgot-password {
     width: 100%;
     max-width: 300px;
@@ -372,10 +347,6 @@
     font-size: 0.9rem;
     cursor: pointer;
     transition: color 0.3s ease;
-}
-
-#enter-password-form .forgot-password a#forgot-password-link:hover {
-    color: var(--link-hover-color);
 }
 
 #enter-password-form #enter-password-response p {
@@ -434,4 +405,142 @@
         right: 15px;
         font-size: 20px;
     }
+}
+
+/* Обёртка для поля ввода + дропдауна */
+.phone-input-wrapper {
+    display: flex;
+    align-items: center;
+    position: relative;
+    width: 100%;
+}
+
+.country-dropdown {
+    position: relative;
+    margin-right: 10px;
+    margin-top: 7px;
+    height: 50px;
+}
+
+/* Кнопка с флагом и кодом */
+.country-dropdown-toggle {
+    display: inline-flex;
+    align-items: center;
+    background-color: var(--input-background);
+    border: 1px solid var(--input-border-color);
+    border-radius: 5px;
+    padding: 10px 12px;
+    cursor: pointer;
+    font-size: 1rem;
+    color: var(--inpit-color);
+    outline: none;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Флаг-эмоджи */
+.flag-emoji {
+    font-family: "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+    margin-right: 5px;
+    font-size: 1.2rem;
+}
+
+/* Код страны */
+.country-code {
+    margin-right: 5px;
+    font-size: 1rem;
+    margin-top: 3px;
+}
+
+/* Стрелка выпадающего списка */
+.dropdown-arrow {
+    font-size: 0.8rem;
+    margin-left: auto;
+    transition: transform 0.3s ease;
+}
+
+/* Кнопка-дропдаун */
+.country-dropdown-toggle {
+    display: inline-flex;
+    align-items: center;
+    background-color: var(--input-background);
+    border: 1px solid var(--input-border-color);
+    border-radius: 5px;
+    padding: 10px 12px;
+    cursor: pointer;
+    font-size: 1rem;
+    color: var(--inpit-color);
+    outline: none;
+    transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Меню выпадающего списка */
+.country-dropdown-menu {
+    position: absolute;
+    top: calc(100% + 5px);
+    left: 0;
+    background-color: var(--input-background);
+    border: 1px solid var(--input-border-color);
+    border-radius: 5px;
+    padding: 5px 0;
+    margin: 0;
+    list-style: none;
+    display: none;
+    z-index: 9999;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.country-dropdown-menu.show {
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Пункты меню */
+.country-dropdown-menu li {
+    padding: 10px 15px;
+    cursor: pointer;
+    font-size: 1rem;
+    color: var(--inpit-color);
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.country-dropdown-menu li:hover {
+    color: rgba(0, 123, 255, 0.5);
+}
+
+
+/* Поле ввода номера */
+#id_phone_number {
+    flex: 1;
+    padding: 10px 12px;
+    font-size: 1rem;
+    border: 1px solid var(--input-border-color);
+    border-radius: 5px;
+    background-color: var(--input-background);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    color: var(--inpit-color);
+    width: 40%;
+}
+
+#id_phone_number:focus {
+    outline: none;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+}
+
+/* Обёртка для поля ввода и дропдауна */
+.phone-input-wrapper {
+    display: flex;
+    align-items: center;
+    position: relative;
+    width: 100%;
+}
+
+.flag-icon {
+    width: 24px;
+    height: auto;
+    margin-right: 5px;
+    vertical-align: middle;
 }

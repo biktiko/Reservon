@@ -125,7 +125,7 @@
                 {% include 'salons/salon-reserv.html' %}
 
                 <!-- Итоговая цена и длительность -->
-                <div class="total-summary">
+                <div class="total-summary" style="display: none;">
                     <p>Итоговая цена: <span id="total-price">{{ salon.default_price }}</span>&nbsp;{% trans "драм" %}</p>
                     <p>Общее время: <span id="total-duration">{{ salon.default_duration }}</span>&nbsp;{% trans "минут" %}</p>
                 </div>

@@ -222,14 +222,17 @@ class BarberInline(admin.StackedInline):
 class SalonAdmin(ImportExportModelAdmin):
     form = SalonAdminForm
     # Используем метод display_admins вместо поля admins
-    list_display = ('name', 'status', 'address', 'telegram_status', 'mod')
+    list_display = ('name', 'city', 'status', 'address', 'telegram_status', 'mod')
     list_filter = ('status', 'mod')
     search_fields = ('name', 'address')
     inlines = [ServiceInline, SalonImageInline, BarberInline, NoteInline]
     autocomplete_fields = ['admins']
     fieldsets = (
         (None, {
-            'fields': ('name', 'logo', 'address', 'coordinates')
+            'fields': ('name', 'logo')
+        }),
+        ('Address', {
+            'fields': ('city', 'address', 'coordinates')
         }),
         ('Descriptions', {
             'fields': (
