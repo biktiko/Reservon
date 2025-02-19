@@ -57,6 +57,7 @@ class Salon(models.Model):
     mod = models.CharField(choices=MOD_CHOICES, max_length=10, default='category')
     appointment_mod = models.CharField(choices=APPOINTMENT_MOD_CHOICES, max_length=10, default='auto')
     IsCheckDays = models.BooleanField('Is Check Days', default=True)
+    salon_manager = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='managed_salons')
 
     # telegram
     telegram_status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='active')
