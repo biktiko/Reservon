@@ -11,6 +11,10 @@
     justify-content: flex-start; /* Выравниваем кнопки по левому краю */
 }
 
+
+.services-grid{
+ margin-top: 15px;
+}
 .services-container {
     /* Устанавливаем grid layout */
     display: grid;
