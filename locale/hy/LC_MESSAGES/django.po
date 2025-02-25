@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-02-17 22:07+0400\n"
+"POT-Creation-Date: 2025-02-25 22:49+0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,14 +18,118 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+#: .\authentication\templates\authentication\enter_password.html:7
+msgid "Enter Password"
+msgstr "Մուտքի գաղտնաբառը մուտքագրեք"
+
+#: .\authentication\templates\authentication\enter_password.html:12
+#: .\authentication\templates\authentication\set_password.html:16
+#: .\main\templates\main\login_password.html:22
+msgid "Password:"
+msgstr "Գաղտնաբառ՝"
+
+#: .\authentication\templates\authentication\enter_password.html:18
+msgid "Log in and Book"
+msgstr "Մուտք և ամրագրում"
+
+#: .\authentication\templates\authentication\enter_password.html:20
+#: .\main\templates\main\login_password.html:25
+#: .\venv\Lib\site-packages\grappelli\templates\admin\login.html:26
+#: .\venv\Lib\site-packages\grappelli\templates\admin\login.html:67
+#: .\venv\Lib\site-packages\grappelli\templates\registration\password_reset_complete.html:17
+msgid "Log in"
+msgstr "Մուտք"
+
+#: .\authentication\templates\authentication\enter_password.html:25
+#: .\main\templates\main\login_password.html:28
+msgid "Forgot password?"
+msgstr "Մոռացե՞լ եք գաղտնաբառը"
+
+#: .\authentication\templates\authentication\login_modal.html:6
+msgid "Log in to the System"
+msgstr "Մուտք համակարգ"
+
+#: .\authentication\templates\authentication\login_modal.html:8
+msgid "To continue booking, please log in to the system."
+msgstr "Ամրագրման շարունակման համար, խնդրում եմ մուտք գործեք համակարգ"
+
+#: .\authentication\templates\authentication\login_modal.html:13
+msgid "Phone Number"
+msgstr "Հեռախոսահամար"
+
+#: .\authentication\templates\authentication\login_modal.html:46
+msgid "Enter number"
+msgstr "Մուտքագրեք համարը"
+
+#: .\authentication\templates\authentication\login_modal.html:53
+msgid "Next"
+msgstr "Հաջորդը"
+
+#: .\authentication\templates\authentication\set_password.html:8
+#: .\main\templates\main\register.html:7
+msgid "Registration"
+msgstr "Գրանցում"
+
+#: .\authentication\templates\authentication\set_password.html:12
+msgid "First Name:"
+msgstr "Անուն՝"
+
+#: .\authentication\templates\authentication\set_password.html:13
+msgid "Enter your name"
+msgstr "Մուտքագրեք ձեր անունը"
+
+#: .\authentication\templates\authentication\set_password.html:17
+msgid "Enter password"
+msgstr "Մուտքագրեք գաղտնաբառը"
+
+#: .\authentication\templates\authentication\set_password.html:20
+msgid "Confirm Password:"
+msgstr "Հաստատեք գաղտնաբառը՝"
+
+#: .\authentication\templates\authentication\set_password.html:21
+msgid "Confirm password"
+msgstr "Հաստատեք գաղտնաբառը"
+
+#: .\authentication\templates\authentication\set_password.html:26
+msgid "Complete Registration and Book"
+msgstr "Ավարտեք գրանցումը և ամրագրեք"
+
+#: .\authentication\templates\authentication\set_password.html:28
+msgid "Complete Registration"
+msgstr "Ավարտեք գրանцումը"
+
+#: .\authentication\templates\authentication\set_password.html:42
+msgid "Log in with Google"
+msgstr "Մուտք Google-ով"
+
+#: .\authentication\templates\authentication\verify_code.html:7
+msgid "Enter Verification Code"
+msgstr "Մուտքագրեք հաստատման կոդը"
+
+#: .\authentication\templates\authentication\verify_code.html:21
+msgid "Code from SMS"
+msgstr "SMS-ից կոդ"
+
+#: .\authentication\templates\authentication\verify_code.html:61
+msgid "Confirm"
+msgstr "Հաստատել"
+
+#: .\authentication\templates\authentication\verify_code.html:66
+msgid "Didn't receive the code?"
+msgstr "Չե՞ք ստացել կոդը"
+
+#: .\authentication\templates\authentication\verify_code.html:66
+msgid "Resend"
+msgstr "Կրկին ուղարկել"
+
 #: .\main\templates\base.html:53 .\main\templates\main\section.html:9
 msgid ""
 "Reservon — это ваш лучший помощник для онлайн бронирования в салонах красоты."
-msgstr ""
+msgstr "Reservon-ը ձեր լավագույն օգնականն է գեղեցկության սրահներում առցանց ամրագրումների համար։"
 
 #: .\main\templates\base.html:55 .\main\templates\main\section.html:11
 msgid "Узнать больше"
-msgstr ""
+msgstr "Իմանալ ավելին"
 
 #: .\main\templates\main\header.html:22
 #: .\venv\Lib\site-packages\grappelli\dashboard\templates\admin\index.html:25
@@ -71,7 +175,7 @@ msgstr "Սրահներ"
 
 #: .\main\templates\main\header.html:24
 msgid "About"
-msgstr "Տեղեկատվություն"
+msgstr "Մեր մասին"
 
 #: .\main\templates\main\header.html:25
 msgid "Contact"
@@ -82,62 +186,63 @@ msgid "My account"
 msgstr "Իմ էջը"
 
 #: .\main\templates\main\header.html:35
+#: .\main\templates\main\login_password.html:7
 msgid "Login"
 msgstr "Մուտք"
 
-#: .\main\templates\main\login_password.html:6
-msgid "Вход"
-msgstr "Մուտք"
+#: .\main\templates\main\login_password.html:18
+msgid "Enter the password for the number"
+msgstr "Մուտքագրեք համարի գաղտնաբառը"
 
-#: .\main\templates\main\login_password.html:21
-msgid "Пароль:"
-msgstr "Գաղտնաբառ"
+#: .\main\templates\main\register.html:11
+msgid "Register"
+msgstr "Գրանցվել"
 
-#: .\main\templates\main\login_password.html:27
-msgid "Забыли пароль?"
-msgstr "Մոռացել ե՞ք գաղտնաբառը"
+#: .\main\templates\main\search.html:12
+msgid "Search..."
+msgstr "Որոնել..."
 
-#: .\main\templates\main\register.html:6
-msgid "Регистрация"
-msgstr "Մուտք"
+#: .\main\templates\main\search.html:16
+msgid "Cities▾"
+msgstr "Քաղաքներ▾"
 
-#: .\main\templates\main\register.html:10
-msgid "Зарегистрироваться"
-msgstr ""
+#: .\main\templates\main\search.html:24 .\main\templates\main\search.html:28
+msgid "Search"
+msgstr "Որոնել"
 
 #: .\reservon\settings.py:180 .\reservon\settings_staging.py:162
 msgid "English"
-msgstr ""
+msgstr "Անգլերեն"
 
 #: .\reservon\settings.py:181 .\reservon\settings_staging.py:163
 msgid "Russian"
-msgstr ""
+msgstr "Ռուսերեն"
 
 #: .\reservon\settings.py:182 .\reservon\settings_staging.py:164
 msgid "Armenian"
-msgstr ""
+msgstr "Հայերեն"
 
 #: .\reservon\settings.py:189 .\reservon\settings_staging.py:171
 msgid "j E"
-msgstr ""
+msgstr "E d"
 
 #: .\reservon\settings.py:190 .\reservon\settings_staging.py:172
 msgid "H:i"
-msgstr ""
+msgstr "H:i"
 
 #: .\salons\templates\salons\barbers.html:12
 #: .\salons\templates\salons\barbers.html:32
 msgid "Любой мастер"
-msgstr ""
+msgstr "Ցանկացած վարպետ"
 
 #: .\salons\templates\salons\barbers.html:13
 #: .\salons\templates\salons\barbers.html:33
 msgid "Описание или слоган"
-msgstr ""
+msgstr "Նկարագրություն կամ կարգախոս"
 
 #: .\salons\templates\salons\book-confirm.html:9
 msgid "Подтверждение бронирования"
-msgstr "Հաստատել ամրագրումը"
+msgstr "Ամրագրման հաստատում"
 
 #: .\salons\templates\salons\book-confirm.html:36
 msgid "Подтвердить"
@@ -149,7 +254,7 @@ msgstr "Չեղարկել"
 
 #: .\salons\templates\salons\salon-detail.html:109
 msgid "Выберите дату и время"
-msgstr "Ընտրել օրն ու ժամը"
+msgstr "Ընտրեք ամսաթիվն և ժամը"
 
 #: .\salons\templates\salons\salon-detail.html:121
 msgid "Время не выбрано"
@@ -161,22 +266,21 @@ msgstr "դրամ"
 
 #: .\salons\templates\salons\salon-detail.html:130
 msgid "минут"
-msgstr "րոխե"
+msgstr "րոպե"
 
 #: .\salons\templates\salons\salon-services.html:23
 #: .\salons\templates\salons\salon-services.html:50
 msgid "Нет доступных услуг."
-msgstr ""
+msgstr "Հասանելի ծառայություններ չկան։"
 
 #: .\salons\templates\salons\salon-services.html:33
 #: .\salons\templates\salons\salon-services.html:60
 msgid "Нет доступных категорий услуг."
-msgstr ""
+msgstr "Հասանելի ծառայությունների կատեգորիաներ չկան։"
 
 #: .\salons\templates\salons\salons.html:18
 msgid "Нет доступных салонов."
-msgstr ""
-
+msgstr "Հասանելի սրահներ չկան։"
 #: .\venv\Lib\site-packages\click\_termui_impl.py:518
 #, python-brace-format
 msgid "{editor}: Editing failed"
@@ -2180,12 +2284,6 @@ msgid ""
 "the appropriate user."
 msgstr ""
 
-#: .\venv\Lib\site-packages\grappelli\templates\admin\login.html:26
-#: .\venv\Lib\site-packages\grappelli\templates\admin\login.html:67
-#: .\venv\Lib\site-packages\grappelli\templates\registration\password_reset_complete.html:17
-msgid "Log in"
-msgstr ""
-
 #: .\venv\Lib\site-packages\grappelli\templates\admin\login.html:60
 msgid "Forgotten your password or username?"
 msgstr ""
@@ -2655,3 +2753,15 @@ msgstr ""
 msgctxt "stick"
 msgid "club"
 msgstr ""
+
+#~ msgid "Вход"
+#~ msgstr "Մուտք"
+
+#~ msgid "Пароль:"
+#~ msgstr "Գաղտնաբառ"
+
+#~ msgid "Забыли пароль?"
+#~ msgstr "Մոռացել ե՞ք գաղտնաբառը"
+
+#~ msgid "Регистрация"
+#~ msgstr "Մուտք"

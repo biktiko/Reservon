@@ -1,14 +1,16 @@
 {% load static %}
+{% load i18n %}
+
 <link rel="stylesheet" href="{% static 'authentication/css/modal.css' %}">
 
-<h2>Вход в систему</h2>
+<h2>{% trans "Log in to the System" %}</h2>
 {% if from_booking %}
-    <p>Для продолжения бронирования, пожалуйста, войдите в систему.</p>
+    <p>{% trans "To continue booking, please log in to the system." %}</p>
 {% endif %}
 <form id="login-form">
     {% csrf_token %}
     <p>
-        <label for="id_phone_number">Номер телефона</label>
+        <label for="id_phone_number">{% trans "Phone Number" %}</label>
         
         <!-- Обёртка для кнопки выбора страны и поля ввода -->
         <div class="phone-input-wrapper">
@@ -41,14 +43,14 @@
                 type="tel" 
                 name="phone_number" 
                 id="id_phone_number" 
-                placeholder="Введите номер" 
+                placeholder="{% trans 'Enter number' %}" 
                 required 
             >
             
         </div><!-- .phone-input-wrapper -->
     </p>
     
-    <button type="button" id="submit-login-btn">Далее</button>
+    <button type="button" id="submit-login-btn">{% trans "Next" %}</button>
 </form>
 
 <div id="login-response"></div>

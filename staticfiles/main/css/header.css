@@ -11,7 +11,7 @@ header {
 
 .header-container {
   width: 100%;
-  padding: 0 10%;
+  padding: 0 5%;              /* Уменьшенный padding */
   box-sizing: border-box;
   display: flex;
   justify-content: space-between;
@@ -56,6 +56,10 @@ header {
   transition: color 0.3s;
   display: flex;
   align-items: center;
+  white-space: nowrap;
+  overflow: hidden;           /* Скрыть лишний текст */
+  text-overflow: ellipsis;    /* Добавить многоточие */
+  max-width: 150px;           /* Ограничить ширину */
 }
 
 .navigation a i {
@@ -79,7 +83,7 @@ header {
   text-decoration: none;
   font-size: 0.9rem;
   transition: background 0.3s;
-  margin-top: 10px;
+  margin-top: -5px;
 }
 
 .auth-buttons .login-btn {
@@ -195,8 +199,8 @@ header:hover {
 }
 
 .language-switcher select {
-  padding: 8px 15px;
-  border-radius: 8px;
+  padding: 8px 9px;
+  /* border-radius: 8px; */
   background-color: transparent;
   color: #fff;
   border: 1px solid #fff;
@@ -204,6 +208,7 @@ header:hover {
   cursor: pointer;
   transition: background 0.3s, color 0.3s;
   margin-bottom: 0px;
+  min-width: 92px;
 }
 
 .language-switcher select:hover {

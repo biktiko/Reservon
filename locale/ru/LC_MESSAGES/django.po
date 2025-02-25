@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-02-17 22:07+0400\n"
+"POT-Creation-Date: 2025-02-25 22:49+0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -20,14 +20,118 @@ msgstr ""
 "n%10<=4 && (n%100<12 || n%100>14) ? 1 : n%10==0 || (n%10>=5 && n%10<=9) || "
 "(n%100>=11 && n%100<=14)? 2 : 3);\n"
 
+#: .\authentication\templates\authentication\enter_password.html:7
+msgid "Enter Password"
+msgstr ""
+
+#: .\authentication\templates\authentication\enter_password.html:12
+#: .\authentication\templates\authentication\set_password.html:16
+#: .\main\templates\main\login_password.html:22
+msgid "Password:"
+msgstr ""
+
+#: .\authentication\templates\authentication\enter_password.html:18
+msgid "Log in and Book"
+msgstr ""
+
+#: .\authentication\templates\authentication\enter_password.html:20
+#: .\main\templates\main\login_password.html:25
+#: .\venv\Lib\site-packages\grappelli\templates\admin\login.html:26
+#: .\venv\Lib\site-packages\grappelli\templates\admin\login.html:67
+#: .\venv\Lib\site-packages\grappelli\templates\registration\password_reset_complete.html:17
+msgid "Log in"
+msgstr "Войти"
+
+#: .\authentication\templates\authentication\enter_password.html:25
+#: .\main\templates\main\login_password.html:28
+msgid "Forgot password?"
+msgstr "Забыли пароль?"
+
+#: .\authentication\templates\authentication\login_modal.html:6
+msgid "Log in to the System"
+msgstr "Вход в систему"
+
+#: .\authentication\templates\authentication\login_modal.html:8
+msgid "To continue booking, please log in to the system."
+msgstr "Для продолжения бронирования, пожалуйста, войдите в систему."
+
+#: .\authentication\templates\authentication\login_modal.html:13
+msgid "Phone Number"
+msgstr "Номер телефона"
+
+#: .\authentication\templates\authentication\login_modal.html:46
+msgid "Enter number"
+msgstr "Введите номер"
+
+#: .\authentication\templates\authentication\login_modal.html:53
+msgid "Next"
+msgstr "Далее"
+
+#: .\authentication\templates\authentication\set_password.html:8
+#: .\main\templates\main\register.html:7
+msgid "Registration"
+msgstr "Регистрация"
+
+#: .\authentication\templates\authentication\set_password.html:12
+msgid "First Name:"
+msgstr "Имя:"
+
+#: .\authentication\templates\authentication\set_password.html:13
+msgid "Enter your name"
+msgstr "Введите ваше имя"
+
+#: .\authentication\templates\authentication\set_password.html:17
+msgid "Enter password"
+msgstr "Введите пароль"
+
+#: .\authentication\templates\authentication\set_password.html:20
+msgid "Confirm Password:"
+msgstr "Повторите пароль:"
+
+#: .\authentication\templates\authentication\set_password.html:21
+msgid "Confirm password"
+msgstr "Повторите пароль"
+
+#: .\authentication\templates\authentication\set_password.html:26
+msgid "Complete Registration and Book"
+msgstr "Завершить регистрацию и забронировать"
+
+#: .\authentication\templates\authentication\set_password.html:28
+msgid "Complete Registration"
+msgstr "Завершить регистрацию"
+
+#: .\authentication\templates\authentication\set_password.html:42
+msgid "Log in with Google"
+msgstr "Войти через Google"
+
+#: .\authentication\templates\authentication\verify_code.html:7
+msgid "Enter Verification Code"
+msgstr "Введите код подтверждения"
+
+#: .\authentication\templates\authentication\verify_code.html:21
+msgid "Code from SMS"
+msgstr "Код из SMS"
+
+#: .\authentication\templates\authentication\verify_code.html:61
+msgid "Confirm"
+msgstr "Подтвердить"
+
+#: .\authentication\templates\authentication\verify_code.html:66
+msgid "Didn't receive the code?"
+msgstr "Не получили код?"
+
+#: .\authentication\templates\authentication\verify_code.html:66
+msgid "Resend"
+msgstr "Отправить заново"
+
 #: .\main\templates\base.html:53 .\main\templates\main\section.html:9
 msgid ""
 "Reservon — это ваш лучший помощник для онлайн бронирования в салонах красоты."
-msgstr ""
+msgstr "Reservon — это ваш лучший помощник для онлайн-бронирования в салонах красоты."
 
 #: .\main\templates\base.html:55 .\main\templates\main\section.html:11
 msgid "Узнать больше"
-msgstr ""
+msgstr "Узнать больше"
 
 #: .\main\templates\main\header.html:22
 #: .\venv\Lib\site-packages\grappelli\dashboard\templates\admin\index.html:25
@@ -65,7 +169,7 @@ msgstr ""
 #: .\venv\Lib\site-packages\grappelli\templates\reversion\revision_form.html:7
 #: .\venv\Lib\site-packages\grappelli\templates\smuggler\load_data_form.html:24
 msgid "Home"
-msgstr "Главное"
+msgstr "Главная"
 
 #: .\main\templates\main\header.html:23
 msgid "Salons"
@@ -73,7 +177,7 @@ msgstr "Салоны"
 
 #: .\main\templates\main\header.html:24
 msgid "About"
-msgstr "Информация"
+msgstr "О нас"
 
 #: .\main\templates\main\header.html:25
 msgid "Contact"
@@ -81,31 +185,32 @@ msgstr "Контакты"
 
 #: .\main\templates\main\header.html:31 .\main\templates\main\header.html:33
 msgid "My account"
-msgstr "Моя страница"
+msgstr "Мой аккаунт"
 
 #: .\main\templates\main\header.html:35
+#: .\main\templates\main\login_password.html:7
 msgid "Login"
-msgstr "Логин"
+msgstr "Вход"
 
-#: .\main\templates\main\login_password.html:6
-msgid "Вход"
-msgstr ""
+#: .\main\templates\main\login_password.html:18
+msgid "Enter the password for the number"
+msgstr "Введите пароль для номера"
 
-#: .\main\templates\main\login_password.html:21
-msgid "Пароль:"
-msgstr ""
+#: .\main\templates\main\register.html:11
+msgid "Register"
+msgstr "Зарегистрироваться"
 
-#: .\main\templates\main\login_password.html:27
-msgid "Забыли пароль?"
-msgstr ""
+#: .\main\templates\main\search.html:12
+msgid "Search..."
+msgstr "Поиск..."
 
-#: .\main\templates\main\register.html:6
-msgid "Регистрация"
-msgstr ""
+#: .\main\templates\main\search.html:16
+msgid "Cities▾"
+msgstr "Города▾"
 
-#: .\main\templates\main\register.html:10
-msgid "Зарегистрироваться"
-msgstr ""
+#: .\main\templates\main\search.html:24 .\main\templates\main\search.html:28
+msgid "Search"
+msgstr "Поиск"
 
 #: .\reservon\settings.py:180 .\reservon\settings_staging.py:162
 msgid "English"
@@ -2194,12 +2299,6 @@ msgid ""
 "Something's wrong with your database installation. Make sure the appropriate "
 "database tables have been created, and make sure the database is readable by "
 "the appropriate user."
-msgstr ""
-
-#: .\venv\Lib\site-packages\grappelli\templates\admin\login.html:26
-#: .\venv\Lib\site-packages\grappelli\templates\admin\login.html:67
-#: .\venv\Lib\site-packages\grappelli\templates\registration\password_reset_complete.html:17
-msgid "Log in"
 msgstr ""
 
 #: .\venv\Lib\site-packages\grappelli\templates\admin\login.html:60

@@ -1,5 +1,7 @@
 {% load static %}
 {% load salon_extras %}
+{% load i18n %}
+
 
 <link rel="stylesheet" href="{% static 'main/css/search.css' %}">
 
@@ -7,11 +9,11 @@
   <form method="GET" action="{% url 'salons:salons_main' %}" id="search-form">
     <!-- Первый ряд: фильтр, строка поиска и inline-кнопка (ПК) -->
     <div class="row row-1">
-      <input type="text" name="q" placeholder="Search..." value="{{ q|default:'' }}" id="search-input">
+      <input type="text" name="q" placeholder="{% trans 'Search...' %}" value="{{ q|default:'' }}" id="search-input">
       <div class="filter-wrapper">
         {% get_available_cities as cities %}
         <select name="city" id="city-select">
-          <option value="">Города▾</option>
+          <option value="">{% trans "Cities▾" %}</option>
           {% for city in cities %}
             <option value="{{ city }}" {% if request.GET.city == city %}selected{% endif %}>
               {{ city }}
@@ -19,11 +21,11 @@
           {% endfor %}
         </select>
       </div>
-      <button class="search-button" type="submit" id="search-btn-inline">Поиск</button>
+      <button class="search-button" type="submit" id="search-btn-inline">{% trans "Search" %}</button>
     </div>
     <!-- Второй ряд: кнопка поиска на всю ширину (показывается только на мобильных) -->
     <div class="row row-2">
-      <button class="search-button full" type="submit" id="search-btn-full">Поиск</button>
+      <button class="search-button full" type="submit" id="search-btn-full">{% trans "Search" %}</button>
     </div>
   </form>
 </div>
