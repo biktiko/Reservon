@@ -174,12 +174,12 @@ USE_L10N = True
 TIME_ZONE = 'Asia/Yerevan'
 USE_TZ = True
 
-LANGUAGE_CODE = 'en'
+LANGUAGE_CODE = 'ru'
 
 LANGUAGES = [
-    ('en', _('English')),
     ('ru', _('Russian')),
     ('hy', _('Armenian')),
+    ('en', _('English')),
 ]
 
 LOCALE_PATHS = [
@@ -245,7 +245,7 @@ ALLOWED_HOSTS = [
     'reservon-8b5da3853ffa.herokuapp.com', 
     'localhost', 
     '127.0.0.1'
-    ]
+]
 
 LOGGING = {
     'version': 1,

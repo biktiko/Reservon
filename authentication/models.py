@@ -9,6 +9,7 @@ class Profile(models.Model):
     ]
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='main_profile')
+    nickname = models.CharField(max_length=30, unique=True, null=True, blank=True)
     phone_number = models.CharField(max_length=15, unique=True, null=True, blank=True)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='unverified')
     last_verification_sent_at = models.DateTimeField(null=True, blank=True) 
