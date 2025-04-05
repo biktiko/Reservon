@@ -221,45 +221,64 @@ class BarberInline(admin.StackedInline):
 @admin.register(Salon)
 class SalonAdmin(ImportExportModelAdmin):
     form = SalonAdminForm
-    # Используем метод display_admins вместо поля admins
     list_display = ('name', 'salon_manager', 'city', 'status', 'address', 'telegram_status', 'mod')
     list_filter = ('status', 'mod')
     search_fields = ('name', 'address')
     inlines = [ServiceInline, SalonImageInline, BarberInline, NoteInline]
     autocomplete_fields = ['admins']
+
     fieldsets = (
         (None, {
-            'fields': ('name', 'logo', 'salon_manager')
+            # Убрали 'status', чтобы не было дублирования
+            'fields': ('name', 'salon_manager')
+        }),
+        ('Partnership status', {
+            'fields': ('status', 'additional_status')
         }),
         ('Address', {
             'fields': ('city', 'address', 'coordinates')
         }),
-        ('Descriptions', {
-            'fields': (
-                'shortDescription_hy', 'shortDescription_ru', 'shortDescription_eng',
-                'description_hy', 'description_ru', 'description_eng'
-            )
+        ('Salon visual', {
+            # Для одного элемента в кортеже ставим запятую
+            'fields': ('logo',)
         }),
         ('Salon contacts', {
             'fields': ('phone_number', 'instagram', 'facebook')
+        }),
+        ('Descriptions', {
+            'fields': (
+                'shortDescription_hy',
+                'shortDescription_ru',
+                'shortDescription_eng',
+                'description_hy',
+                'description_ru',
+                'description_eng'
+            )
         }),
         ('Telegram settings', {
             'fields': ('telegram_status', 'telegram_appointmentMod', 'telegram_barbersMod')
         }),
         ('Salon settings', {
-            'fields': ('appointment_mod', 'reservDays', 'admins', 'IsCheckDays', 'mod', 'default_duration', 'default_price', 'status')
-        })
+            # Здесь оставили 'status'
+            'fields': (
+                'appointment_mod',
+                'reservDays',
+                'admins',
+                'IsCheckDays',
+                'mod',
+                'default_duration',
+                'default_price'
+            )
+        }),
     )
 
     def formfield_for_manytomany(self, db_field, request, **kwargs):
         if db_field.name == 'admins':
-            # Uncomment the next line to restrict the queryset:
             # kwargs['queryset'] = User.objects.filter(is_staff=True, is_active=True)
             pass
         return super().formfield_for_manytomany(db_field, request, **kwargs)
 
     def display_admins(self, obj):
-        # Return a comma-separated list of admins
         return ", ".join([str(admin) for admin in obj.admins.all()])
     display_admins.short_description = "Admins"
 

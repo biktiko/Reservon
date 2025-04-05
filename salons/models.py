@@ -10,8 +10,19 @@ class Salon(models.Model):
     STATUS_CHOICES = [
         ('new', 'New'),
         ('active', 'Active'),
+        ('in process', 'In process'),
+        ('refused', 'Refused'),
         ('suspend', 'Suspend'),
-        ('disable', 'Disable'),
+    ]
+
+    ADDITIONAL_STATUS_CHOICES = [
+        ('waiting_contact', 'Waiting for a contact'),
+        ('they_think', 'They think'),
+        ('mail', 'Mail'),
+        ('ignored', 'Ignored'),
+        ('inbound', 'Inbound'),
+        ('former_partner', 'Former Partner'),
+        ('expansion_needed', 'Expansion needed'),
     ]
 
     MOD_CHOICES = [
@@ -61,28 +72,11 @@ class Salon(models.Model):
 
     # telegram
     telegram_status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='active')
+    telegram_appointmentMod = models.CharField(max_length=10, choices=TELEGRAM_APPOINTMENT_MOD_CHOICES, default='services', verbose_name="Telegram Appointment Mod")
+    telegram_barbersMod = models.CharField(max_length=15, choices=BARBERS_MOD_CHOICES, default='without_images', verbose_name="Telegram Barbers Bod")
 
-    telegram_appointmentMod = models.CharField(
-        max_length=10,
-        choices=TELEGRAM_APPOINTMENT_MOD_CHOICES,
-        default='services',
-        verbose_name="Telegram Appointment Mod"
-    )
-
-    telegram_barbersMod = models.CharField(
-        max_length=15,
-        choices=BARBERS_MOD_CHOICES,
-        default='without_images',
-        verbose_name="Telegram Barbers Bod"
-    )
-
-    # salon status everywhere
-    status = models.CharField(
-        max_length=10,
-        choices=STATUS_CHOICES,
-        default='new',
-        verbose_name="Status"
-    )
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='new', verbose_name="Status")
+    additional_status = models.CharField(max_length=20, choices=ADDITIONAL_STATUS_CHOICES, verbose_name="Additional Status", blank=True, null=True)
 
     def __str__(self):
         return self.name
@@ -90,7 +84,6 @@ class Salon(models.Model):
     class Meta:
         verbose_name = 'Salon'
         verbose_name_plural = 'Salons'
-
 
 class ServiceCategory(models.Model):
     name = models.CharField(max_length=100, unique=True)  # Название категории
