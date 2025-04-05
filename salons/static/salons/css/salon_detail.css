@@ -4,6 +4,10 @@
     box-sizing: border-box;
 }
 
+h1, h2, h3{
+    text-align: left;
+    letter-spacing: 0;
+}
 /* Основные стили */
 .salon-detail {
     max-width: 1100px; /* Ограничиваем максимальную ширину */
@@ -13,12 +17,17 @@
     width: 100%;
 }
 
+.salon-info{
+    background-color: #312f2fad;
+}
 
 .salon-info,
 .right-section {
-    /* background-color: #444; */
-    background-color: #43424291;
-    padding: 10px 20px; /* Отступы: 10px сверху и снизу, 20px слева и справа */
+    padding: 10px 20px;
+    flex: 1;
+    padding: 20px;
+    box-sizing: border-box;
+    border-radius: 15px;
 }
 
 .right-section h2 h3{
@@ -36,13 +45,6 @@
     display: flex;
     gap: 20px;
     width: 100%;
-}
-
-.salon-info, .right-section {
-    flex: 1;
-    padding: 20px;
-    box-sizing: border-box;
-    border-radius: 15px;
 }
 
 .map-container {
@@ -206,7 +208,7 @@
 
 .options div.selected, .date-row div.selected, .hour-row div.selected, .minute-row div.selected {
     /* background-color: #28a745; */
-    background-color: #3390ec;
+    background-color: #2d69c6;
     color: #fff;
 }
 

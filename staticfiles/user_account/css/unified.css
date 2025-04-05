@@ -39,7 +39,7 @@ input[type="text"]:focus,
 input[type="file"]:focus,
 textarea:focus,
 select:focus {
-    border-color: rgb(240,165,0);
+    border-color: #3390ec;
     box-shadow: 0 0 5px rgba(240,165,0,0.5);
     outline: none;
 }
@@ -54,7 +54,7 @@ input[type="datetime-local"].form-control {
 }
 
 input[type="datetime-local"].form-control:focus {
-    border-color: rgb(240,165,0);
+    border-color: #3390ec;
     box-shadow: 0 0 5px rgba(240,165,0,0.5);
     outline: none;
 }
@@ -165,7 +165,7 @@ input[type="datetime-local"].form-control:focus {
 
 /* Подсветка активного барбера */
 .barber-small-card.active {
-    border-color: rgb(240,165,0);
+    border-color: #3390ec;
     background-color: #555;
     box-shadow: 0 4px 12px rgba(240,165,0,0.5);
     transform: scale(1.05);
@@ -188,7 +188,7 @@ input[type="datetime-local"].form-control:focus {
 }
 
 .barber-small-card.active {
-    border: 2px solid rgb(240,165,0);
+    border: 2px solid #3390ec;
 }
 
 .barber-small-card img.small-avatar {
@@ -232,11 +232,11 @@ input[type="datetime-local"].form-control:focus {
 
 .edit-icon:hover {
     opacity: 1;
-    color: rgb(240,165,0);
+    color: #3390ec;
 }
 
 .editable-field:hover {
-    color: rgb(240,165,0);
+    color: #3390ec;
 }
 
 .barber-details-container {
@@ -250,7 +250,7 @@ input[type="datetime-local"].form-control:focus {
     height: 150px;
     border-radius: 8px;
     object-fit: cover;
-    border: 2px solid rgb(240,165,0);
+    border: 2px solid #3390ec;
 }
 
 .barber-details-right {
@@ -272,7 +272,7 @@ input[type="datetime-local"].form-control:focus {
 }
 
 .barber-details-right strong {
-    color: rgb(240,165,0);
+    color: #3390ec;
 }
 
 .schedule p.editable-schedule {

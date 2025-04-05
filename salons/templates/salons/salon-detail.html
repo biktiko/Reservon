@@ -46,7 +46,7 @@
                 
                 <!-- Основная информация -->
                 <div class="salon-main-info">
-                    <h1>{{ salon.name }}</h1>
+                    <h1 style="text-align: center;">{{ salon.name }}</h1>
                     <p class="address"><i class="fas fa-map-marker-alt"></i> {{ salon.address }}</p>
                 </div>
                 
@@ -91,16 +91,16 @@
             <!-- Правая часть -->
             <div class="right-section">
                 {% if salon.mod == "category" %}
-                    <h2>Выберите услуги</h2>
+                    <h1>Выберите услуги</h1>
                     {% include 'salons/salon-services.html' with categories_with_services=categories_with_services barbers_by_category=barbers_by_category barbers_by_category_json=barbers_by_category_json %}
                     
-                    <h2>Выберите мастера</h2>
+                    <h1>Выберите мастера</h1>
                     {% include 'salons/barbers.html' with category=category barbers_by_category=barbers_by_category %}
                 {% else %}
-                    <h2>Выберите мастера</h2>
+                    <h1>Выберите мастера</h1>
                     {% include 'salons/barbers.html' with category=category barbers_by_category=barbers_by_category %}
                     
-                    <h2>Выберите услуги</h2>
+                    <h1>Выберите услуги</h1>
                     {% include 'salons/salon-services.html' with categories_with_services=categories_with_services barbers_by_category=barbers_by_category barbers_by_category_json=barbers_by_category_json %}
                 {% endif %}
                 
@@ -123,12 +123,6 @@
             
                 <!-- Форма бронирования -->
                 {% include 'salons/salon-reserv.html' %}
-
-                <!-- Итоговая цена и длительность -->
-                <div class="total-summary" style="display: none;">
-                    <p>Итоговая цена: <span id="total-price">{{ salon.default_price }}</span>&nbsp;{% trans "драм" %}</p>
-                    <p>Общее время: <span id="total-duration">{{ salon.default_duration }}</span>&nbsp;{% trans "минут" %}</p>
-                </div>
             </div>
         </div>
     </div>

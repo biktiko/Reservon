@@ -1,7 +1,7 @@
 /* Основные стили для header */
 header {
   /* background: linear-gradient(30deg, #333333f7, #444); */
-  background: #333333f7;
+  background: #312f2fad;
   color: #fff;
   padding: 10px 0;
   position: sticky;
@@ -67,7 +67,7 @@ header {
 }
 
 .navigation a:hover {
-  color: #f0a500;
+  color: #2d69c6;
 }
 
 /* Блок авторизации */
@@ -93,9 +93,9 @@ header {
 }
 
 .auth-buttons .register-btn {
-  background-color: #f0a500;
+  background-color: #2d69c6;
   color: #000;
-  border: 1px solid #f0a500;
+  border: 1px solid #2d69c6;
 }
 
 .auth-buttons .btn:hover {

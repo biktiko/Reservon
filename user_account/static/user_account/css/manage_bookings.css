@@ -27,7 +27,7 @@
 .filter-button,
 .add-booking-button {
     padding: 5px 10px;
-    background-color: rgb(240, 165, 0);
+    background-color: #3390ec;
     color: white;
     border: none;
     cursor: pointer;
@@ -61,7 +61,7 @@
 }
 
 .bookings-container h1 {
-    color: rgb(240, 165, 0);
+    color: #3390ec;
     margin-bottom: 20px;
 }
 
@@ -94,12 +94,12 @@
 
 .filter-form select:focus {
     outline: none;
-    box-shadow: 0 0 5px rgb(240, 165, 0);
+    box-shadow: 0 0 5px #3390ec;
 }
 
 .filter-form button {
     padding: 5px 10px;
-    background-color: rgb(240, 165, 0);
+    background-color: #3390ec;
     color: white;
     border: none;
     cursor: pointer;
@@ -107,7 +107,7 @@
 }
 
 .filter-form button:hover {
-    background-color: rgb(220, 145, 0);
+    background-color: #3390ec;
 }
 
 
@@ -137,7 +137,7 @@
 .booking-time {
     font-size: 1.2em;
     font-weight: bold;
-    color: rgb(240, 165, 0);
+    color: #3390ec;
 }
 
 /* Стили информации о бронировании */
@@ -148,7 +148,7 @@
 }
 
 .booking-info i {
-    color: rgb(240, 165, 0);
+    color: #3390ec;
     margin-right: 10px;
     font-size: 1.2em;
 }
@@ -173,7 +173,7 @@
 }
 
 .booking-actions a:hover {
-    color: rgb(240, 165, 0);
+    color: #3390ec;
 }
 
 /* Иконки действий */
@@ -186,7 +186,7 @@
 }
 
 .booking-actions a.details-button i {
-    color: rgb(240, 165, 0);
+    color: #3390ec;
 }
 
 /* Hover-эффект для карточек бронирования */
@@ -204,7 +204,7 @@
 }
 
 .action-button:hover {
-    color: rgb(240, 165, 0);
+    color: #3390ec;
 }
 
 .action-button i {
@@ -278,7 +278,7 @@
 
     /* Стилизация кнопки закрытия */
     .close-button-item a {
-        background-color: rgb(240, 165, 0); /* Яркий фон */
+        background-color: #3390ec; /* Яркий фон */
         color: white;
         text-decoration: none;
         padding: 10px 20px;
@@ -289,7 +289,7 @@
     }
 
     .close-button-item a:hover {
-        background-color: rgb(220, 145, 0); /* Более темный оттенок при наведении */
+        background-color: #3390ec; /* Более темный оттенок при наведении */
         transform: translateY(-2px); /* Небольшое поднятие при наведении */
     }
 
@@ -335,7 +335,7 @@
     .sidebar ul li a:hover,
     .sidebar ul li.active a {
         background-color: rgb(70, 70, 70);
-        color: rgb(240, 165, 0);
+        color: #3390ec;
     }
 
     /* Удаление иконок для кнопки закрытия, если необходимо */

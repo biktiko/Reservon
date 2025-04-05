@@ -24,7 +24,7 @@
 
 .intro-content .btn.learn-more {
   padding: 10px 20px;
-  background-color: #f0a500;
+  background-color: #2d69c6;
   color: #000;
   text-decoration: none;
   border-radius: 5px;
@@ -49,5 +49,5 @@
 }
 
 .close-icon:hover {
-  color: #f0a500;
+  color: #2d69c6;
 }

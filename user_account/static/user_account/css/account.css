@@ -58,8 +58,8 @@
 /* Подсветка активных пунктов меню */
 .top-menu ul li.active a,
 .top-menu ul li a:hover {
-    color: rgb(240, 165, 0);
-    border-bottom: 2px solid rgb(240, 165, 0);
+    color: #3390ec;
+    border-bottom: 2px solid #3390ec;
 }
 
 /* Левое боковое меню (sidebar) */
@@ -92,7 +92,7 @@
 
 .sidebar ul li.active a,
 .sidebar ul li:hover a {
-    color: rgb(240, 165, 0);
+    color: #3390ec;
 }
 
 .sidebar ul li a i {
@@ -170,7 +170,7 @@
     }
     /* Стилизация самой ссылки "Закрыть" */
     .close-button-item a {
-        background-color: rgb(240, 165, 0);
+        background-color: #3390ec;
         color: white;
         text-decoration: none;
         padding: 10px 20px;
@@ -181,7 +181,7 @@
         margin-top: 5px;
     }
     .close-button-item a:hover {
-        background-color: rgb(220, 145, 0);
+        background-color: #3390ec;
         transform: translateY(-2px);
         cursor: pointer;
     }
@@ -203,6 +203,6 @@
     .sidebar ul li a:hover,
     .sidebar ul li.active a {
         background-color: rgb(70, 70, 70);
-        color: rgb(240, 165, 0);
+        color: #3390ec;
     }
 }

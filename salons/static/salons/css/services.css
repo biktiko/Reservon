@@ -47,7 +47,7 @@
 }
 
 .category-button.selected {
-    background-color: #3390ec;
+    background-color: #2d69c6;
     color: #fff;
 }
 
@@ -59,7 +59,7 @@
 
 .all-services-button:hover {
     background-color: #fff;
-    /* color: #f0a500; */
+    /* color: #2d69c6; */
     border: 2px solid;
 }
 
@@ -97,7 +97,7 @@
 }
 
 .service-card.selected {
-    background-color: #3390ec;
+    background-color: #2d69c6;
     color: #fff;
 }
 
@@ -165,7 +165,7 @@
 }
 
 .pagination-button.active {
-    background-color: #3390ec;
+    background-color: #2d69c6;
     color: #fff;
     transform: scale(1.1);
 }

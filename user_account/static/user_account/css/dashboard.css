@@ -16,14 +16,14 @@
 .card-title {
     font-size: 2em;
     margin: 0 0 10px;
-    color: rgb(240,165,0);
+    color: #3390ec;
     word-wrap: break-word;
 }
 
 .card-subtitle {
     font-size: 1.5em;
     margin: 0 0 15px;
-    color: rgb(240,165,0);
+    color: #3390ec;
     display: flex;
     align-items: center;
 }
@@ -86,14 +86,14 @@
 }
 
 .services-list .service-price {
-    color: rgb(240,165,0);
+    color: #3390ec;
 }
 
 .edit-button {
     display: inline-block;
     margin-top: 20px;
     padding: 10px 20px;
-    background-color: rgb(240,165,0);
+    background-color: #3390ec;
     color: white;
     text-decoration: none;
     border-radius: 5px;

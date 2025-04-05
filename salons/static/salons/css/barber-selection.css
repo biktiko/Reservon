@@ -11,7 +11,7 @@
     align-items: center;
     padding: 10px;
     border-radius: 8px;
-    background-color: #333;
+    background-color: 312f2fad;
     cursor: pointer;
     transition: background-color 0.3s;
 }
@@ -36,7 +36,7 @@
     align-items: center;
     padding: 10px;
     border-radius: 8px;
-    background-color: #333;
+    background-color: #312f2fad;
     margin-bottom: 10px;
     cursor: pointer;
     transition: background 0.3s;
