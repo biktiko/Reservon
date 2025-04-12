@@ -330,7 +330,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Комментируем код на английском:
     async function populateDays() {
-        console.log('populate')
         daySelect.innerHTML = '';
         const daysToCheck = [];
         for (let i = 0; i < reservDays; i++) {
@@ -417,7 +416,11 @@ document.addEventListener('DOMContentLoaded', function() {
         updateBookingButtonState();
     }
 
+    let globalRequestId = 0;
+
     async function populateHours(dateString) {
+        const currentRequestId = ++globalRequestId;
+
         const hoursInfo = document.querySelector('.hours-info');
         if (hoursInfo) hoursInfo.style.display = 'block';
         hourSelect.innerHTML = '';
@@ -446,6 +449,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Отправляем один запрос для всех часов
         const availableMinutesData = await getAvailableMinutesBatch(salonId, chosenDate, hours);
+
+        if (currentRequestId !== globalRequestId) {
+            return; // Игнорируем ответ, если запрос устарел
+        }
 
         let anyAvailable = false;
         hours.forEach(hour => {
@@ -776,6 +783,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
 
     function collectBookingFormData() {
+        console.log('collect booking form data')
         const formData = {
             salon_id: salonId,
             date: selectedDateInput.value,
@@ -786,26 +794,56 @@ document.addEventListener('DOMContentLoaded', function() {
     
         if (salonMod === 'barber') {
             const categories = Object.keys(selectedServicesByCategory);
-            categories.forEach(categoryId => {
-                const barberId = selectedBarbersByCategory[categoryId]; 
-                let services = selectedServicesByCategory[categoryId] || [];
-                let duration = services.reduce((acc, sId) => acc + getServiceDuration(sId), 0);
-                if (duration === 0 && barberId) {
-                    duration = getBarberDefaultDuration(barberId);
-                }
-                if (services.length > 0 || barberId) {
+        
+            if (categories.length > 0) {
+                categories.forEach(categoryId => {
+                    const barberId = selectedBarbersByCategory[categoryId];
+                    console.log('barberId', barberId);
+        
+                    // Список услуг по категории
+                    const services = selectedServicesByCategory[categoryId] || [];
+        
+                    // Суммируем продолжительность выбранных услуг
+                    let duration = services.reduce((acc, sId) => acc + getServiceDuration(sId), 0);
+        
+                    // Если нет услуг, но есть выбранный барбер, подставляем дефолт
+                    if (duration === 0 && barberId) {
+                        duration = getBarberDefaultDuration(barberId);
+                    }
+        
+                    // Добавляем в formData, если что-то выбрано
+                    if (services.length > 0 || barberId) {
+                        formData.booking_details.push({
+                            categoryId: categoryId,
+                            barberId: barberId,
+                            services: services.map(sId => ({
+                                serviceId: sId,
+                                duration: getServiceDuration(sId)
+                            })),
+                            duration: duration
+                        });
+                        formData.total_service_duration += duration;
+                    }
+                });
+            } else {
+                // Когда категорий нет, но есть выбранный барбер
+                const barber = document.querySelector('.barber-card.selected');
+                if (barber) {
+                    const barberId = barber.dataset.barberId;
+                    // Подставим дефолтную длительность для выбранного барбера (если надо)
+                    const duration = getBarberDefaultDuration(barberId);
+        
                     formData.booking_details.push({
-                        categoryId: categoryId,
+                        categoryId: 'any',
                         barberId: barberId,
-                        services: services.map(sId => ({
-                            serviceId: sId,
-                            duration: getServiceDuration(sId)
-                        })),
+                        services: [],
                         duration: duration
                     });
                     formData.total_service_duration += duration;
                 }
-            });
+            }
+        
+            // Если в booking_details вообще ничего не собралось
             if (formData.booking_details.length === 0) {
                 formData.total_service_duration = salonDefaultDuration;
             }

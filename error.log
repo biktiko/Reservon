@@ -38991,3 +38991,42 @@ Traceback (most recent call last):
   File "C:\Reservon\Reservon\venv\Lib\site-packages\django\template\base.py", line 573, in invalid_block_tag
     raise self.error(
 django.template.exceptions.TemplateSyntaxError: Invalid block tag on line 10: 'trans'. Did you forget to register or load this tag?
+ERROR 2025-04-11 22:30:53,487 log Internal Server Error: /salons/1/book/
+ERROR 2025-04-11 22:31:33,971 log Internal Server Error: /salons/1/book/
+ERROR 2025-04-11 22:32:05,968 log Internal Server Error: /salons/1/book/
+ERROR 2025-04-11 22:32:35,603 log Internal Server Error: /salons/1/book/
+ERROR 2025-04-11 22:46:10,367 log Internal Server Error: /salons/1/book/
+ERROR 2025-04-11 22:50:53,959 log Internal Server Error: /salons/1/book/
+ERROR 2025-04-11 22:59:03,034 log Internal Server Error: /salons/1/book/
+ERROR 2025-04-11 23:04:36,666 log Internal Server Error: /salons/1/book/
+ERROR 2025-04-11 23:08:59,507 log Internal Server Error: /salons/1/book/
+ERROR 2025-04-11 23:11:23,394 log Internal Server Error: /salons/1/book/
+ERROR 2025-04-11 23:12:00,166 log Internal Server Error: /salons/1/book/
+ERROR 2025-04-11 23:20:22,640 log Internal Server Error: /salons/1/book/
+Traceback (most recent call last):
+  File "C:\Reservon\Reservon\salons\views.py", line 1165, in book_appointment
+    raise BookingError("Barber is busy", nearest_before=suggestion["nearest_before"], nearest_after=suggestion["nearest_after"])
+salons.views.BookingError: Barber is busy
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Reservon\Reservon\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Reservon\Reservon\venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\user\AppData\Local\Programs\Python\Python312\Lib\contextlib.py", line 81, in inner
+    return func(*args, **kwds)
+           ^^^^^^^^^^^^^^^^^^^
+  File "C:\Reservon\Reservon\venv\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Reservon\Reservon\salons\views.py", line 1349, in book_appointment
+    return JsonResponse({'error': e.message}, status=e.status)
+                                                     ^^^^^^^^
+AttributeError: 'BookingError' object has no attribute 'status'
+ERROR 2025-04-12 15:39:55,412 log Internal Server Error: /salons/1/book/
+ERROR 2025-04-12 15:41:53,265 log Internal Server Error: /salons/1/book/
+ERROR 2025-04-12 15:42:32,012 log Internal Server Error: /salons/1/book/
