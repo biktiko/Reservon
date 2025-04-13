@@ -1,3 +1,5 @@
+# Test it in https://editor-next.swagger.io/
+
 openapi: 3.0.1
 info:
   title: Reservon API
