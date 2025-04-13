@@ -4,7 +4,7 @@
  * @param {string} action - Действие для загрузки соответствующего контента (например, 'login').
  */
 
-
+console.log("Modal.js is loaded")
 
 const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
@@ -399,12 +399,8 @@ function loadModalContent(step, phone_number) {
     var modal = document.getElementById('auth-modal');
     var modalBody = document.getElementById('modal-body');
 
+    if(phone_number[0]==0) phone_number = phone_number.slice(1);
    
-    if(phone_number[0]==0){
-        phone_number = phone_number.slice(1);
-    }
-   
-
     fetch('/auth/get_form/', {
         method: 'POST',
         headers: {
@@ -550,7 +546,16 @@ function submitSetPassword() {
         if (data.success) {
             if (data.redirect_to_booking) {
                 closeModal();
-                const event = new Event('loginFromBookingSuccess');
+                // const event = new Event('loginFromBookingSuccess');
+                // document.dispatchEvent(event);
+
+                const event = new CustomEvent('loginFromBookingSuccess', {
+                    detail: {
+                        salon_id: data.salon_id,
+                        phone_number: phone_number
+                        // можно положить любые поля
+                    }
+                });
                 document.dispatchEvent(event);
 
             } else {
@@ -579,7 +584,7 @@ function submitEnterPassword() {
     var phone_number = document.getElementById('id_phone_number').value;
     var password = document.getElementById('id_password').value;
     var submitButton = document.getElementById('submit-enter-password-btn');
-
+    console.log('submitEnterPassword')
     if (!password) {
         document.getElementById('enter-password-response').innerHTML = '<p style="color: red;">Пароль обязателен.</p>';
         return;
@@ -597,14 +602,30 @@ function submitEnterPassword() {
         },
         body: JSON.stringify({ 'phone_number': phone_number, 'password': password })
     })
-    .then(response => response.json())
+    .then(response => {
+        console.log(response)
+        return response.json()
+    })
     .then(data => {
+        console.log(data)
         if (data.success) {
             if (data.redirect_to_booking) {
                 closeModal();
+                console.log('event')
                 // Отправляем событие об успешном логине для продолжения бронирования
-                const event = new Event('loginFromBookingSuccess');
+
+                // const event = new Event('loginFromBookingSuccess');
+                // document.dispatchEvent(event);
+                
+                const event = new CustomEvent('loginFromBookingSuccess', {
+                    detail: {
+                        salon_id: data.salon_id,
+                        phone_number: phone_number
+                        // можно положить любые поля
+                    }
+                });
                 document.dispatchEvent(event);
+
             } else {
                 closeModal();
                 location.reload();
@@ -623,6 +644,7 @@ function submitEnterPassword() {
         submitButton.innerText = 'Войти';
     });
 }
+
 
 /**
  * Валидирует формат номера телефона.

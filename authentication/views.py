@@ -354,13 +354,17 @@ def enter_password(request):
         phone_number = normalize_phone_number(phone_number)
 
         user = authenticate(username=phone_number, password=password)
+        print('enter_password view')
+        print(data)
         if user is not None:
             login(request, user)
             logger.debug(f"Пользователь {phone_number} вошёл в систему.")
-
+            print(request.session.items())
             from_booking = request.session.get('from_booking', False)
             salon_id = request.session.get('salon_id', None)
             if from_booking and salon_id:
+                print('we are here')
+                print('from_booking', from_booking)
                 del request.session['from_booking']
                 del request.session['salon_id']
                 return JsonResponse({'success': True, 'redirect_to_booking': True, 'salon_id': salon_id})

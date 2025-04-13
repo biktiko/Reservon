@@ -1,6 +1,7 @@
 // C:\Reservon\Reservon\salons\static\salons\js\booking.js
 
 document.addEventListener('DOMContentLoaded', function() {
+    let globalRequestId = 0;
 
     // Сначала объявляем salonDataElement, а затем salonId
     const salonDataElement = document.getElementById('salon-data');
@@ -416,7 +417,6 @@ document.addEventListener('DOMContentLoaded', function() {
         updateBookingButtonState();
     }
 
-    let globalRequestId = 0;
 
     async function populateHours(dateString) {
         const currentRequestId = ++globalRequestId;
@@ -574,12 +574,12 @@ document.addEventListener('DOMContentLoaded', function() {
     function populateAvailableMinutes(availableMinutes, date, hour) {
         const minutesInfo = document.querySelector('.minutes-info');
         if (minutesInfo) minutesInfo.style.display = 'block';
-        const minuteSelect = document.getElementById('minute-select'); // Убедитесь, что у вас есть этот элемент
-        const summaryText = document.getElementById('summary-text'); // Убедитесь, что у вас есть этот элемент
+        const minuteSelect = document.getElementById('minute-select');
+        const summaryText = document.getElementById('summary-text');
         minuteSelect.innerHTML = '';
         summaryText.innerText = 'Дата и час выбраны, выберите минуту';
 
-        const totalDurationElem = parseInt(document.getElementById('total-duration').innerHTML);
+        // const totalDurationElem = parseInt(document.getElementById('total-duration').innerHTML);
         const totalServiceDuration = calculateTotalDuration();
 
         if (availableMinutes.length === 0) {
@@ -725,6 +725,8 @@ document.addEventListener('DOMContentLoaded', function() {
         bookingButton.addEventListener('click', function(event) {
 
             // Проверяем, заполнены ли необходимые поля
+            console.log('bookingButton cliccked')
+            console.log(canSubmitForm())
             if (!canSubmitForm()) {
 
                 event.preventDefault();
@@ -750,8 +752,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    bookingButtonBefore.addEventListener('click', handleAutoBooking);
-    bookingButtonAfter.addEventListener('click', handleAutoBooking);
+    if(bookingButtonBefore) bookingButtonBefore.addEventListener('click', handleAutoBooking);
+    if(bookingButtonBefore) bookingButtonAfter.addEventListener('click', handleAutoBooking);
 
     function handleAutoBooking(event) {
         const btn = event.target;
@@ -766,6 +768,11 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('Пожалуйста, выберите дату и время для бронирования.');
             return;
         }
+
+        if (selectedTimeInput) {
+            selectedTimeInput.value = chosenTime;
+        }
+        
         const isAuthenticated = btn.dataset.isAuthenticated === 'true';
         if (!isAuthenticated) {
             saveBookingFormData();
@@ -774,9 +781,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // Устанавливаем выбранное время в скрытый input
-        if (selectedTimeInput) {
-            selectedTimeInput.value = chosenTime;
-        }
         // Теперь данные, собранные функцией collectBookingFormData(), будут содержать поле time
         submitBookingForm();
     }
@@ -1096,8 +1100,10 @@ document.addEventListener('DOMContentLoaded', function() {
     function openAuthModal(action, salonId="") {
         var modal = document.getElementById('auth-modal');
         var modalBody = document.getElementById('modal-body');
-    
+        
         let bodyData = { 'action': action };
+        console.log('bodyData')
+        console.log(bodyData)
     
         if (action === 'login_from_booking') {
             bodyData.salon_id = salonId;
@@ -1111,7 +1117,7 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             body: JSON.stringify(bodyData)
         })
-        .then(response => response.json())
+        .then(response => response.json()) 
         .then(data => {
             if (data.html) {
                 modalBody.innerHTML = data.html;
@@ -1136,17 +1142,6 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(error => console.error('Error fetching modal content:', error));
     }
-
-    document.addEventListener('loginFromBookingSuccess', function() {
-        // Получаем данные из localStorage
-        const formDataString = localStorage.getItem('bookingFormData');
-        if (formDataString) {
-            const formData = JSON.parse(formDataString);
-            showBookingConfirmationModal(formData);
-        } else {
-            console.error('No booking data found in localStorage.');
-        }
-    });
 
     // Сбор данных о категориях
     const categoriesData = {};
@@ -1182,7 +1177,7 @@ document.addEventListener('DOMContentLoaded', function() {
         };
     });
 
-    function showBookingConfirmationModal(formData) {
+    window.showBookingConfirmationModal = function(formData) {
         const modal = document.getElementById('booking-confirmation-modal');
         console.log(modal)
         const closeButton = modal.querySelector('.close-button');
@@ -1191,18 +1186,37 @@ document.addEventListener('DOMContentLoaded', function() {
     
         // Функция для вычисления endTime
         function calculateEndTime(formData) {
-            let [hours, minutes] = formData.time.split(":").map(Number);
+            // Если время не указано, пытаемся получить его из скрытого поля или возвращаем пустую строку
+            if (!formData.time || formData.time.trim() === "") {
+                const selectedTimeInput = document.getElementById('selected-time');
+                if (selectedTimeInput && selectedTimeInput.value.trim() !== "") {
+                    formData.time = selectedTimeInput.value.trim();
+                } else {
+                    return ""; // Или можно задать дефолтное время, например, "00:00"
+                }
+            }
+            const parts = formData.time.split(":");
+            if (parts.length < 2) {
+                return "";
+            }
+            let hours = parseInt(parts[0], 10);
+            let minutes = parseInt(parts[1], 10);
+        
+            // Если парсинг не успешен, возвращаем пустую строку
+            if (isNaN(hours) || isNaN(minutes)) {
+                return "";
+            }
+        
             minutes += formData.total_service_duration;
-
             hours += Math.floor(minutes / 60);
             minutes = minutes % 60;
-
-            let formattedHours = String(hours).padStart(2, "0");
-            let formattedMinutes = String(minutes).padStart(2, "0");
-
+        
+            // Форматируем часы и минуты с ведущими нулями
+            const formattedHours = String(hours).padStart(2, "0");
+            const formattedMinutes = String(minutes).padStart(2, "0");
             return `${formattedHours}:${formattedMinutes}`;
         }
-
+        
         formData.endTime = calculateEndTime(formData);
     
         generateBookingDetailsHTML(formData);
@@ -1245,6 +1259,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         };
     }
+    console.log("Мы объявляем showBookingConfirmationModal", window.showBookingConfirmationModal);
     
      // Функция для генерации HTML деталей бронирования
      function generateBookingDetailsHTML(data) {
@@ -1406,6 +1421,23 @@ document.addEventListener('DOMContentLoaded', function() {
         const modal = document.getElementById('booking-confirmation-modal');
         modal.classList.remove('show');
         // modal.style.display = 'none'; // Добавляем скрытие модального окна
+        location.reload()
     }
 
+});
+
+console.log("Booking.js is loaded")
+document.addEventListener('loginFromBookingSuccess', function(event) {
+    
+    // Если в событии передавались данные — они лежат в event.detail
+    console.log('loginFromBookingSuccess event triggered');
+    console.log('event.detail:', event.detail);
+    // Получаем данные из localStorage
+    const formDataString = localStorage.getItem('bookingFormData');
+    if (formDataString) {
+        const formData = JSON.parse(formDataString);
+        showBookingConfirmationModal(formData);
+    } else {
+        console.error('No booking data found in localStorage.');
+    }
 });

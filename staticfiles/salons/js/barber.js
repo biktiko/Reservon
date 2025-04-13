@@ -25,7 +25,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const uniqueBarbers = {};
 
-    
     // Проходим по каждой категории
     for (const categoryId in barbersByCategory) {
         if (barbersByCategory.hasOwnProperty(categoryId)) {

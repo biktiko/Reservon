@@ -1,6 +1,7 @@
 // C:\Reservon\Reservon\salons\static\salons\js\booking.js
 
 document.addEventListener('DOMContentLoaded', function() {
+    let globalRequestId = 0;
 
     // Сначала объявляем salonDataElement, а затем salonId
     const salonDataElement = document.getElementById('salon-data');
@@ -330,7 +331,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Комментируем код на английском:
     async function populateDays() {
-        console.log('populate')
         daySelect.innerHTML = '';
         const daysToCheck = [];
         for (let i = 0; i < reservDays; i++) {
@@ -417,7 +417,10 @@ document.addEventListener('DOMContentLoaded', function() {
         updateBookingButtonState();
     }
 
+
     async function populateHours(dateString) {
+        const currentRequestId = ++globalRequestId;
+
         const hoursInfo = document.querySelector('.hours-info');
         if (hoursInfo) hoursInfo.style.display = 'block';
         hourSelect.innerHTML = '';
@@ -446,6 +449,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Отправляем один запрос для всех часов
         const availableMinutesData = await getAvailableMinutesBatch(salonId, chosenDate, hours);
+
+        if (currentRequestId !== globalRequestId) {
+            return; // Игнорируем ответ, если запрос устарел
+        }
 
         let anyAvailable = false;
         hours.forEach(hour => {
@@ -567,12 +574,12 @@ document.addEventListener('DOMContentLoaded', function() {
     function populateAvailableMinutes(availableMinutes, date, hour) {
         const minutesInfo = document.querySelector('.minutes-info');
         if (minutesInfo) minutesInfo.style.display = 'block';
-        const minuteSelect = document.getElementById('minute-select'); // Убедитесь, что у вас есть этот элемент
-        const summaryText = document.getElementById('summary-text'); // Убедитесь, что у вас есть этот элемент
+        const minuteSelect = document.getElementById('minute-select');
+        const summaryText = document.getElementById('summary-text');
         minuteSelect.innerHTML = '';
         summaryText.innerText = 'Дата и час выбраны, выберите минуту';
 
-        const totalDurationElem = parseInt(document.getElementById('total-duration').innerHTML);
+        // const totalDurationElem = parseInt(document.getElementById('total-duration').innerHTML);
         const totalServiceDuration = calculateTotalDuration();
 
         if (availableMinutes.length === 0) {
@@ -718,6 +725,8 @@ document.addEventListener('DOMContentLoaded', function() {
         bookingButton.addEventListener('click', function(event) {
 
             // Проверяем, заполнены ли необходимые поля
+            console.log('bookingButton cliccked')
+            console.log(canSubmitForm())
             if (!canSubmitForm()) {
 
                 event.preventDefault();
@@ -743,8 +752,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    bookingButtonBefore.addEventListener('click', handleAutoBooking);
-    bookingButtonAfter.addEventListener('click', handleAutoBooking);
+    if(bookingButtonBefore) bookingButtonBefore.addEventListener('click', handleAutoBooking);
+    if(bookingButtonBefore) bookingButtonAfter.addEventListener('click', handleAutoBooking);
 
     function handleAutoBooking(event) {
         const btn = event.target;
@@ -759,6 +768,11 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('Пожалуйста, выберите дату и время для бронирования.');
             return;
         }
+
+        if (selectedTimeInput) {
+            selectedTimeInput.value = chosenTime;
+        }
+        
         const isAuthenticated = btn.dataset.isAuthenticated === 'true';
         if (!isAuthenticated) {
             saveBookingFormData();
@@ -767,15 +781,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // Устанавливаем выбранное время в скрытый input
-        if (selectedTimeInput) {
-            selectedTimeInput.value = chosenTime;
-        }
         // Теперь данные, собранные функцией collectBookingFormData(), будут содержать поле time
         submitBookingForm();
     }
     
 
     function collectBookingFormData() {
+        console.log('collect booking form data')
         const formData = {
             salon_id: salonId,
             date: selectedDateInput.value,
@@ -786,26 +798,56 @@ document.addEventListener('DOMContentLoaded', function() {
     
         if (salonMod === 'barber') {
             const categories = Object.keys(selectedServicesByCategory);
-            categories.forEach(categoryId => {
-                const barberId = selectedBarbersByCategory[categoryId]; 
-                let services = selectedServicesByCategory[categoryId] || [];
-                let duration = services.reduce((acc, sId) => acc + getServiceDuration(sId), 0);
-                if (duration === 0 && barberId) {
-                    duration = getBarberDefaultDuration(barberId);
-                }
-                if (services.length > 0 || barberId) {
+        
+            if (categories.length > 0) {
+                categories.forEach(categoryId => {
+                    const barberId = selectedBarbersByCategory[categoryId];
+                    console.log('barberId', barberId);
+        
+                    // Список услуг по категории
+                    const services = selectedServicesByCategory[categoryId] || [];
+        
+                    // Суммируем продолжительность выбранных услуг
+                    let duration = services.reduce((acc, sId) => acc + getServiceDuration(sId), 0);
+        
+                    // Если нет услуг, но есть выбранный барбер, подставляем дефолт
+                    if (duration === 0 && barberId) {
+                        duration = getBarberDefaultDuration(barberId);
+                    }
+        
+                    // Добавляем в formData, если что-то выбрано
+                    if (services.length > 0 || barberId) {
+                        formData.booking_details.push({
+                            categoryId: categoryId,
+                            barberId: barberId,
+                            services: services.map(sId => ({
+                                serviceId: sId,
+                                duration: getServiceDuration(sId)
+                            })),
+                            duration: duration
+                        });
+                        formData.total_service_duration += duration;
+                    }
+                });
+            } else {
+                // Когда категорий нет, но есть выбранный барбер
+                const barber = document.querySelector('.barber-card.selected');
+                if (barber) {
+                    const barberId = barber.dataset.barberId;
+                    // Подставим дефолтную длительность для выбранного барбера (если надо)
+                    const duration = getBarberDefaultDuration(barberId);
+        
                     formData.booking_details.push({
-                        categoryId: categoryId,
+                        categoryId: 'any',
                         barberId: barberId,
-                        services: services.map(sId => ({
-                            serviceId: sId,
-                            duration: getServiceDuration(sId)
-                        })),
+                        services: [],
                         duration: duration
                     });
                     formData.total_service_duration += duration;
                 }
-            });
+            }
+        
+            // Если в booking_details вообще ничего не собралось
             if (formData.booking_details.length === 0) {
                 formData.total_service_duration = salonDefaultDuration;
             }
@@ -1058,8 +1100,10 @@ document.addEventListener('DOMContentLoaded', function() {
     function openAuthModal(action, salonId="") {
         var modal = document.getElementById('auth-modal');
         var modalBody = document.getElementById('modal-body');
-    
+        
         let bodyData = { 'action': action };
+        console.log('bodyData')
+        console.log(bodyData)
     
         if (action === 'login_from_booking') {
             bodyData.salon_id = salonId;
@@ -1073,7 +1117,7 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             body: JSON.stringify(bodyData)
         })
-        .then(response => response.json())
+        .then(response => response.json()) 
         .then(data => {
             if (data.html) {
                 modalBody.innerHTML = data.html;
@@ -1098,17 +1142,6 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(error => console.error('Error fetching modal content:', error));
     }
-
-    document.addEventListener('loginFromBookingSuccess', function() {
-        // Получаем данные из localStorage
-        const formDataString = localStorage.getItem('bookingFormData');
-        if (formDataString) {
-            const formData = JSON.parse(formDataString);
-            showBookingConfirmationModal(formData);
-        } else {
-            console.error('No booking data found in localStorage.');
-        }
-    });
 
     // Сбор данных о категориях
     const categoriesData = {};
@@ -1144,7 +1177,7 @@ document.addEventListener('DOMContentLoaded', function() {
         };
     });
 
-    function showBookingConfirmationModal(formData) {
+    window.showBookingConfirmationModal = function(formData) {
         const modal = document.getElementById('booking-confirmation-modal');
         console.log(modal)
         const closeButton = modal.querySelector('.close-button');
@@ -1153,18 +1186,37 @@ document.addEventListener('DOMContentLoaded', function() {
     
         // Функция для вычисления endTime
         function calculateEndTime(formData) {
-            let [hours, minutes] = formData.time.split(":").map(Number);
+            // Если время не указано, пытаемся получить его из скрытого поля или возвращаем пустую строку
+            if (!formData.time || formData.time.trim() === "") {
+                const selectedTimeInput = document.getElementById('selected-time');
+                if (selectedTimeInput && selectedTimeInput.value.trim() !== "") {
+                    formData.time = selectedTimeInput.value.trim();
+                } else {
+                    return ""; // Или можно задать дефолтное время, например, "00:00"
+                }
+            }
+            const parts = formData.time.split(":");
+            if (parts.length < 2) {
+                return "";
+            }
+            let hours = parseInt(parts[0], 10);
+            let minutes = parseInt(parts[1], 10);
+        
+            // Если парсинг не успешен, возвращаем пустую строку
+            if (isNaN(hours) || isNaN(minutes)) {
+                return "";
+            }
+        
             minutes += formData.total_service_duration;
-
             hours += Math.floor(minutes / 60);
             minutes = minutes % 60;
-
-            let formattedHours = String(hours).padStart(2, "0");
-            let formattedMinutes = String(minutes).padStart(2, "0");
-
+        
+            // Форматируем часы и минуты с ведущими нулями
+            const formattedHours = String(hours).padStart(2, "0");
+            const formattedMinutes = String(minutes).padStart(2, "0");
             return `${formattedHours}:${formattedMinutes}`;
         }
-
+        
         formData.endTime = calculateEndTime(formData);
     
         generateBookingDetailsHTML(formData);
@@ -1207,6 +1259,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         };
     }
+    console.log("Мы объявляем showBookingConfirmationModal", window.showBookingConfirmationModal);
     
      // Функция для генерации HTML деталей бронирования
      function generateBookingDetailsHTML(data) {
@@ -1368,6 +1421,23 @@ document.addEventListener('DOMContentLoaded', function() {
         const modal = document.getElementById('booking-confirmation-modal');
         modal.classList.remove('show');
         // modal.style.display = 'none'; // Добавляем скрытие модального окна
+        location.reload()
     }
 
+});
+
+console.log("Booking.js is loaded")
+document.addEventListener('loginFromBookingSuccess', function(event) {
+    
+    // Если в событии передавались данные — они лежат в event.detail
+    console.log('loginFromBookingSuccess event triggered');
+    console.log('event.detail:', event.detail);
+    // Получаем данные из localStorage
+    const formDataString = localStorage.getItem('bookingFormData');
+    if (formDataString) {
+        const formData = JSON.parse(formDataString);
+        showBookingConfirmationModal(formData);
+    } else {
+        console.error('No booking data found in localStorage.');
+    }
 });
