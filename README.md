@@ -1,2 +1,5 @@
 # Reservon
- Web-app for reserv salons in Armenia
+Web-app for reservations
+ 
+For questions
+Telegram: @newTig

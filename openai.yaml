@@ -1,0 +1,163 @@
+openapi: 3.0.1
+info:
+  title: Reservon API
+  description: >
+    Reservon.am: Web-app for reserving.
+    
+
+    **Note:** All necessary IDs (such as salon_id, categoryId, barberId, serviceId, etc.) are generated and maintained in the Reservon database. When partnering, these IDs will be provided upon request.
+    
+
+    **Test Data:**
+      - Salon ID: 36  
+      - Barbers:  
+          - Anahit: 39  
+          - Arsen: 40  
+      - Categories:  
+          - Hairstyles: 67  
+      - Services: 84, 85  
+      
+    For more details, visit: [https://reservon.am/salons/36/](https://reservon.am/salons/36/)
+
+  version: "1.0.0"
+  x-testData:
+    link: "https://reservon.am/salons/36/"
+    salonId: 36
+    barbers:
+      - name: "Anahit"
+        id: 39
+      - name: "Arsen"
+        id: 40
+    categories:
+      - name: "Hairstyles"
+        id: 67
+    services:
+      - 84
+      - 85
+servers:
+  - url: https://reservon.am/api
+paths:
+  /salons/{partner_id}/book/:
+    post:
+      summary: Create a Booking
+      description: Creates a booking for a given salon/partner.
+      parameters:
+        - name: partner_id
+          in: path
+          description: The partner (salon) ID.
+          required: true
+          schema:
+            type: integer
+            example: 36
+      requestBody:
+        required: true
+        description: Booking details provided by the user.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                salon_id:
+                  type: integer
+                  description: >
+                    Numeric ID of the salon/partner.
+                    This matches the partner_id in the URL.
+                  example: 36
+                date:
+                  type: string
+                  format: date
+                  description: Booking date in YYYY-MM-DD format.
+                  example: "2025-04-16"
+                time:
+                  type: string
+                  description: Booking start time in HH:MM format.
+                  example: "16:00"
+                booking_details:
+                  type: array
+                  description: >
+                    Additional booking options. An empty array means no extra options.
+                  items:
+                    type: object
+                    properties:
+                      categoryId:
+                        type: string
+                        description: >
+                          Either "any" or a specific category ID.
+                        example: "any"
+                      barberId:
+                        type: string
+                        description: >
+                          Either "any" or a specific barber ID.
+                        example: "any"
+                      services:
+                        type: array
+                        description: >
+                          An array of services (if any), each with its own ID and duration.
+                        items:
+                          type: object
+                          properties:
+                            serviceId:
+                              type: integer
+                              description: Unique ID of the service.
+                              example: 85
+                            duration:
+                              type: integer
+                              description: Duration (in minutes) of the service.
+                              example: 30
+                      duration:
+                        type: integer
+                        description: Total duration for this block of services.
+                        example: 50
+                user_comment:
+                  type: string
+                  description: An optional comment from the user.
+                  example: ""
+                phone_number:
+                  type: string
+                  description: The user's phone number.
+                  example: "37497242038"
+                salonMod:
+                  type: string
+                  description: >
+                    Salon mode. Possible values:
+                    - "category" — static grouping of services/categories (recommended).
+                    - "barber" — each barber has a separate service list.
+                  example: "category"
+              required:
+                - salon_id
+                - date
+                - time
+                - phone_number
+                - salonMod
+      responses:
+        '200':
+          description: Booking created successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Booking created successfully!"
+        '400':
+          description: Time slot unavailable (booking conflict).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Barber is busy"
+                  nearest_before:
+                    type: string
+                    description: Suggested available time before the requested slot.
+                    example: "15:40"
+                  nearest_after:
+                    type: string
+                    description: Suggested available time after the requested slot.
+                    example: "17:00"
