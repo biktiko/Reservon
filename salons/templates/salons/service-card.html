@@ -13,6 +13,7 @@
         {% endif %}
         <div class="service-info">
             <h4 class="service-name">{{ service.name }}</h4>
+            {% if service.description %} <h5 class="service-description">{{ service.description }}</h5> {% endif %}
             <p class="service-details">{{ service.price|floatformat:0 }} драм • {{ service.duration|duration_minutes }} минут</p>
         </div>
     </div>

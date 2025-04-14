@@ -5,12 +5,29 @@
 }
 
 .service-categories {
-    display: flex;
-    flex-wrap: wrap; /* Разрешаем перенос элементов */
-    gap: 10px; /* Добавляем отступы между кнопками */
-    justify-content: flex-start; /* Выравниваем кнопки по левому краю */
-}
-
+    display: grid;
+    /* auto-fit пытается "растянуть" элементы так,
+       чтобы занять всю доступную ширину строки */
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;           /* регулируй отступы между кнопками */
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  
+  .category-button {
+    margin: 0;
+    padding: 10px;
+    text-align: center;
+    box-sizing: border-box;
+    background-color: #312f2fad;
+    color: #ccc;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s, color 0.3s;
+  }
+  
 
 .services-grid{
  margin-top: 15px;
@@ -34,8 +51,8 @@
     color: #312f2fad;
 }
 
-.category-button {
-    max-width: 200px; /* Устанавливаем максимальную ширину */
+/* .category-button {
+    max-width: 200px;
     padding: 10px;
     text-align: center;
     background-color: #312f2fad;
@@ -44,7 +61,7 @@
     border-radius: 5px;
     cursor: pointer;
     transition: background 0.3s, color 0.3s;
-}
+} */
 
 .category-button.selected {
     background-color: #2d69c6;
