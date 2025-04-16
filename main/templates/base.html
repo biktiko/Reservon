@@ -12,14 +12,29 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
 
-    <link rel="icon" type="image/x-icon" href="{% static 'favicon.ico' %}">
+     <!-- Подключение основных иконок -->
+    <!-- Классическая .ico (запасная для старых браузеров) -->
+    <link rel="icon" type="image/x-icon" href="{% static 'favicon/favicon.ico' %}" />
+
+    <!-- PNG иконки разных размеров для современных браузеров -->
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'favicon/favicon-16x16.png' %}" />
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'favicon/favicon-32x32.png' %}" />
+
+    <!-- Android Chrome (часто рекомендуют 192x192 и 512x512) -->
+    <link rel="icon" type="image/png" sizes="192x192" href="{% static 'favicon/android-chrome-192x192.png' %}" />
+    <link rel="icon" type="image/png" sizes="512x512" href="{% static 'favicon/android-chrome-512x512.png' %}" />
+
+    <!-- Apple Touch Icon (iPhone/iPad) -->
+    <link rel="apple-touch-icon" href="{% static 'favicon/apple-touch-icon.png' %}" />
+
+    <!-- webmanifest для PWA/Android Chrome -->
+    <link rel="manifest" href="{% static 'favicon/site.webmanifest' %}" />
 
     <script src="https://kit.fontawesome.com/5efa530f7d.js" crossorigin="anonymous"></script>
     
     <link rel="stylesheet" href="{% static 'main/css/main.css' %}">
     <link rel="stylesheet" href="{% static 'main/css/header.css' %}">
     <link rel="stylesheet" href="{% static 'main/css/section.css' %}">
-
 
     <title> Reservon </title>
     
