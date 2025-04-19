@@ -270,6 +270,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function initializeActiveBarber() {
+
         const activeBarberCard = document.getElementById('active-barber');
         if (!activeBarberCard) {
             console.error('Элемент с id "active-barber" не найден.');
@@ -356,12 +357,16 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     
         if (barber) {
-            activeBarberCard.querySelector('.barber-avatar').src = barber.avatar || '/static/salons/img/default-avatar.png';
             activeBarberCard.querySelector('.barber-name').textContent = barber.name;
+            activeBarberCard.querySelector('.barber-avatar').src = barber.avatar || '/static/salons/img/default-avatar.png';
             activeBarberCard.querySelector('.barber-description').textContent = barber.description || '';
         } else {
+            if (anyBarberMode=="True"){
+                activeBarberCard.querySelector('.barber-name').textContent = 'Любой мастер';
+            }else{
+                activeBarberCard.querySelector('.barber-name').textContent = barber.name;
+            }
             activeBarberCard.querySelector('.barber-avatar').src = '/static/salons/img/default-avatar.png';
-            activeBarberCard.querySelector('.barber-name').textContent = 'Любой мастер';
             activeBarberCard.querySelector('.barber-description').textContent = 'Описание или слоган';
         }
     }
