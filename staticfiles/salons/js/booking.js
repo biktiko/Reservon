@@ -8,15 +8,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const salonId = parseInt(salonDataElement.dataset.salonId, 10);
 
     const salonModInput = document.getElementById('salon-mod');
+    
     const salonMod = salonModInput.value;
+    console.log('Salon mod is ', salonMod)
 
     const salonAppointmentMod = salonDataElement.dataset.appointment_mod
     console.log('Salon appointment mod is ', salonAppointmentMod)
 
     const isCheckDays = salonDataElement.dataset.ischeckdays
-    console.log(isCheckDays)
+    console.log('isCheckDays is ', isCheckDays)
     
-    console.log('Salon mod is ', salonMod)
 
     const serviceDurationElement = document.getElementById('service-duration');
     const salonDefaultDuration = parseInt(serviceDurationElement.dataset.duration, 10) || 0; // В минутах

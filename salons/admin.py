@@ -261,13 +261,14 @@ class SalonAdmin(ImportExportModelAdmin):
         ('Salon settings', {
             # Здесь оставили 'status'
             'fields': (
+                'admins',
+                'mod',
                 'appointment_mod',
                 'reservDays',
-                'admins',
-                'IsCheckDays',
-                'mod',
                 'default_duration',
-                'default_price'
+                'default_price',
+                'IsCheckDays',
+                'anyBarberMode'
             )
         }),
     )

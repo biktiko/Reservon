@@ -46,6 +46,7 @@ class Salon(models.Model):
     ]
 
     name = models.CharField('Salon name', max_length=50)
+    salon_manager = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='managed_salons')
     logo = models.ImageField('Logo', upload_to='salon_logos/', blank=True, null=True)
     city = models.CharField('City', max_length=20, default='Yerevan', blank=False)
     address = models.CharField('Address', max_length=100, blank=True, null=True)
@@ -68,7 +69,7 @@ class Salon(models.Model):
     mod = models.CharField(choices=MOD_CHOICES, max_length=10, default='category')
     appointment_mod = models.CharField(choices=APPOINTMENT_MOD_CHOICES, max_length=10, default='auto')
     IsCheckDays = models.BooleanField('Is Check Days', default=True)
-    salon_manager = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='managed_salons')
+    anyBarberMode = models.BooleanField('Any Barber Mod', default=True)
 
     # telegram
     telegram_status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='active')

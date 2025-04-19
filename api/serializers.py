@@ -68,16 +68,18 @@ class SalonDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Salon
-        fields = [
-            'id', 'name', 'logo', 'address', 'status', 'mod',
-            'IsCheckDays', 'reservDays',
-            'shortDescription_hy', 'shortDescription_ru', 'shortDescription_eng',
-            'description_hy', 'description_ru', 'description_eng',
-            'services',
-            'barbers',
-            'appointment_mod',
-            'telegram_status', 'telegram_appointmentMod', 'telegram_barbersMod',
-        ]
+        # fields = [
+        #     'id', 'name', 'logo', 'address', 'status', 'mod',
+        #     'IsCheckDays', 'reservDays',
+        #     'shortDescription_hy', 'shortDescription_ru', 'shortDescription_eng',
+        #     'description_hy', 'description_ru', 'description_eng',
+        #     'services',
+        #     'barbers',
+        #     'appointment_mod',
+        #     'telegram_status', 'telegram_appointmentMod', 'telegram_barbersMod',
+        # ]
+
+        fields = '__all__'
 class BookingServiceSerializer(serializers.Serializer):
     serviceId = serializers.IntegerField()
     duration = serializers.IntegerField()

@@ -4,9 +4,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const salonModInput = document.getElementById('salon-mod');
     let salonMod = 'null';
-    if (salonModInput) {
-        salonMod = salonModInput.value;
-    }
+    if (salonModInput) salonMod = salonModInput.value;
+    
+    const anyBarberMode = document.querySelector('.barber-selection').getAttribute('data-any-barber-mode');
 
     let selectedBarbers = {}; // Ключ: categoryId, Значение: barberId
 
@@ -51,8 +51,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const activeBarberCard = document.getElementById('active-barber');
     const barberList = document.getElementById('barber-list');
-
+    
     if(salonMod=='barber') initializeActiveBarber();
+    else if (anyBarberMode=="False"){
+        initializeActiveBarber();
+        console.log('anyBarberMode', anyBarberMode)
+    }  
+    
     initializeCategory();
 
     // Текущая выбранная категория
@@ -81,7 +86,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Получаем выбранного барбера для текущей категории
             const selectedBarberId = selectedBarbers[currentCategoryId] || 'any';
             // Добавляем опцию "Любой мастер", если она не является выбранной
-            if(salonMod == 'category'){
+            if(salonMod == 'category' && anyBarberMode=="True"){
                 if (selectedBarberId !== 'any') {
                     const anyBarberCard = createBarberCard('any', 'Любой мастер', '/static/salons/img/default-avatar.png', 'Описание или слоган');
                     barberList.appendChild(anyBarberCard);

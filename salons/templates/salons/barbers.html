@@ -3,7 +3,7 @@
 {% load i18n %}
 {% load custom_tags %}
 
-<div class="barber-selection">
+<div class="barber-selection" data-any-barber-mode="{{ salon.anyBarberMode }}">
     <!-- Активный барбер -->
     {% if salon.mod == "category" %}
         <div id="active-barber" class="barber-card active-barber-card">
