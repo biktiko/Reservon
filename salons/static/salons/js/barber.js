@@ -286,25 +286,21 @@ document.addEventListener('DOMContentLoaded', function() {
         //     barber = uniqueBarbersArray.find(b => String(b.id) === String(barberId));
         // }
         let currentCategoryId = getCurrentCategoryId();
+        console.log('barbersByCategory[currentCategoryId]')
         console.log(barbersByCategory[currentCategoryId])
         // Пытаемся найти барбера по заданному ID, если он задан и не равен "any"
         if (barberId && barberId !== 'any') {
             barber = barbersByCategory[currentCategoryId].find(b => String(b.id) === String(barberId));
         }
-
-        console.log('uniqueBarbersArray');
-        console.log(uniqueBarbersArray);
-        console.log('barbersByCategory');
-        console.log(barbersByCategory);
         // Если барбер не найден или barberId не задан,
         // выбираем первого или случайного барбера из uniqueBarbersArray
         if (!barber) {
-            if (uniqueBarbersArray.length > 0) {
+            if (barbersByCategory[currentCategoryId].length > 0) {
                 // Выбор первого:
-                // barber = uniqueBarbersArray[0];
+                // barber = barbersByCategory[currentCategoryId][0];
 
                 // Или, если требуется случайный выбор:
-                barber = uniqueBarbersArray[Math.floor(Math.random() * uniqueBarbersArray.length)];
+                barber = barbersByCategory[currentCategoryId][Math.floor(Math.random() * uniqueBarbersArray.length)];
             } else {
                 console.error("Нет доступных барберов для инициализации.");
                 return;
