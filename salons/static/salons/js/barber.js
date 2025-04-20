@@ -351,16 +351,26 @@ document.addEventListener('DOMContentLoaded', function() {
     
         // Обновляем активную карточку барбера
         let barber = null;
-        if (barberId !== 'any') {
-            barber = uniqueBarbersArray.find(b => String(b.id) === String(barberId));
-            if (!barber) {
-                // Если не найден в uniqueBarbersArray, ищем в barbersByCategory
-                for (const categoryId in barbersByCategory) {
-                    if (barbersByCategory.hasOwnProperty(categoryId)) {
-                        barber = barbersByCategory[categoryId].find(b => String(b.id) === String(barberId));
-                        if (barber) break;
-                    }
+        let currentCategoryId = getCurrentCategoryId();
+        console.log('barbersByCategory[currentCategoryId]')
+        console.log(barbersByCategory[currentCategoryId])
+        // Пытаемся найти барбера по заданному ID, если он задан и не равен "any"
+        if (barberId && barberId !== 'any') {
+            barber = barbersByCategory[currentCategoryId].find(b => String(b.id) === String(barberId));
+        }
+        // Если барбер не найден или barberId не задан,
+        // выбираем первого или случайного барбера из uniqueBarbersArray
+        if (!barber) {
+            if (barbersByCategory[currentCategoryId].length > 0) {
+
+                if(barbersByCategory[currentCategoryId].length > 1) {
+                    barber = barbersByCategory[currentCategoryId][Math.floor(Math.random() *  barbersByCategory[currentCategoryId].length)];
+                }else{
+                    barber = barbersByCategory[currentCategoryId][0];
                 }
+            } else {
+                console.error("Нет доступных барберов для инициализации.");
+                return;
             }
         }
     
