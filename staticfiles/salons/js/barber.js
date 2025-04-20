@@ -280,12 +280,22 @@ document.addEventListener('DOMContentLoaded', function() {
         // Получаем начальное значение data-barber-id из activeBarberCard
         let barberId = activeBarberCard.getAttribute('data-barber-id');
         let barber = null;
-        console.log('barberId', barberId)
+
+        // Пытаемся найти барбера по заданному ID, если он задан и не равен "any"
+        // if (barberId && barberId !== 'any') {
+        //     barber = uniqueBarbersArray.find(b => String(b.id) === String(barberId));
+        // }
+        let currentCategoryId = getCurrentCategoryId();
+        console.log(barbersByCategory[currentCategoryId])
         // Пытаемся найти барбера по заданному ID, если он задан и не равен "any"
         if (barberId && barberId !== 'any') {
-            barber = uniqueBarbersArray.find(b => String(b.id) === String(barberId));
+            barber = barbersByCategory[currentCategoryId].find(b => String(b.id) === String(barberId));
         }
-        console.log('barber', barber)
+
+        console.log('uniqueBarbersArray');
+        console.log(uniqueBarbersArray);
+        console.log('barbersByCategory');
+        console.log(barbersByCategory);
         // Если барбер не найден или barberId не задан,
         // выбираем первого или случайного барбера из uniqueBarbersArray
         if (!barber) {
@@ -309,6 +319,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Определяем текущую категорию: либо выбранная категория, либо первая из списка
         const initialCategoryId = getCurrentCategoryId() || Object.keys(barbersByCategory)[0];
+        
         // Сохраняем выбранного барбера для текущей категории в глобальном объекте selectedBarbers
         selectedBarbers[initialCategoryId] = barber.id;
         
