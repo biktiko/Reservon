@@ -296,11 +296,12 @@ document.addEventListener('DOMContentLoaded', function() {
         // выбираем первого или случайного барбера из uniqueBarbersArray
         if (!barber) {
             if (barbersByCategory[currentCategoryId].length > 0) {
-                // Выбор первого:
-                // barber = barbersByCategory[currentCategoryId][0];
-
-                // Или, если требуется случайный выбор:
-                barber = barbersByCategory[currentCategoryId][Math.floor(Math.random() * uniqueBarbersArray.length)];
+    
+                if(barbersByCategory[currentCategoryId].length > 1) {
+                    barber = barbersByCategory[currentCategoryId][Math.floor(Math.random() *  barbersByCategory[currentCategoryId].length)];
+                }else{
+                    barber = barbersByCategory[currentCategoryId][0];
+                }
             } else {
                 console.error("Нет доступных барберов для инициализации.");
                 return;
