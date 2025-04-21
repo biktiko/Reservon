@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-02-25 22:49+0400\n"
+"POT-Creation-Date: 2025-04-21 21:11+0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -124,16 +124,17 @@ msgstr "Не получили код?"
 msgid "Resend"
 msgstr "Отправить заново"
 
-#: .\main\templates\base.html:53 .\main\templates\main\section.html:9
+#: .\main\templates\base.html:69 .\main\templates\main\section.html:9
 msgid ""
 "Reservon — это ваш лучший помощник для онлайн бронирования в салонах красоты."
-msgstr "Reservon — это ваш лучший помощник для онлайн-бронирования в салонах красоты."
+msgstr ""
+"Reservon — это ваш лучший помощник для онлайн-бронирования в салонах красоты."
 
-#: .\main\templates\base.html:55 .\main\templates\main\section.html:11
+#: .\main\templates\base.html:71 .\main\templates\main\section.html:11
 msgid "Узнать больше"
 msgstr "Узнать больше"
 
-#: .\main\templates\main\header.html:22
+#: .\main\templates\main\header.html:26
 #: .\venv\Lib\site-packages\grappelli\dashboard\templates\admin\index.html:25
 #: .\venv\Lib\site-packages\grappelli\templates\admin\500.html:9
 #: .\venv\Lib\site-packages\grappelli\templates\admin\app_index.html:11
@@ -171,23 +172,23 @@ msgstr "Узнать больше"
 msgid "Home"
 msgstr "Главная"
 
-#: .\main\templates\main\header.html:23
+#: .\main\templates\main\header.html:27
 msgid "Salons"
 msgstr "Салоны"
 
-#: .\main\templates\main\header.html:24
+#: .\main\templates\main\header.html:28
 msgid "About"
 msgstr "О нас"
 
-#: .\main\templates\main\header.html:25
+#: .\main\templates\main\header.html:29
 msgid "Contact"
 msgstr "Контакты"
 
-#: .\main\templates\main\header.html:31 .\main\templates\main\header.html:33
+#: .\main\templates\main\header.html:35 .\main\templates\main\header.html:37
 msgid "My account"
 msgstr "Мой аккаунт"
 
-#: .\main\templates\main\header.html:35
+#: .\main\templates\main\header.html:39
 #: .\main\templates\main\login_password.html:7
 msgid "Login"
 msgstr "Вход"
@@ -200,28 +201,32 @@ msgstr "Введите пароль для номера"
 msgid "Register"
 msgstr "Зарегистрироваться"
 
-#: .\main\templates\main\search.html:12
+#: .\main\templates\main\search.html:15
 msgid "Search..."
 msgstr "Поиск..."
 
-#: .\main\templates\main\search.html:16
+#: .\main\templates\main\search.html:20
+msgid "Categories▾"
+msgstr "Категории▾"
+
+#: .\main\templates\main\search.html:32
 msgid "Cities▾"
 msgstr "Города▾"
 
-#: .\main\templates\main\search.html:24 .\main\templates\main\search.html:28
+#: .\main\templates\main\search.html:43
 msgid "Search"
 msgstr "Поиск"
 
-#: .\reservon\settings.py:180 .\reservon\settings_staging.py:162
-msgid "English"
-msgstr ""
-
-#: .\reservon\settings.py:181 .\reservon\settings_staging.py:163
+#: .\reservon\settings.py:180 .\reservon\settings_staging.py:163
 msgid "Russian"
 msgstr ""
 
-#: .\reservon\settings.py:182 .\reservon\settings_staging.py:164
+#: .\reservon\settings.py:181 .\reservon\settings_staging.py:164
 msgid "Armenian"
+msgstr ""
+
+#: .\reservon\settings.py:182 .\reservon\settings_staging.py:162
+msgid "English"
 msgstr ""
 
 #: .\reservon\settings.py:189 .\reservon\settings_staging.py:171
@@ -262,14 +267,6 @@ msgstr ""
 msgid "Время не выбрано"
 msgstr ""
 
-#: .\salons\templates\salons\salon-detail.html:129
-msgid "драм"
-msgstr ""
-
-#: .\salons\templates\salons\salon-detail.html:130
-msgid "минут"
-msgstr ""
-
 #: .\salons\templates\salons\salon-services.html:23
 #: .\salons\templates\salons\salon-services.html:50
 msgid "Нет доступных услуг."
@@ -280,7 +277,7 @@ msgstr ""
 msgid "Нет доступных категорий услуг."
 msgstr ""
 
-#: .\salons\templates\salons\salons.html:18
+#: .\salons\templates\salons\salons.html:19
 msgid "Нет доступных салонов."
 msgstr ""
 

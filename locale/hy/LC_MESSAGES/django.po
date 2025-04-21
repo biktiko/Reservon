@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-02-25 22:49+0400\n"
+"POT-Creation-Date: 2025-04-21 21:18+0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -122,16 +122,18 @@ msgstr "Չե՞ք ստացել կոդը"
 msgid "Resend"
 msgstr "Կրկին ուղարկել"
 
-#: .\main\templates\base.html:53 .\main\templates\main\section.html:9
+#: .\main\templates\base.html:69 .\main\templates\main\section.html:9
 msgid ""
 "Reservon — это ваш лучший помощник для онлайн бронирования в салонах красоты."
-msgstr "Reservon-ը ձեր լավագույն օգնականն է գեղեցկության սրահներում առցանց ամրագրումների համար։"
+msgstr ""
+"Reservon-ը ձեր լավագույն օգնականն է գեղեցկության սրահներում առցանց "
+"ամրագրումների համար։"
 
-#: .\main\templates\base.html:55 .\main\templates\main\section.html:11
+#: .\main\templates\base.html:71 .\main\templates\main\section.html:11
 msgid "Узнать больше"
 msgstr "Իմանալ ավելին"
 
-#: .\main\templates\main\header.html:22
+#: .\main\templates\main\header.html:26
 #: .\venv\Lib\site-packages\grappelli\dashboard\templates\admin\index.html:25
 #: .\venv\Lib\site-packages\grappelli\templates\admin\500.html:9
 #: .\venv\Lib\site-packages\grappelli\templates\admin\app_index.html:11
@@ -169,23 +171,23 @@ msgstr "Իմանալ ավելին"
 msgid "Home"
 msgstr "Գլխավոր"
 
-#: .\main\templates\main\header.html:23
+#: .\main\templates\main\header.html:27
 msgid "Salons"
 msgstr "Սրահներ"
 
-#: .\main\templates\main\header.html:24
+#: .\main\templates\main\header.html:28
 msgid "About"
 msgstr "Մեր մասին"
 
-#: .\main\templates\main\header.html:25
+#: .\main\templates\main\header.html:29
 msgid "Contact"
 msgstr "Կոնտակտներ"
 
-#: .\main\templates\main\header.html:31 .\main\templates\main\header.html:33
+#: .\main\templates\main\header.html:35 .\main\templates\main\header.html:37
 msgid "My account"
 msgstr "Իմ էջը"
 
-#: .\main\templates\main\header.html:35
+#: .\main\templates\main\header.html:39
 #: .\main\templates\main\login_password.html:7
 msgid "Login"
 msgstr "Մուտք"
@@ -198,29 +200,35 @@ msgstr "Մուտքագրեք համարի գաղտնաբառը"
 msgid "Register"
 msgstr "Գրանցվել"
 
-#: .\main\templates\main\search.html:12
+#: .\main\templates\main\search.html:15
 msgid "Search..."
 msgstr "Որոնել..."
 
-#: .\main\templates\main\search.html:16
+#: .\main\templates\main\search.html:20
+#, fuzzy
+#| msgid "Cities▾"
+msgid "Categories▾"
+msgstr "Քաղաքներ▾"
+
+#: .\main\templates\main\search.html:32
 msgid "Cities▾"
 msgstr "Քաղաքներ▾"
 
-#: .\main\templates\main\search.html:24 .\main\templates\main\search.html:28
+#: .\main\templates\main\search.html:43
 msgid "Search"
 msgstr "Որոնել"
 
-#: .\reservon\settings.py:180 .\reservon\settings_staging.py:162
-msgid "English"
-msgstr "Անգլերեն"
-
-#: .\reservon\settings.py:181 .\reservon\settings_staging.py:163
+#: .\reservon\settings.py:180 .\reservon\settings_staging.py:163
 msgid "Russian"
 msgstr "Ռուսերեն"
 
-#: .\reservon\settings.py:182 .\reservon\settings_staging.py:164
+#: .\reservon\settings.py:181 .\reservon\settings_staging.py:164
 msgid "Armenian"
 msgstr "Հայերեն"
+
+#: .\reservon\settings.py:182 .\reservon\settings_staging.py:162
+msgid "English"
+msgstr "Անգլերեն"
 
 #: .\reservon\settings.py:189 .\reservon\settings_staging.py:171
 msgid "j E"
@@ -260,14 +268,6 @@ msgstr "Ընտրեք ամսաթիվն և ժամը"
 msgid "Время не выбрано"
 msgstr "Ժամը ընտրված չէ"
 
-#: .\salons\templates\salons\salon-detail.html:129
-msgid "драм"
-msgstr "դրամ"
-
-#: .\salons\templates\salons\salon-detail.html:130
-msgid "минут"
-msgstr "րոպե"
-
 #: .\salons\templates\salons\salon-services.html:23
 #: .\salons\templates\salons\salon-services.html:50
 msgid "Нет доступных услуг."
@@ -278,9 +278,10 @@ msgstr "Հասանելի ծառայություններ չկան։"
 msgid "Нет доступных категорий услуг."
 msgstr "Հասանելի ծառայությունների կատեգորիաներ չկան։"
 
-#: .\salons\templates\salons\salons.html:18
+#: .\salons\templates\salons\salons.html:19
 msgid "Нет доступных салонов."
 msgstr "Հասանելի սրահներ չկան։"
+
 #: .\venv\Lib\site-packages\click\_termui_impl.py:518
 #, python-brace-format
 msgid "{editor}: Editing failed"
@@ -2753,6 +2754,12 @@ msgstr ""
 msgctxt "stick"
 msgid "club"
 msgstr ""
+
+#~ msgid "драм"
+#~ msgstr "դրամ"
+
+#~ msgid "минут"
+#~ msgstr "րոպե"
 
 #~ msgid "Вход"
 #~ msgstr "Մուտք"

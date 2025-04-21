@@ -34,6 +34,7 @@ logger = logging.getLogger('booking')
 def main(request):
     query = request.GET.get('q', '')
     city_filter = request.GET.get('city', '')
+    category_filter = request.GET.get('category', '')
     if query:
         salons = Salon.objects.filter(
             Q(name__icontains=query) | Q(address__icontains=query)
@@ -42,6 +43,8 @@ def main(request):
         salons = Salon.objects.filter(status='active')
     if city_filter:
         salons = salons.filter(city=city_filter)
+    if category_filter:
+        salons = salons.filter(category__iexact=category_filter)
     context = {
         'salons': salons,
         'q': query,

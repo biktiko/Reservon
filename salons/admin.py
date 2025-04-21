@@ -229,8 +229,7 @@ class SalonAdmin(ImportExportModelAdmin):
 
     fieldsets = (
         (None, {
-            # Убрали 'status', чтобы не было дублирования
-            'fields': ('name', 'salon_manager')
+            'fields': ('name', 'category', 'salon_manager')
         }),
         ('Partnership status', {
             'fields': ('status', 'additional_status')
@@ -259,7 +258,6 @@ class SalonAdmin(ImportExportModelAdmin):
             'fields': ('telegram_status', 'telegram_appointmentMod', 'telegram_barbersMod')
         }),
         ('Salon settings', {
-            # Здесь оставили 'status'
             'fields': (
                 'admins',
                 'mod',

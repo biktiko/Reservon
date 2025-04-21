@@ -1,3 +1,4 @@
+# C:\Reservon\Reservon\salons\models.py
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils.translation import gettext_lazy as _
@@ -47,6 +48,7 @@ class Salon(models.Model):
 
     name = models.CharField('Salon name', max_length=50)
     salon_manager = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='managed_salons')
+    category = models.CharField('Category', max_length=50, blank=False, null=True, default='Beauty Salon')
     logo = models.ImageField('Logo', upload_to='salon_logos/', blank=True, null=True)
     city = models.CharField('City', max_length=20, default='Yerevan', blank=False)
     address = models.CharField('Address', max_length=100, blank=True, null=True)

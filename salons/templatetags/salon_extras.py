@@ -7,3 +7,8 @@ register = template.Library()
 def get_available_cities():
     # Получаем города из активных салонов
     return Salon.objects.filter(status='active').values_list('city', flat=True).distinct()
+
+@register.simple_tag
+def get_available_categories():
+    # Получаем города из активных салонов
+    return Salon.objects.filter(status='active').values_list('category', flat=True).distinct()
