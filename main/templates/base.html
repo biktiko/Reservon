@@ -36,6 +36,16 @@
     <link rel="stylesheet" href="{% static 'main/css/header.css' %}">
     <link rel="stylesheet" href="{% static 'main/css/section.css' %}">
 
+    <meta property="og:title" content="Reservon">
+    <meta property="og:description" content="Ամրագրումների հարթակ գեղեցկության սրահների համար">
+    <meta property="og:image" content="https://reservon.am{% static 'main/img/logo.png' %}" >
+    <meta property="og:url" content="{{ request.build_absolute_uri }}">
+    <meta property="og:type" content="website">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:image" content="https://reservon.am{% static 'main/img/logo.png' %}" >
+
+
     <title> Reservon </title>
     
   </head>
@@ -96,6 +106,8 @@
     <script src="{% static 'user_account/js/edit_booking.js' %}"></script>
     <script src="{% static 'main/js/push_subscription.js' %}"></script>
     <script src="{% static 'main/js/section.js' %}"></script>
+    <script src="{% static 'js/chat-widget.js' %}"></script>
 
   </body>
 </html>
+
