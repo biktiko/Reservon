@@ -23,8 +23,9 @@ class Salon(models.Model):
         ('mail', 'Mail'),                         # отправлено письмо
         ('they_think', 'They think'),             # думают
         ('not now', 'Not now'),                   # сказали свяжутся если нужно будет
+        ('not_interested', 'Not interested'),     # не заинтересованы
         ('ignored', 'Ignored'),                   # не отвечают
-        ('expansion_needed', 'Expansion needed'), # пока нет условий
+        ('expansion_needed', 'Expansion needed'), # нyжно расширить
         ('former_partner', 'Former Partner'),     # раньше сотрудничали
     ]
 

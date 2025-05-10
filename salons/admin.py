@@ -201,10 +201,63 @@ class BarberAvailabilityAdmin(admin.ModelAdmin):
 # --- Настройка админки для Salon ---
 
 # Форма для модели Salon с использованием стандартного виджета Textarea
+
+class ChoiceWithDescSelect(forms.Select):
+    """Select, который добавляет к пункту описание и тултип."""
+    def __init__(self, *args, descriptions=None, **kwargs):
+        self.descriptions = descriptions or {}
+        super().__init__(*args, **kwargs)
+
+    def create_option(
+        self, name, value, label, selected, index,
+        subindex=None, attrs=None
+    ):
+        option = super().create_option(
+            name, value, label, selected, index,
+            subindex=subindex, attrs=attrs,
+        )
+        desc = self.descriptions.get(value)
+        if desc:
+            # (а) показываем описание рядом
+            option["label"] = f"{label} — {desc}"
+            # (б) добавляем title для ховера
+            option["attrs"]["title"] = desc
+        return option
+
+# ---  Описания для status / additional_status ------------------------------
+
+STATUS_DESCRIPTIONS = {
+    'new': 'только появился лид',
+    'in process': 'уже в процессе обсуждения',
+    'active': 'уже сотрудничает',
+    'suspend': 'мы приостановили',
+    'refused': 'они отказались',
+}
+
+ADDITIONAL_DESCRIPTIONS = {
+    'inbound': 'они сами обратились',
+    'waiting_contact': 'ждём ответа',
+    'mail': 'отправлено письмо',
+    'they_think': 'думают',
+    'not now': 'сказали «свяжемся, если нужно будет»',
+    'not_interested': 'не заинтересованы',
+    'ignored': 'не отвечают',
+    'expansion_needed': 'нужно расширить',
+    'former_partner': 'раньше сотрудничали',
+}
+
 class SalonAdminForm(forms.ModelForm):
     class Meta:
         model = Salon
         fields = '__all__'
+        widgets = {
+            "status": ChoiceWithDescSelect(           # ⬅️ применяем кастом
+                descriptions=STATUS_DESCRIPTIONS
+            ),
+            "additional_status": ChoiceWithDescSelect(
+                descriptions=ADDITIONAL_DESCRIPTIONS
+            ),
+        }
 
     def __init__(self, *args, **kwargs):
         super(SalonAdminForm, self).__init__(*args, **kwargs)
@@ -280,6 +333,14 @@ class SalonAdmin(ImportExportModelAdmin):
     def display_admins(self, obj):
         return ", ".join([str(admin) for admin in obj.admins.all()])
     display_admins.short_description = "Admins"
+
+    def status_display(self, obj):
+        return obj.get_status_display()
+    status_display.short_description = 'Status'
+
+    def additional_status_display(self, obj):
+        return obj.get_additional_status_display()
+    additional_status_display.short_description = 'Additional status'
 
 # --- Настройка админки для SalonImage ---
 
