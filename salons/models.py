@@ -9,21 +9,23 @@ class Salon(models.Model):
     admins = models.ManyToManyField(User, related_name='administered_salons', blank=True)
 
     STATUS_CHOICES = [
-        ('new', 'New'),
-        ('active', 'Active'),
-        ('in process', 'In process'),
-        ('refused', 'Refused'),
-        ('suspend', 'Suspend'),
+        ('new', 'New'),                     # только появился лид
+        ('in process', 'In process'),       # уже в процессе обсуждения
+        ('active', 'Active'),               # уже сотрудничает
+        ('suspend', 'Suspend'),             # мы приостановили
+        ('refused', 'Refused'),             # они отказались
     ]
 
+
     ADDITIONAL_STATUS_CHOICES = [
-        ('waiting_contact', 'Waiting for a contact'),
-        ('they_think', 'They think'),
-        ('mail', 'Mail'),
-        ('ignored', 'Ignored'),
-        ('inbound', 'Inbound'),
-        ('former_partner', 'Former Partner'),
-        ('expansion_needed', 'Expansion needed'),
+        ('inbound', 'Inbound'),                   # они сами обратились
+        ('waiting_contact', 'Waiting for a contact'), # ждём ответа
+        ('mail', 'Mail'),                         # отправлено письмо
+        ('they_think', 'They think'),             # думают
+        ('not now', 'Not now'),                   # сказали свяжутся если нужно будет
+        ('ignored', 'Ignored'),                   # не отвечают
+        ('expansion_needed', 'Expansion needed'), # пока нет условий
+        ('former_partner', 'Former Partner'),     # раньше сотрудничали
     ]
 
     MOD_CHOICES = [

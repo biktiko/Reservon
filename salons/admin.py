@@ -221,7 +221,7 @@ class BarberInline(admin.StackedInline):
 @admin.register(Salon)
 class SalonAdmin(ImportExportModelAdmin):
     form = SalonAdminForm
-    list_display = ('name', 'salon_manager', 'city', 'status', 'address', 'telegram_status', 'mod')
+    list_display = ('name', 'salon_manager','city', 'status', 'additional_status', 'address', 'mod')
     list_filter = ('status', 'mod')
     search_fields = ('name', 'address')
     inlines = [ServiceInline, SalonImageInline, BarberInline, NoteInline]
