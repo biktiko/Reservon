@@ -27,6 +27,7 @@ h1, h2, h3{
     padding: 20px;
     box-sizing: border-box;
     border-radius: 15px;
+    padding-bottom: 3px;
 }
 
 .right-section{
