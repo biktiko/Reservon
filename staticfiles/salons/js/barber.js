@@ -211,7 +211,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }else{
                 card.style.display = 'none';
             }
-
         });
         hideEmptyCategories(barberId);
     }
@@ -285,6 +284,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // if (barberId && barberId !== 'any') {
         //     barber = uniqueBarbersArray.find(b => String(b.id) === String(barberId));
         // }
+        
         let currentCategoryId = getCurrentCategoryId();
         console.log('barbersByCategory[currentCategoryId]')
         console.log(barbersByCategory[currentCategoryId])

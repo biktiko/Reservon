@@ -94,10 +94,8 @@
                     <h1>Выберите услуги</h1>
                     {% include 'salons/salon-services.html' with categories_with_services=categories_with_services barbers_by_category=barbers_by_category barbers_by_category_json=barbers_by_category_json %}
                     
-                    <h1>Выберите мастера</h1>
                     {% include 'salons/barbers.html' with category=category barbers_by_category=barbers_by_category %}
                 {% else %}
-                    <h1>Выберите мастера</h1>
                     {% include 'salons/barbers.html' with category=category barbers_by_category=barbers_by_category %}
                     
                     <h1>Выберите услуги</h1>

@@ -10,7 +10,6 @@
 <form id="login-form">
     {% csrf_token %}
     <p>
-        <label for="id_phone_number">{% trans "Phone Number" %}</label>
         
         <!-- Обёртка для кнопки выбора страны и поля ввода -->
         <div class="phone-input-wrapper">
@@ -50,7 +49,7 @@
         </div><!-- .phone-input-wrapper -->
     </p>
     
-    <button type="button" id="submit-login-btn">{% trans "Next" %}</button>
+    <button type="button" id="submit-login-btn" >{% trans "Next" %}</button>
 </form>
 
 <div id="login-response"></div>
