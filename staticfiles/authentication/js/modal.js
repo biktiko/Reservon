@@ -481,7 +481,15 @@ function submitVerifyCode() {
                 // Закрываем модалку
                 closeModal(); 
                 // Доп. действия...
-                const event = new Event('loginFromBookingSuccess');
+                // const event = new Event('loginFromBookingSuccess');
+
+                 const event = new CustomEvent('loginFromBookingSuccess', {
+                    detail: {
+                        salon_id: data.salon_id,
+                        phone_number: phone_number
+                        // можно положить любые поля
+                    }
+                });
                 document.dispatchEvent(event);
             } else {
                 closeModal();
@@ -625,7 +633,6 @@ function submitEnterPassword() {
                     }
                 });
                 document.dispatchEvent(event);
-
             } else {
                 closeModal();
                 location.reload();
