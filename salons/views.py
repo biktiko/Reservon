@@ -757,7 +757,7 @@ def is_barber_busy(barber_id, start_dt, end_dt, barber_busy_times):
         if bs < end_dt and be > start_dt:
             return True
     return False
-
+# test
 def has_overlap(schedule_list, start_dt, end_dt):
     """Проверяем перекрытие внутри уже найденных интервалов schedule_list = [{'start': dt, 'end': dt}, ...]."""
     for sched in schedule_list:

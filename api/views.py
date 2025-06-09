@@ -89,7 +89,7 @@ def api_get_nearest_available_time(request):
     # Возможные случаи, если старая вьюшка ожидает request.POST:
     # нужно подложить в django_request.POST нужные данные (не всегда обязательно).
     # django_request.POST = request.data  # иногда может помочь, если в старой вьюшке используется request.POST[...]
-    from salons.views import get_nearest_available_time as get_nearest_available_time_view
+    from salons.views import get_nearest_suggestion as get_nearest_available_time_view
     response = get_nearest_available_time_view(django_request)
 
     if isinstance(response, JsonResponse):

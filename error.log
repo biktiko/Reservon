@@ -39740,3 +39740,85 @@ Traceback (most recent call last):
   File "C:\Reservon\Reservon\venv\Lib\site-packages\django\template\base.py", line 706, in __init__
     raise TemplateSyntaxError(
 django.template.exceptions.TemplateSyntaxError: Could not parse the remainder: '▾' from 'Categories▾'
+ERROR 2025-06-09 22:49:14,231 log Internal Server Error: /salons/get_available_slots/
+Traceback (most recent call last):
+  File "C:\Reservon\Reservon\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Reservon\Reservon\venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Reservon\Reservon\venv\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Reservon\Reservon\venv\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Reservon\Reservon\venv\Lib\site-packages\rest_framework\views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Reservon\Reservon\venv\Lib\site-packages\rest_framework\views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "C:\Reservon\Reservon\venv\Lib\site-packages\rest_framework\views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "C:\Reservon\Reservon\venv\Lib\site-packages\rest_framework\views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Reservon\Reservon\venv\Lib\site-packages\rest_framework\decorators.py", line 50, in handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Reservon\Reservon\salons\views.py", line 1682, in get_available_slots
+    minutes_response = get_available_minutes(request)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Reservon\Reservon\venv\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Reservon\Reservon\venv\Lib\site-packages\django\views\generic\base.py", line 104, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Reservon\Reservon\venv\Lib\site-packages\rest_framework\views.py", line 492, in dispatch
+    request = self.initialize_request(request, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Reservon\Reservon\venv\Lib\site-packages\rest_framework\views.py", line 391, in initialize_request
+    return Request(
+           ^^^^^^^^
+  File "C:\Reservon\Reservon\venv\Lib\site-packages\rest_framework\request.py", line 154, in __init__
+    assert isinstance(request, HttpRequest), (
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: The `request` argument must be an instance of `django.http.HttpRequest`, not `rest_framework.request.Request`.
+ERROR 2025-06-09 23:14:40,626 log Internal Server Error: /salons/get_nearest_suggestion/
+Traceback (most recent call last):
+  File "C:\Reservon\Reservon\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Reservon\Reservon\venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: get_nearest_suggestion() missing 4 required positional arguments: 'date_str', 'chosen_hour', 'booking_details', and 'total_service_duration'
+ERROR 2025-06-09 23:14:40,638 log Internal Server Error: /salons/get_nearest_suggestion/
+Traceback (most recent call last):
+  File "C:\Reservon\Reservon\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Reservon\Reservon\venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: get_nearest_suggestion() missing 4 required positional arguments: 'date_str', 'chosen_hour', 'booking_details', and 'total_service_duration'
+ERROR 2025-06-09 23:22:21,302 log Internal Server Error: /salons/get_nearest_suggestion/
+Traceback (most recent call last):
+  File "C:\Reservon\Reservon\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Reservon\Reservon\venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: get_nearest_suggestion() missing 4 required positional arguments: 'date_str', 'chosen_hour', 'booking_details', and 'total_service_duration'
+ERROR 2025-06-09 23:22:21,331 log Internal Server Error: /salons/get_nearest_suggestion/
+Traceback (most recent call last):
+  File "C:\Reservon\Reservon\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Reservon\Reservon\venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: get_nearest_suggestion() missing 4 required positional arguments: 'date_str', 'chosen_hour', 'booking_details', and 'total_service_duration'
