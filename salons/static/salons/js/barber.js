@@ -60,6 +60,21 @@ document.addEventListener('DOMContentLoaded', function() {
     
     initializeCategory();
 
+    function updateBarberSelectionVisibility(){
+        if(salonMod !== 'category') return;
+        const categoryId = getCurrentCategoryId();
+        const barberSection = document.querySelector('.barber-selection');
+        if(!barberSection) return;
+        if(!categoryId){
+            barberSection.style.display = 'none';
+            return;
+        }
+        const hasSelected = servicesContainer.querySelector(`.service-card.selected[data-category-id="${categoryId}"]`);
+        barberSection.style.display = hasSelected ? 'block' : 'none';
+    }
+
+    updateBarberSelectionVisibility();
+
     // Текущая выбранная категория
     let currentCategoryId = null;
 
@@ -223,6 +238,10 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    document.addEventListener('servicesUpdated', function(){
+        updateBarberSelectionVisibility();
+    });
+
     // Обработчик изменения категории
     categoryButtons.forEach(button => {
         button.addEventListener('click', function() {
@@ -247,6 +266,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Закрываем список барберов, если он открыт
             barberList.classList.remove('open');
+
+            updateBarberSelectionVisibility();
         });
     });
 
@@ -284,10 +305,9 @@ document.addEventListener('DOMContentLoaded', function() {
         // if (barberId && barberId !== 'any') {
         //     barber = uniqueBarbersArray.find(b => String(b.id) === String(barberId));
         // }
-        
+        console.log('barbers by category')
         let currentCategoryId = getCurrentCategoryId();
-        console.log('barbersByCategory[currentCategoryId]')
-        console.log(barbersByCategory[currentCategoryId])
+        console.table(barbersByCategory[currentCategoryId]);
         // Пытаемся найти барбера по заданному ID, если он задан и не равен "any"
         if (barberId && barberId !== 'any') {
             barber = barbersByCategory[currentCategoryId].find(b => String(b.id) === String(barberId));
@@ -331,10 +351,19 @@ document.addEventListener('DOMContentLoaded', function() {
     
     
     function updateActiveBarberUI(barber) {
+
+        // const activeSection = document.querySelector('.category-section:not(.hidden)');
+        // const isService = activeSection.querySelector('.service-card.selected') !== null;
+
         const activeBarberCard = document.getElementById('active-barber');
         activeBarberCard.querySelector('.barber-avatar').src = barber.avatar || '/static/salons/img/default-avatar.png';
         activeBarberCard.querySelector('.barber-name').textContent = barber.name;
         activeBarberCard.querySelector('.barber-description').textContent = barber.description || '';
+        // if(isService){
+        //     activeBarberCard.style.display = 'none';
+        // }else{
+        //     activeBarberCard.style.display = 'block';
+        // }
     }
 
     function updateBarberSelectionUI(barberId) {
@@ -352,8 +381,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Обновляем активную карточку барбера
         let barber = null;
         let currentCategoryId = getCurrentCategoryId();
-        console.log('barbersByCategory[currentCategoryId]')
-        console.log(barbersByCategory[currentCategoryId])
+   
         // Пытаемся найти барбера по заданному ID, если он задан и не равен "any"
         if (barberId && barberId !== 'any') {
             barber = barbersByCategory[currentCategoryId].find(b => String(b.id) === String(barberId));

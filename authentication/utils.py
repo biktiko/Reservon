@@ -6,6 +6,9 @@ from twilio.rest import Client
 from django.utils import timezone
 from datetime import timedelta
 from authentication.models import User
+from authentication.models import Profile
+from django.db import IntegrityError
+import time
 
 logger = logging.getLogger('booking')
 
@@ -64,6 +67,24 @@ def check_verification_code(phone_number, code):
     except User.DoesNotExist:
         return 'rejected'
 
+def get_or_create_user_by_phone(phone_number: str):
 
+    # 1) создаём/находим user
+    user, created = User.objects.get_or_create(
+        username=phone_number
+    )
+    if created:
+        user.set_unusable_password()
+        user.save()
 
-
+    # 2) создаём/находим profile
+    # В случае параллельного обращения может выдать IntegrityError, придётся ловить
+    for attempt in range(5):
+        try:
+            profile, created = Profile.objects.get_or_create(
+                phone_number=phone_number,
+                defaults={'user': user, 'status': 'verified'}
+            )
+            return profile.user, profile
+        except IntegrityError:
+            time.sleep(0.2)
