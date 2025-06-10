@@ -9,3 +9,4 @@ db.sqlite3
 error.log
 premium.txt
 /venv
+__pycache__/
