@@ -343,6 +343,8 @@ document.addEventListener('DOMContentLoaded', function() {
         // Выделяем выбранную карточку в списке
         updateBarberSelectionUI(barber.id);
         
+        // Сообщаем booking.js о выбранном мастере при инициализации
+      
         // Если режим "barber", фильтруем услуги по выбранному барберу для текущей категории
         if (salonMod === 'barber') {
             filterServicesByBarber(barber.id, initialCategoryId);
