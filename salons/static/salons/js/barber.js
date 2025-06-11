@@ -2,6 +2,8 @@
 
 document.addEventListener('DOMContentLoaded', function() {
 
+    window.barbersByCatergoryWithoutAny = {};
+
     const salonModInput = document.getElementById('salon-mod');
     let salonMod = 'null';
     if (salonModInput) salonMod = salonModInput.value;
@@ -71,6 +73,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         const hasSelected = servicesContainer.querySelector(`.service-card.selected[data-category-id="${categoryId}"]`);
         barberSection.style.display = hasSelected ? 'block' : 'none';
+
+        initializeActiveBarber();
+
     }
 
     updateBarberSelectionVisibility();
@@ -290,7 +295,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function initializeActiveBarber() {
-
+        console.log('Initializing active barber');
         const activeBarberCard = document.getElementById('active-barber');
         if (!activeBarberCard) {
             console.error('Элемент с id "active-barber" не найден.');
@@ -373,17 +378,21 @@ document.addEventListener('DOMContentLoaded', function() {
         barberList.querySelectorAll('.barber-card').forEach(card => {
             card.classList.remove('selected');
         });
-    
+
+        
         // Выделяем выбранного барбера
         const selectedCard = barberList.querySelector(`.barber-card[data-barber-id="${barberId}"]`);
         if (selectedCard) {
             selectedCard.classList.add('selected');
         }
-    
+        
         // Обновляем активную карточку барбера
         let barber = null;
         let currentCategoryId = getCurrentCategoryId();
-   
+        
+        if (anyBarberMode=="False" ) {
+            window.barbersByCatergoryWithoutAny[currentCategoryId] = barberId
+        }
         // Пытаемся найти барбера по заданному ID, если он задан и не равен "any"
         if (barberId && barberId !== 'any') {
             barber = barbersByCategory[currentCategoryId].find(b => String(b.id) === String(barberId));
@@ -418,6 +427,4 @@ document.addEventListener('DOMContentLoaded', function() {
             activeBarberCard.querySelector('.barber-description').textContent = 'Описание или слоган';
         }
     }
-    
-    
 });
