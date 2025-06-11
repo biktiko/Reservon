@@ -316,20 +316,23 @@ def book_appointment(request, id):
         start_datetime = timezone.make_aware(start_datetime_naive, timezone.get_current_timezone())
 
         # -----------------------------------
-        # 4) Считаем общую длительность
+        # 4) Считаем общую длительность по моделям, игнорируем любые duration из запроса
         # -----------------------------------
         if booking_details:
-            try:
-                total_service_duration = sum(int(cat['duration']) for cat in booking_details)
-            except (KeyError, TypeError, ValueError) as e:
-                logger.error(f"Error calculating total duration: {e}")
-                raise ClientError("Invalid duration in booking_details", status=400)
+            total_minutes = 0
+            for detail in booking_details:
+                for svc in detail.get('services', []):
+                    sid = svc.get('serviceId')
+                    try:
+                        serv = Service.objects.get(id=sid, salon=salon)
+                    except Service.DoesNotExist:
+                        logger.warning(f"Service ID {sid} not found in salon {salon.id}")
+                        raise ClientError(f"Service with ID {sid} not found in salon.", status=400)
+                    # duration — это timedelta
+                    total_minutes += int(serv.duration.total_seconds() // 60)
+            total_service_duration = total_minutes
         else:
-            try:
-                total_service_duration = int(total_service_duration)
-            except (TypeError, ValueError):
-                logger.error("Error converting default duration")
-                total_service_duration = salon.default_duration or 30
+            total_service_duration = salon.default_duration or 30
 
         end_datetime = start_datetime + timedelta(minutes=total_service_duration)
 
@@ -395,15 +398,19 @@ def book_appointment(request, id):
                 cat_id = cat_detail.get('categoryId', 'any')
                 services = cat_detail.get('services', [])
                 barber_id = cat_detail.get('barberId', 'any')
-                duration_raw = cat_detail.get('duration', 30)
 
-                try:
-                    dur = int(duration_raw)
-                except (TypeError, ValueError):
-                    logger.error(f"Invalid service duration: {duration_raw}")
-                    raise ClientError("Invalid service duration", status=400)
+                # игнорируем cat_detail['duration'], считаем сумму длительностей из Service
+                dur_minutes = 0
+                for svc in services:
+                    sid = svc.get('serviceId')
+                    try:
+                        serv = Service.objects.get(id=sid, salon=salon)
+                    except Service.DoesNotExist:
+                        logger.warning(f"Service ID {sid} not found in salon {salon.id}")
+                        raise ClientError(f"Service with ID {sid} not found in salon.", status=400)
+                    dur_minutes += int(serv.duration.total_seconds() // 60)
 
-                interval_end = local_start + timedelta(minutes=dur)
+                interval_end = local_start + timedelta(minutes=dur_minutes)
 
                 # Ищем барбера
                 found_barber = None

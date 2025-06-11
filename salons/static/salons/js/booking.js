@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const isCheckDays = salonDataElement.dataset.ischeckdays
     console.log('isCheckDays is ', isCheckDays)
+    
 
     const serviceDurationElement = document.getElementById('service-duration');
     const salonDefaultDuration = parseInt(serviceDurationElement.dataset.duration, 10) || 0; // В минутах
@@ -814,8 +815,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             categoryId: categoryId,
                             barberId: barberId,
                             services: services.map(sId => ({
-                                serviceId: sId,
-                                duration: getServiceDuration(sId)
+                                serviceId: sId
                             })),
                             duration: duration
                         });
@@ -848,10 +848,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const categories = new Set([...Object.keys(selectedServicesByCategory), ...Object.keys(selectedBarbersByCategory)]);
             console.log('categories', categories);
             categories.forEach(categoryId => {
-                let barberId = selectedBarbersByCategory[categoryId] || 'any';
-                // if (barberId === 'any' & window.barbersByCatergoryWithoutAny[categoryId] !== undefined) {
-                //     barberId = window.barbersByCatergoryWithoutAny[categoryId];
-                // }
+                const barberId = selectedBarbersByCategory[categoryId] || 'any';
 
                 let services = selectedServicesByCategory[categoryId] || [];
                 let duration = 0;
@@ -1274,10 +1271,8 @@ document.addEventListener('DOMContentLoaded', function() {
         // Очищаем контейнер
         bookingDetailsContainer.innerHTML = '';
         if (data.booking_details && data.booking_details.length > 0) {
-            console.log(data.booking_details)
             data.booking_details.forEach((detail) => {
                 const categoryName = getCategoryNameById(detail.categoryId);
-                console.log(detail)
                 const barberName = detail.barberId !== 'any' ? getBarberNameById(detail.barberId) : 'Любой мастер';
 
                 // Создаем HTML для списка услуг
