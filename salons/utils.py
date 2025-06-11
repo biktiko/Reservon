@@ -141,18 +141,31 @@ def get_barber_busy_times(salon, date):
         busy[app.barber_id].append((start_local, end_local))
     return busy
 
-def compute_active_categories(booking_details):
+def compute_active_categories(booking_details, salon_id=None):
+    """Return normalized booking details with calculated durations."""
     active = []
     for d in booking_details or []:
-        try:
-            dur = int(d.get('duration', 0))
-        except (ValueError, TypeError):
-            dur = 0
+        dur_minutes = 0
+        for svc in d.get('services', []):
+            sid = svc.get('serviceId')
+            try:
+                if salon_id:
+                    serv = Service.objects.get(id=sid, salon_id=salon_id)
+                else:
+                    serv = Service.objects.get(id=sid)
+                dur_minutes += int(serv.duration.total_seconds() // 60)
+            except Service.DoesNotExist:
+                continue
+        if dur_minutes == 0:
+            try:
+                dur_minutes = int(d.get('duration', 0))
+            except (ValueError, TypeError):
+                dur_minutes = 0
         active.append({
             'category_id': d.get('categoryId'),
             'services': d.get('services', []),
             'barber_id': d.get('barberId', 'any'),
-            'duration': dur
+            'duration': dur_minutes
         })
     return active
 
@@ -174,7 +187,7 @@ def get_candidate_slots(salon_id, date_str, booking_details, total_service_durat
     availability = get_barber_availability(barbers, day_code)
     busy_times = get_barber_busy_times(salon, date)
 
-    active = compute_active_categories(booking_details)
+    active = compute_active_categories(booking_details, salon_id=salon_id)
     if active:
         duration = sum(c['duration'] for c in active)
     else:
@@ -298,13 +311,19 @@ def parse_booking_request(request, salon_id):
         raise ClientError('Invalid date/time', status=400)
     start = timezone.make_aware(dt, timezone.get_current_timezone())
     details = data.get('booking_details', [])
+    total=0
     if details:
-        total = sum(int(d.get('duration', 0)) for d in details)
-    else:
-        try:
-            total = int(data.get('total_service_duration', salon.default_duration or 30))
-        except Exception:
-            total = salon.default_duration or 30
+        for d in details:
+            for svc in d.get('services', []):
+                sid = svc.get('serviceId')
+                try:
+                    serv = Service.objects.get(id=sid, salon=salon)
+                except Service.DoesNotExist:
+                    logger.warning(f"Service ID {sid} not found in salon {salon.id}")
+                    raise ClientError(f"Service with ID {sid} not found in salon.", status=400)
+                total += int(serv.duration.total_seconds() // 60)
+    if total == 0:
+        total = salon.default_duration or 30
     end = start + timedelta(minutes=total)
     comment = data.get('user_comment', '')
     phone = data.get('phone_number')
@@ -326,7 +345,7 @@ def choose_user(request, phone):
 
 def get_nearest_suggestion(salon_id, date_str, chosen_hour, booking_details, total_service_duration, selected_barber_id='any'):
     """
-    Возвращает ближайшие слоты до и после выбранного часа в формате {'nearest_before': 'HH:MM', 'nearest_after': 'HH:MM'}
+    Возвращает ближайшие слоты до и после выбранног=о часа в формате {'nearest_before': 'HH:MM', 'nearest_after': 'HH:MM'}
     """
     slots = get_candidate_slots(salon_id, date_str, booking_details, total_service_duration, selected_barber_id)
     if not slots:
