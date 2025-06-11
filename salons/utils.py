@@ -6,9 +6,9 @@ from django.db.models import Prefetch
 from collections import defaultdict
 from datetime import datetime, time as dtime
 from django.shortcuts import get_object_or_404
-from .models import Barber, Appointment, Service
-from .errors import BookingError, ClientError
+from .models import Appointment, Service
 import logging
+from .errors import ClientError
 import json
 from reservon.utils.twilio_service import send_whatsapp_message
 from authentication.models import PushSubscription
@@ -278,6 +278,8 @@ def format_free_ranges(slots):
 
 def parse_booking_request(request, salon_id):
     logger.debug("parse_booking_request: start")
+    
+
     if request.method != 'POST' or request.headers.get('Content-Type') != 'application/json':
         logger.warning("Invalid request method or content type")
         raise ClientError('Invalid request', status=400)
@@ -321,59 +323,6 @@ def choose_user(request, phone):
         return request.user
     logger.info("No user authenticated or phone provided")
     return None
-
-
-def allocate_barbers(salon, start, end, details, total):
-    logger.debug("allocate_barbers: start allocation")
-    assignments = []
-    if not details:
-        barber = Barber.objects.select_for_update().filter(
-            salon=salon, status='active',
-            availabilities__day_of_week=start.strftime('%A').lower(),
-            availabilities__start_time__lte=start.time(),
-            availabilities__end_time__gte=end.time(),
-            availabilities__is_available=True
-        ).exclude(
-            appointmentbarberservice__start_datetime__lt=end,
-            appointmentbarberservice__end_datetime__gt=start
-        ).first()
-        if not barber:
-            logger.warning("No available barber for slot without details")
-            raise BookingError('Barber is busy', **get_nearest_suggestion(salon.id, start.date().isoformat(), start.hour, [], total))
-        assignments.append((barber, start, end, []))
-    else:
-        cur = start
-        for cat in details:
-            dur = int(cat.get('duration', 0))
-            nxt = cur + timedelta(minutes=dur)
-            bid = cat.get('barberId', 'any')
-            if bid != 'any':
-                b = Barber.objects.select_for_update().get(id=bid, salon=salon, status='active')
-                if not is_barber_available(b, cur, nxt):
-                    logger.warning(f"Barber {b} busy for detail block")
-                    raise BookingError('Barber is busy', **get_nearest_suggestion(salon.id, cur.date().isoformat(), cur.hour, details, total))
-            else:
-                qs = Barber.objects.select_for_update().filter(salon=salon, status='active')
-                cat_id = cat.get('categoryId')
-                if cat_id not in [None, 'any']:
-                    qs = qs.filter(categories__id=cat_id)
-                b = qs.exclude(
-                    appointmentbarberservice__start_datetime__lt=nxt,
-                    appointmentbarberservice__end_datetime__gt=cur
-                ).filter(
-                    availabilities__day_of_week=cur.strftime('%A').lower(),
-                    availabilities__start_time__lte=cur.time(),
-                    availabilities__end_time__gte=nxt.time(),
-                    availabilities__is_available=True
-                ).first()
-                if not b:
-                    logger.warning("No available barber for detail block any-case")
-                    raise BookingError('Barber is busy', **get_nearest_suggestion(salon.id, cur.date().isoformat(), cur.hour, details, total))
-            assignments.append((b, cur, nxt, cat.get('services', [])))
-            logger.info(f"Assigned barber {b.id} for interval {cur}–{nxt}")
-            cur = nxt
-    logger.debug(f"allocate_barbers: assignments={assignments}")
-    return assignments
 
 def get_nearest_suggestion(salon_id, date_str, chosen_hour, booking_details, total_service_duration, selected_barber_id='any'):
     """

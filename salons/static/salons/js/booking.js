@@ -849,9 +849,9 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('categories', categories);
             categories.forEach(categoryId => {
                 let barberId = selectedBarbersByCategory[categoryId] || 'any';
-                if (barberId === 'any' & window.barbersByCatergoryWithoutAny[categoryId] !== undefined) {
-                    barberId = window.barbersByCatergoryWithoutAny[categoryId];
-                }
+                // if (barberId === 'any' & window.barbersByCatergoryWithoutAny[categoryId] !== undefined) {
+                //     barberId = window.barbersByCatergoryWithoutAny[categoryId];
+                // }
 
                 let services = selectedServicesByCategory[categoryId] || [];
                 let duration = 0;
