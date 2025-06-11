@@ -52,11 +52,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const activeBarberCard = document.getElementById('active-barber');
     const barberList = document.getElementById('barber-list');
     
-    if(salonMod=='barber') initializeActiveBarber();
-    else if (anyBarberMode=="False"){
-        initializeActiveBarber();
-        console.log('anyBarberMode', anyBarberMode)
-    }  
+    // Инициализируем раздел барберов всегда
+    initializeActiveBarber();
     
     initializeCategory();
 
@@ -83,28 +80,28 @@ document.addEventListener('DOMContentLoaded', function() {
             barbers = uniqueBarbersArray
         }
         if (barbers) {
-            // Получаем выбранного барбера для текущей категории
             const selectedBarberId = selectedBarbers[currentCategoryId] || 'any';
-            // Добавляем опцию "Любой мастер", если она не является выбранной
-            if(salonMod == 'category' && anyBarberMode=="True"){
-                if (selectedBarberId !== 'any') {
-                    const anyBarberCard = createBarberCard('any', 'Любой мастер', '/static/salons/img/default-avatar.png', 'Описание или слоган');
-                    barberList.appendChild(anyBarberCard);
-                }
-            }
-            // Добавляем барберов, исключая выбранного
-            barbers.forEach(barber => {
 
-                if (barber.id !== parseInt(selectedBarberId) || salonMod=='barber'){
-                    const barberCard = createBarberCard(
-                        barber.id,
-                        barber.name,
-                        barber.avatar || '/static/salons/img/default-avatar.png',
-                        barber.description || ''
-                    );
-                    barberList.appendChild(barberCard);
-                }
+            // Всегда добавляем опцию "Любой мастер", если режим позволяет
+            if (salonMod == 'category' && anyBarberMode == "True") {
+                const anyBarberCard = createBarberCard('any', 'Любой мастер', '/static/salons/img/default-avatar.png', 'Описание или слоган');
+                barberList.appendChild(anyBarberCard);
+            }
+
+            // Добавляем всех барберов
+            barbers.forEach(barber => {
+                const barberCard = createBarberCard(
+                    barber.id,
+                    barber.name,
+                    barber.avatar || '/static/salons/img/default-avatar.png',
+                    barber.description || ''
+                );
+                barberList.appendChild(barberCard);
             });
+
+            // Помечаем выбранного барбера
+            const selectedCard = barberList.querySelector(`.barber-card[data-barber-id="${selectedBarberId}"]`);
+            if (selectedCard) selectedCard.classList.add('selected');
 
             // Добавляем обработчики событий на новые карточки барберов
             addBarberCardEventListeners();
@@ -308,21 +305,23 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        // Обновляем атрибут data-barber-id у activeBarberCard
-        activeBarberCard.setAttribute('data-barber-id', barber.id);
-        
-        // Обновляем UI активного барбера
-        updateActiveBarberUI(barber);
-        
         // Определяем текущую категорию: либо выбранная категория, либо первая из списка
         const initialCategoryId = getCurrentCategoryId() || Object.keys(barbersByCategory)[0];
-        
-        // Сохраняем выбранного барбера для текущей категории в глобальном объекте selectedBarbers
-        selectedBarbers[initialCategoryId] = barber.id;
-        
-        // Выделяем выбранную карточку в списке
-        updateBarberSelectionUI(barber.id);
-        
+
+        if (anyBarberMode == "True" && salonMod == 'category') {
+            // По умолчанию "Любой мастер"
+            activeBarberCard.setAttribute('data-barber-id', 'any');
+            selectedBarbers[initialCategoryId] = 'any';
+            updateBarberSelectionUI('any');
+        } else {
+            // Обновляем атрибут data-barber-id у activeBarberCard
+            activeBarberCard.setAttribute('data-barber-id', barber.id);
+            // Обновляем UI активного барбера
+            updateActiveBarberUI(barber);
+            selectedBarbers[initialCategoryId] = barber.id;
+            updateBarberSelectionUI(barber.id);
+        }
+
         // Если режим "barber", фильтруем услуги по выбранному барберу для текущей категории
         if (salonMod === 'barber') {
             filterServicesByBarber(barber.id, initialCategoryId);
@@ -350,43 +349,27 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     
         // Обновляем активную карточку барбера
-        let barber = null;
         let currentCategoryId = getCurrentCategoryId();
-        console.log('barbersByCategory[currentCategoryId]')
-        console.log(barbersByCategory[currentCategoryId])
-        // Пытаемся найти барбера по заданному ID, если он задан и не равен "any"
-        if (barberId && barberId !== 'any') {
-            barber = barbersByCategory[currentCategoryId].find(b => String(b.id) === String(barberId));
-        }
-        // Если барбер не найден или barberId не задан,
-        // выбираем первого или случайного барбера из uniqueBarbersArray
-        if (!barber) {
-            if (barbersByCategory[currentCategoryId].length > 0) {
 
-                if(barbersByCategory[currentCategoryId].length > 1) {
-                    barber = barbersByCategory[currentCategoryId][Math.floor(Math.random() *  barbersByCategory[currentCategoryId].length)];
-                }else{
-                    barber = barbersByCategory[currentCategoryId][0];
-                }
-            } else {
-                console.error("Нет доступных барберов для инициализации.");
-                return;
-            }
-        }
-    
-        if (barber) {
-            activeBarberCard.querySelector('.barber-name').textContent = barber.name;
-            activeBarberCard.querySelector('.barber-avatar').src = barber.avatar || '/static/salons/img/default-avatar.png';
-            activeBarberCard.querySelector('.barber-description').textContent = barber.description || '';
-        } else {
-            if (anyBarberMode=="True"){
-                activeBarberCard.querySelector('.barber-name').textContent = 'Любой мастер';
-            }else{
-                activeBarberCard.querySelector('.barber-name').textContent = barber.name;
-            }
+        if (barberId === 'any') {
+            activeBarberCard.querySelector('.barber-name').textContent = 'Любой мастер';
             activeBarberCard.querySelector('.barber-avatar').src = '/static/salons/img/default-avatar.png';
             activeBarberCard.querySelector('.barber-description').textContent = 'Описание или слоган';
+            return;
         }
+
+        let barber = barbersByCategory[currentCategoryId].find(b => String(b.id) === String(barberId));
+        if (!barber && barbersByCategory[currentCategoryId].length > 0) {
+            barber = barbersByCategory[currentCategoryId][0];
+        }
+        if (!barber) {
+            console.error("Нет доступных барберов для инициализации.");
+            return;
+        }
+
+        activeBarberCard.querySelector('.barber-name').textContent = barber.name;
+        activeBarberCard.querySelector('.barber-avatar').src = barber.avatar || '/static/salons/img/default-avatar.png';
+        activeBarberCard.querySelector('.barber-description').textContent = barber.description || '';
     }
     
     
