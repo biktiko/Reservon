@@ -17,7 +17,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const isCheckDays = salonDataElement.dataset.ischeckdays
     console.log('isCheckDays is ', isCheckDays)
-    
 
     const serviceDurationElement = document.getElementById('service-duration');
     const salonDefaultDuration = parseInt(serviceDurationElement.dataset.duration, 10) || 0; // В минутах
@@ -133,7 +132,6 @@ document.addEventListener('DOMContentLoaded', function() {
     let selectedServices = [];
     let selectedServicesByCategory = {};
     let selectedBarbersByCategory = {};
-
     // Объявление bookingMessage до использования в функциях
     const bookingMessage = document.getElementById('booking-message');
     if (!bookingMessage) {
@@ -184,13 +182,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Обновляем selectedServicesByCategory
         if (selectedServicesByCategory[categoryId]) {
             selectedServicesByCategory[categoryId] = selectedServicesByCategory[categoryId].filter(id => id !== serviceId);
-            // Если в данной категории услуг больше не выбрано,
-            // НЕ удаляем выбранного барбера из selectedBarbersByCategory!
-            // if (selectedServicesByCategory[categoryId].length === 0) {
-            //     delete selectedServicesByCategory[categoryId];
-            //     // Удаляем следующую строку – она сбрасывала выбранного барбера:
-            //     // delete selectedBarbersByCategory[categoryId];
-            // }
+    
             // Если услуг нет, можно удалить сам ключ из selectedServicesByCategory, но оставить selectedBarbersByCategory:
             if (selectedServicesByCategory[categoryId].length === 0) {
                 delete selectedServicesByCategory[categoryId];
@@ -506,7 +498,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     booking_details: formData.booking_details,
                     total_service_duration: formData.total_service_duration
                 });
-                console.log(responseData);
     
                 const response = await fetch('/salons/get_available_minutes/', {
                     method: 'POST',
@@ -522,7 +513,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 const data = await response.json();
                 const fetchedMinutes = data.available_minutes || {};
-                console.log(fetchedMinutes);
+                console.log("available time")
+                console.table(fetchedMinutes);
     
                 // Закомментируем запись в кэш
                 // Object.keys(fetchedMinutes).forEach(hour => {
@@ -788,7 +780,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
 
     function collectBookingFormData() {
-        console.log('collect booking form data')
+
         const formData = {
             salon_id: salonId,
             date: selectedDateInput.value,
@@ -854,8 +846,13 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         } else {
             const categories = new Set([...Object.keys(selectedServicesByCategory), ...Object.keys(selectedBarbersByCategory)]);
+            console.log('categories', categories);
             categories.forEach(categoryId => {
-                const barberId = selectedBarbersByCategory[categoryId] || 'any';
+                let barberId = selectedBarbersByCategory[categoryId] || 'any';
+                // if (barberId === 'any' & window.barbersByCatergoryWithoutAny[categoryId] !== undefined) {
+                //     barberId = window.barbersByCatergoryWithoutAny[categoryId];
+                // }
+
                 let services = selectedServicesByCategory[categoryId] || [];
                 let duration = 0;
                 if (services.length > 0) {
@@ -1072,7 +1069,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         return total;
     }
-    
+
+      
     
     // Обновление формы бронирования
     function updateBookingForm() {
@@ -1179,8 +1177,8 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     window.showBookingConfirmationModal = function(formData) {
+        console.log(formData)
         const modal = document.getElementById('booking-confirmation-modal');
-        console.log(modal)
         const closeButton = modal.querySelector('.close-button');
         const confirmButton = modal.querySelector('.confirm-button');
         const cancelButton = modal.querySelector('.cancel-button');
@@ -1260,13 +1258,11 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         };
     }
-    console.log("Мы объявляем showBookingConfirmationModal", window.showBookingConfirmationModal);
     
      // Функция для генерации HTML деталей бронирования
      function generateBookingDetailsHTML(data) {
         const modal = document.getElementById('booking-confirmation-modal');
         const bookingDetailsContainer = modal.querySelector('.booking-details');
-        console.log(modal)
 
         const bookingDateTime = modal.querySelector('.booking-date-time')
         if(bookingDateTime){
@@ -1278,8 +1274,10 @@ document.addEventListener('DOMContentLoaded', function() {
         // Очищаем контейнер
         bookingDetailsContainer.innerHTML = '';
         if (data.booking_details && data.booking_details.length > 0) {
+            console.log(data.booking_details)
             data.booking_details.forEach((detail) => {
                 const categoryName = getCategoryNameById(detail.categoryId);
+                console.log(detail)
                 const barberName = detail.barberId !== 'any' ? getBarberNameById(detail.barberId) : 'Любой мастер';
 
                 // Создаем HTML для списка услуг
@@ -1422,12 +1420,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const modal = document.getElementById('booking-confirmation-modal');
         modal.classList.remove('show');
         // modal.style.display = 'none'; // Добавляем скрытие модального окна
-        location.reload()
+        // location.reload()
     }
 
 });
 
-console.log("Booking.js is loaded")
 document.addEventListener('loginFromBookingSuccess', function(event) {
     
     // Если в событии передавались данные — они лежат в event.detail

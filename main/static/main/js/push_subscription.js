@@ -55,13 +55,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 const oldKey = existingSubscription.options.applicationServerKey;
                 // Если ключи совпадают, переиспользуем существующую подписку
                 if (arraysAreEqual(oldKey, newKey)) {
-                    console.log('Уже есть подписка с тем же ключом, отправим её на сервер...');
+                    // console.log('Уже есть подписка с тем же ключом, отправим её на сервер...');
                     sendSubscriptionToServer(existingSubscription);
                     return;
                 } else {
                     // Ключи не совпадают, значит отписываемся и подписываемся заново
                     await existingSubscription.unsubscribe();
-                    console.log('Старая подписка отписана, ключи различались.');
+                    // console.log('Старая подписка отписана, ключи различались.');
                 }
             }
 
@@ -70,10 +70,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 userVisibleOnly: true,
                 applicationServerKey: newKey
             };
-            console.log('Подписываемся с новым ключом:', subscribeOptions);
+            // console.log('Подписываемся с новым ключом:', subscribeOptions);
 
             const pushSubscription = await registration.pushManager.subscribe(subscribeOptions);
-            console.log('Получена новая подписка на push:', pushSubscription);
+            // console.log('Получена новая подписка на push:', pushSubscription);
 
             // Отправляем подписку на сервер
             sendSubscriptionToServer(pushSubscription);
@@ -85,7 +85,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function sendSubscriptionToServer(subscription) {
 
         if (subscription.endpoint.includes('wns2-par02p.notify.windows.com')) {   // Так как сейчас все равно не работает пуш в браузере временно отключим их вовсе
-            console.log('Пропускаем Windows WNS подписку, так как pywebpush не поддерживает aud');
+            // console.log('Пропускаем Windows WNS подписку, так как pywebpush не поддерживает aud');
             subscription.unsubscribe();
             return;
         }
@@ -101,7 +101,7 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(function(response) {
             if (response.ok) {
-                console.log('Подписка успешно зарегистрирована на сервере.');
+                // console.log('Подписка успешно зарегистрирована на сервере.');
             } else {
                 response.json().then(data => {
                     console.error('Ошибка при отправке подписки на сервер:', data);

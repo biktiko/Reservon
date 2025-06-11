@@ -1,32 +1,30 @@
 # salons/views.py
 from django.shortcuts import render, get_object_or_404
-from .models import Salon, Appointment, Barber, Service, ServiceCategory, AppointmentBarberService, BarberAvailability, BarberService
+from .models import Salon, Barber, Service, ServiceCategory, AppointmentBarberService, BarberAvailability, BarberService
 from django.core.serializers.json import DjangoJSONEncoder
 from django.http import JsonResponse
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework import status
-from datetime import datetime, timedelta, timezone as dt_timezone, time as dtime
-import time
+from datetime import datetime
 from django.utils import timezone
 from django.db.models import Q
 from django.db import transaction
 import json
-from django.db.models import Prefetch
 from collections import defaultdict
 from django.core.cache import cache
 from django.dispatch import receiver
-from django.views.decorators.cache import never_cache
-from django.conf import settings
-from reservon.utils.twilio_service import send_whatsapp_message
-from authentication.models import Profile, User
-from django.db import IntegrityError
-from .utils import round_down_to_5
+from .utils import get_candidate_slots, format_free_ranges
 from django.views.decorators.csrf import csrf_exempt
-from main.tasks import send_push_notification_task
-from authentication.models import PushSubscription
-
+from django.db.models.signals import post_save, post_delete
+import hashlib
 import logging
+from .errors import BookingError, ClientError
+
+from .utils import get_nearest_suggestion, is_barber_available, send_whatsapp_message, get_or_create_user_by_phone, send_push_notification_task
+from datetime import timedelta
+from .models import Appointment
+from django.conf import settings
+from authentication.models import PushSubscription
 
 logger = logging.getLogger('booking')
 
@@ -176,876 +174,92 @@ def get_barber_availability(request, barber_id):
         return JsonResponse({'error': 'Barber not found'}, status=404)
     
 from rest_framework.decorators import api_view, permission_classes
-
 @api_view(['POST'])
 def get_available_minutes(request):
-    """Получение доступных 5-минутных слотов на указанные часы.
-
-    Тело (request.data):
-    {
-      "salon_id": <int>,
-      "date": "YYYY-MM-DD",
-      "hours": [int, int, ...],
-      "booking_details": [
-          {
-            "categoryId": str/int,
-            "services": [{ "serviceId": int, "duration": int}, ...],
-            "barberId": "any" или str(int),
-            "duration": int
-          },
-          ...
-      ],
-      "selected_barber_id": "any" или str(...)? (опционально)
-      "total_service_duration": int
-    }
-    """
-
     data = request.data
-
-    # Логируем входные данные
-    logger.info("Request data = %r", data)
-
     salon_id = data.get('salon_id')
-    booking_details = data.get('booking_details', [])
     date_str = data.get('date')
     hours = data.get('hours', [])
+    booking_details = data.get('booking_details', [])
     selected_barber_id = data.get('selected_barber_id', 'any')
 
-    # total_service_duration может быть строкой. Попробуем int(...)
     try:
-        total_service_duration = int(data.get('total_service_duration', sum(int(cat['duration']) for cat in booking_details)))
-    except (ValueError, TypeError) as e:
-        logger.error("total_service_duration не является целым числом: %r", e)
-        return Response(
-            {"available_minutes": {}, "error": "Неверный тип total_service_duration."},
-            status=status.HTTP_400_BAD_REQUEST
-        )
+        total_duration = int(data.get('total_service_duration', 0))
+    except (ValueError, TypeError):
+        return Response({'available_minutes': {}, 'error': 'Invalid total_service_duration.'}, status=400)
 
-    # Проверка обязательных полей
     if not salon_id or not date_str or not hours:
-        logger.error("Отсутствуют обязательные поля salon_id/date_str/hours.")
-        return Response(
-            {'available_minutes': {}, 'error': 'Отсутствуют обязательные поля (salon_id, date, hours).'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
+        return Response({'available_minutes': {}, 'error': 'Missing required fields.'}, status=400)
+    if not all(isinstance(h, int) for h in hours):
+        return Response({'available_minutes': {}, 'error': 'Field hours must be list of ints.'}, status=400)
 
-    # Проверяем, что hours — список целых
-    if not isinstance(hours, list) or not all(isinstance(h, int) for h in hours):
-        logger.error("Поле 'hours' должно быть списком целых чисел, а получено: %r", hours)
-        return Response(
-            {'available_minutes': {}, 'error': "Поле 'hours' должно быть списком целых чисел."},
-            status=status.HTTP_400_BAD_REQUEST
-        )
+    slots = get_candidate_slots(salon_id, date_str, booking_details, total_duration, selected_barber_id)
+    by_hour = defaultdict(list)
+    for slot in slots:
+        if slot.hour in hours:
+            by_hour[slot.hour].append(slot.minute)
 
-    # Логируем основные поля
-    logger.info("Parsed fields: salon_id=%r, date=%r, hours=%r, total_service_duration=%r, selected_barber_id=%r",
-                salon_id, date_str, hours, total_service_duration, selected_barber_id)
-    logger.info("Booking details = %r", booking_details)
-
-    # Загружаем салон
-    try:
-        salon = Salon.objects.prefetch_related(
-            Prefetch('barbers__availabilities', queryset=BarberAvailability.objects.all())
-        ).get(id=salon_id)
-    except Salon.DoesNotExist:
-        logger.error("Салон с ID %r не найден.", salon_id)
-        return Response(
-            {'available_minutes': {}, 'error': f'Салон с ID={salon_id} не найден.'},
-            status=status.HTTP_404_NOT_FOUND
-        )
-
-    # Парсим дату
-    try:
-        date = datetime.strptime(date_str, '%Y-%m-%d').date()
-    except ValueError as e:
-        logger.error("Ошибка форматирования даты '%r': %r", date_str, e)
-        return Response(
-            {'available_minutes': {}, 'error': 'Некорректный формат даты (ожидается YYYY-MM-DD).'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
-
-    # day_code
-    day_code = date.strftime('%A').lower()
-    logger.info("Day code = %r", day_code)
-
-    # Предзагружаем барберов
-    barbers = salon.barbers.all()
-    logger.info("Found %d barbers in salon %r", len(barbers), salon.name)
-
-    # Собираем barber_availability
-    barber_availability = {}
-    for b in barbers:
-        avails = b.availabilities.filter(day_of_week=day_code)
-        local_list = []
-        for interval in avails:
-            local_list.append({
-                'start_time': interval.start_time,
-                'end_time': interval.end_time,
-                'is_available': interval.is_available
-            })
-        barber_availability[b.id] = local_list
-
-    logger.info("barber_availability = %r", barber_availability)
-
-    # Находим занятые интервалы
-    busy_appointments = AppointmentBarberService.objects.filter(
-        barber__salon=salon,
-        start_datetime__date=date
-    ).select_related('barber')
-    
-    barber_busy_times = defaultdict(list)
-    for appbs in busy_appointments:
-        barber_busy_times[appbs.barber_id].append((appbs.start_datetime, appbs.end_datetime))
-
-    logger.info("Found busy appointments: %r", barber_busy_times)
-
-    # Обработка booking_details
-    active_categories = []
-    if booking_details:
-        for cat_detail in booking_details:
-            cat_id = cat_detail.get('categoryId')
-            services_list = cat_detail.get('services', [])
-            barber_id_ = cat_detail.get('barberId', 'any')
-            # duration
-            try:
-                dur_ = int(cat_detail.get('duration', 0))
-            except (ValueError, TypeError):
-                logger.warning("Некорректная длительность в booking_details: %r", cat_detail)
-                dur_ = 0
-
-            active_categories.append({
-                'category_id': cat_id,
-                'services': services_list,
-                'barber_id': barber_id_,
-                'duration': dur_
-            })
-    logger.info("active_categories = %r", active_categories)
-
-    available_minutes = defaultdict(set)
-    logger.info("Start building available_minutes...")
-
-    now = timezone.now()
-
-    # Цикл по часам
-    for hour in hours:
-        try:
-            naive_dt = datetime.combine(date, datetime.strptime(str(hour), "%H").time())
-            start_of_hour = timezone.make_aware(naive_dt, timezone.get_current_timezone())
-        except ValueError as e:
-            logger.error("Ошибка при создании datetime для hour=%r: %r", hour, e)
-            available_minutes[hour] = []
-            continue
-
-        if booking_details:
-            # Общая длительность
-            # total_cat_duration = sum(c['duration'] for c in active_categories)
-
-            try:
-                total_cat_duration = sum(int(category.get('duration', 0)) for category in booking_details)
-            except Exception as e:
-                logger.error("Ошибка при расчёте общей длительности услуг: %r", e)
-                total_cat_duration = salon.default_duration or 30
-
-            for minute in range(0, 60, 5):
-                minute_start = start_of_hour + timedelta(minutes=minute)
-                minute_end = minute_start + timedelta(minutes=total_cat_duration)
-
-                # Пропускаем прошедшее время
-                if minute_start < now:
-                    continue
-
-                schedule_possible = True
-                # Слоты, занятые в рамках текущего цикла
-                barber_schedules = defaultdict(list)
-
-                # Проходим по всем "категориям" (блокам)
-                local_start = minute_start
-                for cat_obj in active_categories:
-                    cat_id = cat_obj['category_id']
-                    dur_cat = int(cat_obj.get('duration', 0))
-                    end_cat = local_start + timedelta(minutes=dur_cat)
-                    barb_id = cat_obj['barber_id']
-                    local_start = end_cat
-
-                    if barb_id != 'any':
-                        # Конкретный барбер
-                        try:
-                            b_int = int(barb_id)
-                        except (ValueError, TypeError):
-                            logger.warning("Некорректный barberId=%r", barb_id)
-                            schedule_possible = False
-                            break
-
-                        bbb = barbers.filter(id=b_int).first()
-                        if not bbb:
-                            logger.warning("Барбер с ID %r не найден в салоне %r", b_int, salon.name)
-                            schedule_possible = False
-                            break
-
-                        if is_barber_busy(bbb.id, local_start, end_cat, barber_busy_times):
-                            schedule_possible = False
-                            break
-
-                        if not is_barber_available_in_memory(bbb, local_start.time(), end_cat.time(), barber_availability):
-                            schedule_possible = False
-                            break
-
-                        if has_overlap(barber_schedules[bbb.id], local_start, end_cat):
-                            schedule_possible = False
-                            break
-
-                        # Добавляем слот
-                        barber_schedules[bbb.id].append({'start': local_start, 'end': end_cat})
-                    else:
-                        # any barber in that category
-                        try:
-                            sc = ServiceCategory.objects.get(id=cat_id)
-                        except (ValueError, TypeError, ServiceCategory.DoesNotExist):
-                            logger.warning("Категория %r не найдена.", cat_id)
-                            schedule_possible = False
-                            break
-
-                        candidate_barbers = sc.barbers.filter(salon=salon)
-                        found_barber = False
-
-                        for cb in candidate_barbers:
-                            if is_barber_busy(cb.id, local_start, end_cat, barber_busy_times):
-                                continue
-                            if not is_barber_available_in_memory(cb, local_start.time(), end_cat.time(), barber_availability):
-                                continue
-                            if has_overlap(barber_schedules[cb.id], local_start, end_cat):
-                                continue
-                            # use this barber
-                            barber_schedules[cb.id].append({'start': local_start, 'end': end_cat})
-                            found_barber = True
-                            break
-
-                        if not found_barber:
-                            schedule_possible = False
-                            break
-
-                    # Сдвигаем начало
-                    local_start = end_cat
-
-                if schedule_possible:
-                    available_minutes[hour].add(minute)
-
-        else:
-            # Нет booking_details
-            dur = total_service_duration or salon.default_duration
-            if not dur:
-                dur = 30  # fallback, чтобы не было TypeError если default_duration=None
-
-            for minute in range(0, 60, 5):
-                minute_start = start_of_hour + timedelta(minutes=minute)
-                minute_end = minute_start + timedelta(minutes=dur)
-
-                if minute_start < now:
-                    continue
-
-                # Нужен хоть один барбер
-                free_barber = False
-                for b_obj in barbers:
-                    if is_barber_busy(b_obj.id, minute_start, minute_end, barber_busy_times):
-                        continue
-                    if is_barber_available_in_memory(b_obj, minute_start.time(), minute_end.time(), barber_availability):
-                        free_barber = True
-                        break
-                if free_barber:
-                    available_minutes[hour].add(minute)
-
-    # Преобразуем set -> sorted list
-    available_minutes_response = {}
-    for h, mins in available_minutes.items():
-        available_minutes_response[str(h)] = sorted(mins)
-
-    logger.info("Final available_minutes = %r", available_minutes_response)
-
-    # Кэш
-    # cache_time_str = f"{(timezone.now().minute // 5)*5}"
-    # cache_key = generate_safe_cache_key(
-    #     salon_id, date_str, hours, booking_details, cache_time_str, selected_barber_id=selected_barber_id
-    # )
-
-    # cached_response = cache.get(cache_key)
-    # if cached_response:
-    #     logger.debug("Данные получены из кэша. Ключ=%r", cache_key)
-    #     return Response(cached_response)
-
-    response = {'available_minutes': available_minutes_response}
-    # cache.set(cache_key, response, timeout=30)
-    # logger.debug("Кеширование результатов. Ключ=%r", cache_key)
-
-    return Response(response)
+    avail = {str(h): sorted(set(by_hour.get(h, []))) for h in hours}
+    return Response({'available_minutes': avail})
 
 @api_view(['POST'])
 def get_nearest_available_time(request):
-    """
-    Новый режим "auto":
-    При выборе клиентом часа (например, 11:00) сервер ищет все возможные 5-минутные старты в течение дня 
-    (например, в диапазоне работы салона 9-22) и возвращает ближайшие варианты для начала бронирования.
-    
-    Особенность доработки:
-      Если в пределах ±30 минут от выбранного времени уже есть записи, то предлагаем начать бронирование
-      как продолжение (то есть, сразу после окончания предыдущей записи) или так, чтобы завершиться непосредственно
-      перед началом следующей записи.
-    
-    Request data (JSON):
-    {
-      "salon_id": <int>,
-      "date": "YYYY-MM-DD",
-      "chosen_hour": <int>,      # выбранный клиентом час (например, 11)
-      "booking_details": [
-          {
-              "categoryId": str/int,
-              "services": [{ "serviceId": int, "duration": int}, ...],
-              "barberId": "any" или str(int),
-              "duration": int
-          },
-          ...
-      ],
-      "selected_barber_id": "any" или str(...)? (опционально),
-      "total_service_duration": int
-    }
-    """
     data = request.data
-    logger.info("Request data (nearest available time) = %r", data)
-    
-    # Проверка обязательных полей и приведение к нужным типам
     try:
         salon_id = data['salon_id']
         date_str = data['date']
         chosen_hour = int(data['chosen_hour'])
-    except (KeyError, ValueError, TypeError) as e:
-        logger.error("Обязательные поля отсутствуют или имеют неверный формат: %r", e)
-        return Response({'error': 'Отсутствуют обязательные поля или неверный формат.'},
-                        status=status.HTTP_400_BAD_REQUEST)
-    
-    try:
-        total_service_duration = int(data.get('total_service_duration', 0))
-    except (ValueError, TypeError) as e:
-        logger.error("total_service_duration не является целым числом: %r", e)
-        return Response({"error": "Неверный тип total_service_duration."},
-                        status=status.HTTP_400_BAD_REQUEST)
-    
+    except (KeyError, ValueError):
+        return Response({'error': 'Missing or invalid fields.'}, status=400)
+
     booking_details = data.get('booking_details', [])
     selected_barber_id = data.get('selected_barber_id', 'any')
-    
     try:
-        date = datetime.strptime(date_str, '%Y-%m-%d').date()
-    except ValueError as e:
-        logger.error("Ошибка форматирования даты '%r': %r", date_str, e)
-        return Response({'error': 'Некорректный формат даты (ожидается YYYY-MM-DD).'},
-                        status=status.HTTP_400_BAD_REQUEST)
-    
-    day_code = date.strftime('%A').lower()
-    logger.info("Day code = %r", day_code)
-    
-    # Загружаем салон с предзагрузкой availabilities
+        total_duration = int(data.get('total_service_duration', 0))
+    except (ValueError, TypeError):
+        return Response({'error': 'Invalid total_service_duration.'}, status=400)
+
+    slots = get_candidate_slots(salon_id, date_str, booking_details, total_duration, selected_barber_id)
+    if not slots:
+        return Response({'nearest_before': None, 'nearest_after': None})
+
+    ref_naive = datetime.strptime(f"{date_str} {chosen_hour:02d}:00", '%Y-%m-%d %H:%M')
+    ref_time = timezone.make_aware(ref_naive, timezone.get_current_timezone())
+
+    before = [s for s in slots if s <= ref_time]
+    after = [s for s in slots if s >= ref_time]
+    nb = max(before) if before else None
+    na = min(after) if after else None
+
+    # Если оба варианта в пределах ±30 мин и очень близки, оставляем только nb
+    if nb and na:
+        diff = abs((nb - na).total_seconds()) / 60
+        if diff < 30:
+            na = None
+
+    fmt = '%H:%M'
+    return Response({
+        'nearest_before': nb.strftime(fmt) if nb else None,
+        'nearest_after': na.strftime(fmt) if na else None,
+    })
+
+@api_view(['POST'])
+def get_free_time_ranges(request):
+    data = request.data
+    salon_id = data.get('salon_id')
+    date_str = data.get('date')
+    booking_details = data.get('booking_details', [])
+    selected_barber_id = data.get('selected_barber_id', 'any')
     try:
-        salon = Salon.objects.prefetch_related(
-            Prefetch('barbers__availabilities', queryset=BarberAvailability.objects.all())
-        ).get(id=salon_id)
-    except Salon.DoesNotExist:
-        logger.error("Салон с ID %r не найден.", salon_id)
-        return Response({'error': f'Салон с ID={salon_id} не найден.'},
-                        status=status.HTTP_404_NOT_FOUND)
-    
-    barbers = salon.barbers.all()
-    logger.info("Найдено %d барберов в салоне %r", len(barbers), salon.name)
-    
-    # Формируем словарь доступности барберов
-    barber_availability = {
-        b.id: [{
-            'start_time': interval.start_time,
-            'end_time': interval.end_time,
-            'is_available': interval.is_available
-        } for interval in b.availabilities.filter(day_of_week=day_code)]
-        for b in barbers
-    }
-    logger.info("barber_availability = %r", barber_availability)
-    
-    # Загружаем занятые интервалы и сразу преобразуем их в локальное время
-    busy_appointments = AppointmentBarberService.objects.filter(
-        barber__salon=salon,
-        start_datetime__date=date
-    ).select_related('barber')
-    barber_busy_times = defaultdict(list)
-    for app in busy_appointments:
-        start_local = timezone.localtime(app.start_datetime)
-        end_local = timezone.localtime(app.end_datetime)
-        barber_busy_times[app.barber_id].append((start_local, end_local))
-    
-    # Обрабатываем booking_details для формирования active_categories
-    active_categories = []
-    # logger.info("Обработка booking_details: %r", booking_details)
-    for cat_detail in booking_details:
-        try:
-            dur_ = int(cat_detail.get('duration', 0))
-        except (ValueError, TypeError):
-            logger.warning("Некорректная длительность в booking_details: %r", cat_detail)
-            dur_ = 0
-        active_categories.append({
-            'category_id': cat_detail.get('categoryId'),
-            'services': cat_detail.get('services', []),
-            'barber_id': cat_detail.get('barberId', 'any'),
-            'duration': dur_
-        })
-    logger.info("active_categories = %r", active_categories)
-    
-    now = timezone.now()
-    
-    # Генерируем кандидатные слоты (каждые 5 минут) в рабочем интервале (например, 9-22)
-    start_work = 9
-    end_work = 21
-    candidate_slots = []
-    for hour in range(start_work, end_work):
-        try:
-            naive_dt = datetime.combine(date, dtime(hour, 0))
-            hour_start = timezone.make_aware(naive_dt, timezone.get_current_timezone())
-        except Exception as e:
-            logger.error("Ошибка при создании datetime для hour=%r: %r", hour, e)
-            continue
-        for minute in range(0, 60, 5):
-            candidate = hour_start + timedelta(minutes=minute)
-            if candidate < now:
-                continue
-            # Если есть активные категории, проверяем последовательность услуг
-            if active_categories:
-                schedule_possible = True
-                barber_schedules = defaultdict(list)
-                local_start = candidate
-                for cat_obj in active_categories:
-                    dur_cat = cat_obj['duration']
-                    end_cat = local_start + timedelta(minutes=dur_cat)
-                    if cat_obj['barber_id'] != 'any':
-                        try:
-                            barber_int = int(cat_obj['barber_id'])
-                        except (ValueError, TypeError):
-                            schedule_possible = False
-                            break
-                        barber_obj = barbers.filter(id=barber_int).first()
-                        if not barber_obj:
-                            schedule_possible = False
-                            break
-                        if is_barber_busy(barber_obj.id, local_start, end_cat, barber_busy_times):
-                            schedule_possible = False
-                            break
-                        if not is_barber_available_in_memory(barber_obj, local_start.time(), end_cat.time(), barber_availability):
-                            schedule_possible = False
-                            break
-                        if has_overlap(barber_schedules[barber_obj.id], local_start, end_cat):
-                            schedule_possible = False
-                            break
-                        barber_schedules[barber_obj.id].append({'start': local_start, 'end': end_cat})
-                    else:
-                        try:
-                            sc = ServiceCategory.objects.get(id=cat_obj['category_id'])
-                        except (ValueError, TypeError, ServiceCategory.DoesNotExist):
-                            schedule_possible = False
-                            break
-                        candidate_barbers = sc.barbers.filter(salon=salon)
-                        found = False
-                        for cb in candidate_barbers:
-                            if is_barber_busy(cb.id, local_start, end_cat, barber_busy_times):
-                                continue
-                            if not is_barber_available_in_memory(cb, local_start.time(), end_cat.time(), barber_availability):
-                                continue
-                            if has_overlap(barber_schedules[cb.id], local_start, end_cat):
-                                continue
-                            barber_schedules[cb.id].append({'start': local_start, 'end': end_cat})
-                            found = True
-                            break
-                        if not found:
-                            schedule_possible = False
-                            break
-                    local_start = end_cat  # сдвигаем начало для следующего блока
-                if schedule_possible:
-                    candidate_slots.append(candidate)
-            else:
-                # Если активных категорий нет, ищем слот для всего салона (barber_id="any")
-                dur = total_service_duration or salon.default_duration or 30
-                candidate_end = candidate + timedelta(minutes=dur)
+        total_duration = int(data.get('total_service_duration', 0))
+    except (ValueError, TypeError):
+        return Response({'error': 'Invalid total_service_duration.'}, status=400)
 
-                # Проверяем, что хотя бы у одного барбера расписание позволяет работать в этот промежуток
-                works = any(
-                    is_barber_available_in_memory(b, candidate.time(), candidate_end.time(), barber_availability)
-                    for b in barbers if barber_availability.get(b.id)
-                )
+    slots = get_candidate_slots(salon_id, date_str, booking_details, total_duration, selected_barber_id)
+    ranges = format_free_ranges(slots)
+    result = [f"{r[0].strftime('%H:%M')}-{r[1].strftime('%H:%M')}" for r in ranges]
 
-                # Собираем все занятые интервалы из всех барберов в единый список
-                union_busy = []
-                for intervals in barber_busy_times.values():
-                    union_busy.extend(intervals)
-
-                # Проверяем, есть ли конфликт с любым занятым интервалом
-                conflict = any(candidate < busy_end and candidate_end > busy_start for (busy_start, busy_end) in union_busy)
-
-                if works and not conflict:
-                    candidate_slots.append(candidate)
-                    
-                    if not candidate_slots:
-                        return Response({'error': 'Нет доступного времени для бронирования в этот день.'},
-                                        status=status.HTTP_200_OK)
-                    
-    candidate_slots.sort()
-    reference_naive = datetime.combine(date, dtime(chosen_hour, 0))
-    reference_time = timezone.make_aware(reference_naive, timezone.get_current_timezone())
-    
-    slots_before = [slot for slot in candidate_slots if slot <= reference_time]
-    nearest_before = max(slots_before) if slots_before else None
-    slots_after = [slot for slot in candidate_slots if slot >= reference_time]
-    nearest_after = min(slots_after) if slots_after else None
-    
-    # (b) ±30 минут
-    window_start = reference_time - timedelta(minutes=30)
-    window_end = reference_time + timedelta(minutes=30)
-
-    adjusted_before = []
-    adjusted_after = []
-
-    # Если booking_details переданы, вычисляем суммарную длительность из активных категорий,
-    # иначе используем total_service_duration (с fallback)
-    if active_categories:
-        computed_total_duration = sum(cat['duration'] for cat in active_categories)
-    else:
-        computed_total_duration = total_service_duration or salon.default_duration or 30
-
-    # Проходим по всем занятым интервалам (объединённо по всем барберам)
-    for busy_list in barber_busy_times.values():
-        for start_dt, end_dt in busy_list:
-            # Если busy appointment начинается до reference_time (в окне),
-            # то предлагаем слот, который завершится ровно к началу busy appointment.
-            if window_start <= start_dt < reference_time:
-                candidate = round_down_to_5(start_dt - timedelta(minutes=computed_total_duration))
-                adjusted_before.append(candidate)
-            # Если busy appointment заканчивается после reference_time (в окне),
-            # то предлагаем слот, который начнётся сразу после окончания busy appointment.
-            if reference_time < end_dt <= window_end:
-                candidate = round_down_to_5(end_dt)
-                adjusted_after.append(candidate)
-
-    if adjusted_before:
-        nearest_before = max(adjusted_before)
-    if adjusted_after:
-        nearest_after = min(adjusted_after)
-
-    # Если оба варианта существуют, и разница меньше порога (например, 10 минут),
-    # оставляем только один вариант (предпочтительно раннее)
-    fmt = "%H:%M"
-    if nearest_before and nearest_after:
-        diff = abs((nearest_before - nearest_after).total_seconds()) / 60.0
-        threshold = 30
-        if diff < threshold:
-            candidate = min(nearest_before, nearest_after)
-            nearest_before = candidate
-            nearest_after = None
-    
-    response_data = {
-        "nearest_before": nearest_before.strftime(fmt) if nearest_before else None,
-        "nearest_after": nearest_after.strftime(fmt) if nearest_after else None,
-    }
-    logger.info("Результат get_nearest_available_time: %r", response_data)
-    return Response(response_data, status=status.HTTP_200_OK)
-
-# ---------- HELPER UNCTIONS ------------------------
-
-def is_barber_busy(barber_id, start_dt, end_dt, barber_busy_times):
-    """Проверяем пересечение [start_dt, end_dt) с занятыми интервалами барбера."""
-    intervals = barber_busy_times.get(barber_id, [])
-    for (bs, be) in intervals:
-        if bs < end_dt and be > start_dt:
-            return True
-    return False
-# test
-def has_overlap(schedule_list, start_dt, end_dt):
-    """Проверяем перекрытие внутри уже найденных интервалов schedule_list = [{'start': dt, 'end': dt}, ...]."""
-    for sched in schedule_list:
-        if sched['start'] < end_dt and sched['end'] > start_dt:
-            return True
-    return False
-
-def is_barber_available_in_memory(barber, start_t, end_t, barber_availability):
-    """
-    Проверяем, есть ли в barber_availability[barber.id] интервал is_available=True,
-    который покрывает [start_t..end_t].
-    start_t, end_t — это time() в рамках одного дня.
-    """
-    intervals = barber_availability.get(barber.id, [])
-    for block in intervals:
-        if block['is_available']:
-            if block['start_time'] <= start_t and block['end_time'] >= end_t:
-                return True
-    return False
-
-def get_nearest_suggestion(salon_id, date_str, chosen_hour, booking_details, total_service_duration):
-    """
-    Аналог get_nearest_available_time, но без DRF-вьюхи:
-      1) Генерируем candidate_slots (каждые 5 минут с 9:00 до 21:00).
-      2) Делим их на before/after относительно chosen_hour.
-      3) Корректируем с учётом занятых интервалов (окно ±30 мин).
-      4) Возвращаем {"nearest_before": ..., "nearest_after": ...}.
-    """
-    from datetime import datetime, timedelta, time as dtime
-    from django.utils import timezone
-    from django.db.models import Prefetch
-    from collections import defaultdict
-
-    # Функция округления времени вниз до ближайших 5 минут
-    def round_down_to_5(dt):
-        return dt.replace(minute=(dt.minute // 5) * 5, second=0, microsecond=0)
-
-    # Предполагаются функции is_barber_busy, is_barber_available_in_memory и has_overlap,
-    # работающие по следующей логике (полуинтервал [start, end)):
-    #
-    # def is_barber_busy(barber_id, start_dt, end_dt, barber_busy_times):
-    #     for (bs, be) in barber_busy_times.get(barber_id, []):
-    #         if bs < end_dt and be > start_dt:
-    #             return True
-    #     return False
-    #
-    # def has_overlap(schedule_list, start_dt, end_dt):
-    #     for sched in schedule_list:
-    #         if sched['start'] < end_dt and sched['end'] > start_dt:
-    #             return True
-    #     return False
-    #
-    # def is_barber_available_in_memory(barber, req_start, req_end, barber_availability):
-    #     intervals = barber_availability.get(barber.id, [])
-    #     for block in intervals:
-    #         if block['is_available']:
-    #             if block['start_time'] <= req_start and block['end_time'] >= req_end:
-    #                 return True
-    #     return False
-
-    # 1) Парсим дату
-    try:
-        date = datetime.strptime(date_str, '%Y-%m-%d').date()
-    except ValueError:
-        return {"nearest_before": None, "nearest_after": None}
-
-    # 2) Загружаем салон с предзагрузкой availabilities
-    try:
-        salon = Salon.objects.prefetch_related(
-            Prefetch('barbers__availabilities', queryset=BarberAvailability.objects.all())
-        ).get(id=salon_id)
-    except Salon.DoesNotExist:
-        return {"nearest_before": None, "nearest_after": None}
-
-    barbers = salon.barbers.all()
-    day_code = date.strftime('%A').lower()
-
-    # Формируем словарь доступности барберов для данного дня
-    barber_availability = {
-        b.id: [{
-            'start_time': interval.start_time,
-            'end_time': interval.end_time,
-            'is_available': interval.is_available
-        } for interval in b.availabilities.filter(day_of_week=day_code)]
-        for b in barbers
-    }
-
-    # Получаем занятые интервалы (busy) для данного дня
-    busy_appointments = AppointmentBarberService.objects.filter(
-        barber__salon=salon,
-        start_datetime__date=date
-    ).select_related('barber')
-
-    barber_busy_times = defaultdict(list)
-    for app in busy_appointments:
-        start_local = timezone.localtime(app.start_datetime)
-        end_local = timezone.localtime(app.end_datetime)
-        barber_busy_times[app.barber_id].append((start_local, end_local))
-
-    # 3) Обрабатываем booking_details → active_categories
-    active_categories = []
-    for cat_detail in booking_details:
-        try:
-            dur_ = int(cat_detail.get('duration', 0))
-        except (ValueError, TypeError):
-            dur_ = 0
-        active_categories.append({
-            'category_id': cat_detail.get('categoryId'),
-            'services': cat_detail.get('services', []),
-            'barber_id': cat_detail.get('barberId', 'any'),
-            'duration': dur_
-        })
-
-    # Если booking_details не пусты, суммарная длительность берётся из active_categories,
-    # иначе используем total_service_duration или default
-    if active_categories:
-        computed_total_duration = sum(cat['duration'] for cat in active_categories)
-    else:
-        computed_total_duration = total_service_duration or salon.default_duration or 30
-
-    now = timezone.now()
-
-    # 4) Генерируем candidate_slots (каждые 5 минут с 9:00 до 21:00)
-    start_work = 9
-    end_work = 21
-    candidate_slots = []
-
-    for hour in range(start_work, end_work):
-        try:
-            naive_dt = datetime.combine(date, dtime(hour, 0))
-            hour_start = timezone.make_aware(naive_dt, timezone.get_current_timezone())
-        except Exception:
-            continue
-
-        for minute in range(0, 60, 5):
-            candidate = hour_start + timedelta(minutes=minute)
-            if candidate < now:
-                continue
-
-            if active_categories:
-                schedule_possible = True
-                barber_schedules = defaultdict(list)
-                local_start = candidate
-
-                for cat_obj in active_categories:
-                    dur_cat = cat_obj['duration']
-                    end_cat = local_start + timedelta(minutes=dur_cat)
-                    barber_id_ = cat_obj['barber_id']
-
-                    if barber_id_ != 'any':
-                        try:
-                            barber_int = int(barber_id_)
-                        except (ValueError, TypeError):
-                            schedule_possible = False
-                            break
-                        barber_obj = barbers.filter(id=barber_int).first()
-                        if not barber_obj:
-                            schedule_possible = False
-                            break
-                        if is_barber_busy(barber_obj.id, local_start, end_cat, barber_busy_times):
-                            schedule_possible = False
-                            break
-                        if not is_barber_available_in_memory(barber_obj, local_start.time(), end_cat.time(), barber_availability):
-                            schedule_possible = False
-                            break
-                        if has_overlap(barber_schedules[barber_obj.id], local_start, end_cat):
-                            schedule_possible = False
-                            break
-                        barber_schedules[barber_obj.id].append({'start': local_start, 'end': end_cat})
-                    else:
-                        if cat_obj.get('category_id') in [None, 'any']:
-                            candidate_barbers = barbers
-                        else:
-                            try:
-                                sc = ServiceCategory.objects.get(id=cat_obj['category_id'])
-                                candidate_barbers = sc.barbers.filter(salon=salon)
-                            except (ValueError, TypeError, ServiceCategory.DoesNotExist):
-                                schedule_possible = False
-                                break
-
-                        found_barber = False
-                        for cb in candidate_barbers:
-                            if is_barber_busy(cb.id, local_start, end_cat, barber_busy_times):
-                                continue
-                            if not is_barber_available_in_memory(cb, local_start.time(), end_cat.time(), barber_availability):
-                                continue
-                            if has_overlap(barber_schedules[cb.id], local_start, end_cat):
-                                continue
-                            barber_schedules[cb.id].append({'start': local_start, 'end': end_cat})
-                            found_barber = True
-                            break
-                        if not found_barber:
-                            schedule_possible = False
-                            break
-
-                    local_start = end_cat
-
-                if schedule_possible:
-                    candidate_slots.append(candidate)
-            else:
-                # Если booking_details пуст, проверяем слот для всего салона (barber_id="any")
-                dur = computed_total_duration
-                candidate_end = candidate + timedelta(minutes=dur)
-                works = any(
-                    is_barber_available_in_memory(b, candidate.time(), candidate_end.time(), barber_availability)
-                    for b in barbers if barber_availability.get(b.id)
-                )
-                union_busy = []
-                for intervals in barber_busy_times.values():
-                    union_busy.extend(intervals)
-                conflict = any(candidate < busy_end and candidate_end > busy_start 
-                               for (busy_start, busy_end) in union_busy)
-                if works and not conflict:
-                    candidate_slots.append(candidate)
-
-    candidate_slots.sort()
-    reference_naive = datetime.combine(date, dtime(chosen_hour, 0))
-    reference_time = timezone.make_aware(reference_naive, timezone.get_current_timezone())
-
-    if not candidate_slots:
-        return {"nearest_before": None, "nearest_after": None}
-
-    # (a) Разбиваем candidate_slots относительно reference_time
-    slots_before = [s for s in candidate_slots if s <= reference_time]
-    nearest_before = max(slots_before) if slots_before else None
-    slots_after = [s for s in candidate_slots if s >= reference_time]
-    nearest_after = min(slots_after) if slots_after else None
-
-    # (b) Корректировка с учётом занятых интервалов в окне ±30 мин.
-    window_start = reference_time - timedelta(minutes=30)
-    window_end = reference_time + timedelta(minutes=30)
-    adjusted_before = []
-    adjusted_after = []
-
-    # Собираем все busy-интервалы
-    union_busy = []
-    for intervals in barber_busy_times.values():
-        union_busy.extend(intervals)
-
-    # Если есть booking_details (active_categories не пусты), рассчитываем корректировку независимо
-    for (busy_start, busy_end) in union_busy:
-        # Если busy_start попадает в окно перед reference_time
-        if window_start <= busy_start < reference_time:
-            candidate_adj = round_down_to_5(busy_start - timedelta(minutes=computed_total_duration))
-            adjusted_before.append(candidate_adj)
-        # Если busy_end попадает в окно после reference_time
-        if reference_time < busy_end <= window_end:
-            candidate_adj = round_down_to_5(busy_end)
-            adjusted_after.append(candidate_adj)
-
-    if active_categories and (adjusted_before or adjusted_after):
-        # Если скорректированные варианты найдены, переопределяем nearest_before/after
-        if adjusted_before:
-            nearest_before = max(adjusted_before)
-        else:
-            nearest_before = None
-        if adjusted_after:
-            nearest_after = min(adjusted_after)
-        else:
-            nearest_after = None
-
-    # (c) Если оба варианта очень близки (разница < threshold), оставляем один вариант
-    fmt = "%H:%M"
-    if nearest_before and nearest_after:
-        diff = abs((nearest_before - nearest_after).total_seconds()) / 60.0
-        threshold = 30
-        if diff < threshold:
-            candidate_adj = min(nearest_before, nearest_after)
-            nearest_before = candidate_adj
-            nearest_after = None
-
-    return {
-        "nearest_before": nearest_before.strftime(fmt) if nearest_before else None,
-        "nearest_after": nearest_after.strftime(fmt) if nearest_after else None
-    }
-
-
-class BookingError(Exception):
-    def __init__(self, message, nearest_before=None, nearest_after=None):
-        super().__init__(message)
-        self.message = message
-        self.nearest_before = nearest_before
-        self.nearest_after = nearest_after
-
-class ClientError(Exception):
-    def __init__(self, message, status=400):
-        self.message = message
-        self.status = status
+    return Response({'free_time_ranges': result})
 
 @transaction.atomic
 @csrf_exempt
@@ -1478,110 +692,6 @@ def book_appointment(request, id):
         logger.error(f"Unhandled exception in booking (Approach A): {e}", exc_info=True)
         return JsonResponse({'error': 'Internal server error.'}, status=500)
 
-def get_or_create_user_by_phone(phone_number: str):
-
-    # 1) создаём/находим user
-    user, created = User.objects.get_or_create(
-        username=phone_number
-    )
-    if created:
-        user.set_unusable_password()
-        user.save()
-
-    # 2) создаём/находим profile
-    # В случае параллельного обращения может выдать IntegrityError, придётся ловить
-    for attempt in range(5):
-        try:
-            profile, created = Profile.objects.get_or_create(
-                phone_number=phone_number,
-                defaults={'user': user, 'status': 'verified'}
-            )
-            return profile.user, profile
-        except IntegrityError:
-            time.sleep(0.2)
-
-def is_barber_available(barber, start_datetime, end_datetime):
-    day_code = start_datetime.strftime('%A').lower()
-    intervals = BarberAvailability.objects.filter(barber=barber, day_of_week=day_code)
-
-    if not intervals.exists():
-        # Нет записей на этот день: считаем день полностью выходным
-        return False
-
-    request_start = start_datetime.time()
-    request_end = end_datetime.time()
-
-    # Проверим, есть ли недоступные интервалы, пересекающие запрошенный интервал
-    if intervals.filter(is_available=False, start_time__lt=request_end, end_time__gt=request_start).exists():
-        # Есть недоступный интервал, пересекающий запрошенное время
-        return False
-
-    # Проверяем доступные интервалы, должен быть хотя бы один, покрывающий весь [request_start, request_end]
-    if intervals.filter(is_available=True, start_time__lte=request_start, end_time__gte=request_end).exists():
-        return True
-
-    return False
-
-def is_barber_available_in_memory(barber, request_start_time, request_end_time, barber_availability):
-    """
-    Проверяет доступность барбера на основе предварительно загруженных данных.
-
-    :param barber: Объект барбера.
-    :param request_start_time: Время начала бронирования (time).
-    :param request_end_time: Время окончания бронирования (time).
-    :param barber_availability: Словарь с расписанием барберов.
-    :return: True, если барбер доступен, иначе False.
-    """
-    intervals = barber_availability.get(barber.id, [])
-
-    if not intervals:
-        # Нет записей на этот день: считаем день полностью выходным
-        return False
-
-    # Проверяем, есть ли недоступные интервалы, пересекающие запрошенный интервал
-    for interval in intervals:
-        is_available = interval.get('is_available', True)  # Используем get с значением по умолчанию
-        if not is_available:
-            if interval['start_time'] < request_end_time and interval['end_time'] > request_start_time:
-                return False
-
-    # Проверяем доступные интервалы, должен быть хотя бы один, покрывающий весь [request_start_time, request_end_time]
-    for interval in intervals:
-        is_available = interval.get('is_available', True)  # Используем get с значением по умолчанию
-        if is_available:
-            if interval['start_time'] <= request_start_time and interval['end_time'] >= request_end_time:
-                return True
-
-    return False
-
-
-
-from django.db.models.signals import post_save, post_delete
-from django.dispatch import receiver
-import hashlib
-
-# def generate_safe_cache_key(salon_id, date_str, hours, booking_details, cache_time_str, selected_barber_id='any'):
-#     """
-#     Генерирует безопасный ключ кэша, используя хеширование параметров запроса.
-
-#     :param salon_id: ID салона
-#     :param date_str: Дата бронирования в формате 'YYYY-MM-DD'
-#     :param hours: Список часов (целые числа)
-#     :param booking_details: Список деталей бронирования (словари)
-#     :param cache_time_str: Строка округленного времени кэша (например, '45' для минут)
-#     :param selected_barber_id: ID выбранного барбера или 'any' для любого
-#     :return: Строка безопасного ключа кэша
-#     """
-#     key_string = (
-#         f"available_minutes_{salon_id}_v{get_cache_version(salon_id)}_"
-#         f"{date_str}_{json.dumps(hours, sort_keys=True)}_"
-#         f"{json.dumps(booking_details, sort_keys=True)}_"
-#         f"{selected_barber_id}_{cache_time_str}"
-#     )
-#     key_hash = hashlib.md5(key_string.encode('utf-8')).hexdigest()
-#     return f"available_minutes_{salon_id}_v{get_cache_version(salon_id)}_{key_hash}"
-
-import hashlib, json
 def generate_safe_cache_key(
     salon_id, date_str, hours, booking_details, cache_time_str, selected_barber_id='any'
 ):
