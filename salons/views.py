@@ -327,22 +327,20 @@ def book_appointment(request, id):
 
         start_datetime_naive = datetime.combine(date_object, start_time)
         start_datetime = timezone.make_aware(start_datetime_naive, timezone.get_current_timezone())
-        end_datetime = start_datetime + timedelta(minutes=total_service_duration)
+
         # -----------------------------------
         # 4) Считаем общую длительность по моделям, игнорируем любые duration из запроса
         # -----------------------------------
-        total_minutes = 0
-        if booking_details:
-            for detail in booking_details:
-                for svc in detail['services']:
-                   sid = svc['serviceId']
-                   serv = Service.objects.get(id=sid, salon=salon)
-                   total_minutes += int(serv.duration.total_seconds() // 60)
+        total_service_duration = 0
+        if total_service_duration is None:
+            total_service_duration = sum(
+                Service.objects.get(id=_extract_service_id(svc), salon=salon)
+                .duration.total_seconds() // 60
+                for detail in booking_details
+                for svc in detail['services']
+            ) or salon.default_duration or 30
 
-        if total_minutes > 0:
-            total_service_duration = total_minutes
-        else:
-            # если услуг не было или они пустые, используем дефолт
+        if total_service_duration == 0:
             total_service_duration = salon.default_duration or 30
 
         end_datetime = start_datetime + timedelta(minutes=total_service_duration)
@@ -373,6 +371,9 @@ def book_appointment(request, id):
                 end_datetime__gt=start_datetime
             ).values_list('barber_id', flat=True)
             logger.info(f"Busy barber IDs: {list(busy_barber_ids)}")
+
+            logger.info(f"start_datetime: {start_datetime}")
+            logger.info(f"end_datetime: {end_datetime}")
 
             available_barber = Barber.objects.select_for_update().filter(
                 salon=salon,
@@ -466,6 +467,8 @@ def book_appointment(request, id):
                                            nearest_after=suggestion["nearest_after"])
                 else:  # barber_id == 'any'
                     if cat_id == 'any':
+
+        
                         busy_barber_ids = AppointmentBarberService.objects.filter(
                             start_datetime__lt=end_datetime,
                             end_datetime__gt=start_datetime
