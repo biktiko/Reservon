@@ -343,10 +343,27 @@ def choose_user(request, phone):
     logger.info("No user authenticated or phone provided")
     return None
 
+def _extract_service_id(svc):
+    # Если элемент — dict с ключом serviceId, вернём его, иначе предполагаем, что это уже int
+    if isinstance(svc, dict):
+        return svc.get('serviceId')
+    return svc
+
 def get_nearest_suggestion(salon_id, date_str, chosen_hour, booking_details, total_service_duration, selected_barber_id='any'):
     """
     Возвращает ближайшие слоты до и после выбранног=о часа в формате {'nearest_before': 'HH:MM', 'nearest_after': 'HH:MM'}
     """
+    for detail in booking_details:
+        # приводим все services к словарям {'serviceId': int}
+        normalized = []
+        for svc in detail.get('services', []):
+            sid = _extract_service_id(svc)
+            if sid is None:
+                # если вдруг где-то потеряли ID — бросаем клиентскую ошибку
+                raise ValueError("Service ID not provided in compute_nearest_suggestion")
+            normalized.append({'serviceId': sid})
+        detail['services'] = normalized
+
     slots = get_candidate_slots(salon_id, date_str, booking_details, total_service_duration, selected_barber_id)
     if not slots:
         return {'nearest_before': None, 'nearest_after': None}

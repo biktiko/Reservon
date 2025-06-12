@@ -19,8 +19,7 @@ from django.db.models.signals import post_save, post_delete
 import hashlib
 import logging
 from .errors import BookingError, ClientError
-
-from .utils import get_nearest_suggestion, is_barber_available, send_whatsapp_message, get_or_create_user_by_phone, send_push_notification_task
+from .utils import get_nearest_suggestion, is_barber_available, send_whatsapp_message, get_or_create_user_by_phone, send_push_notification_task, _extract_service_id
 from datetime import timedelta
 from .models import Appointment
 from django.conf import settings
@@ -297,6 +296,16 @@ def book_appointment(request, id):
         total_service_duration = data.get("total_service_duration", salon.default_duration)
         user_comment = data.get("user_comment", "")
 
+        #  нормализуем оба формата services: int → {'serviceId': int}
+        for detail in booking_details:
+            normalized = []
+            for svc in detail.get('services', []):
+                sid = _extract_service_id(svc)
+                if sid is None:
+                    raise ClientError("Service ID not provided", status=400)
+                normalized.append({'serviceId': sid})
+            detail['services'] = normalized
+
         # -----------------------------------
         # 3) Разбор даты и времени
         # -----------------------------------
@@ -321,7 +330,7 @@ def book_appointment(request, id):
         if booking_details:
             total_minutes = 0
             for detail in booking_details:
-              for svc in detail.get('services', []):
+                for svc in detail.get('services', []):
                     sid = _extract_service_id(svc)
                     if sid is None:
                         raise ClientError("Service ID not provided", status=400)
@@ -683,12 +692,6 @@ def book_appointment(request, id):
     except Exception as e:
         logger.error(f"Unhandled exception in booking (Approach A): {e}", exc_info=True)
         return JsonResponse({'error': 'Internal server error.'}, status=500)
-
-def _extract_service_id(svc):
-    # Если элемент — dict с ключом serviceId, вернём его, иначе предполагаем, что это уже int
-    if isinstance(svc, dict):
-        return svc.get('serviceId')
-    return svc
 
 def generate_safe_cache_key(
     salon_id, date_str, hours, booking_details, cache_time_str, selected_barber_id='any'
