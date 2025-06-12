@@ -321,14 +321,11 @@ def book_appointment(request, id):
         if booking_details:
             total_minutes = 0
             for detail in booking_details:
-                for svc in detail.get('services', []):
-                    sid = svc.get('serviceId')
-                    try:
-                        serv = Service.objects.get(id=sid, salon=salon)
-                    except Service.DoesNotExist:
-                        logger.warning(f"Service ID {sid} not found in salon {salon.id}")
-                        raise ClientError(f"Service with ID {sid} not found in salon.", status=400)
-                    # duration — это timedelta
+              for svc in detail.get('services', []):
+                    sid = _extract_service_id(svc)
+                    if sid is None:
+                        raise ClientError("Service ID not provided", status=400)
+                    serv = Service.objects.get(id=sid, salon=salon)
                     total_minutes += int(serv.duration.total_seconds() // 60)
             total_service_duration = total_minutes
         else:
@@ -402,12 +399,10 @@ def book_appointment(request, id):
                 # игнорируем cat_detail['duration'], считаем сумму длительностей из Service
                 dur_minutes = 0
                 for svc in services:
-                    sid = svc.get('serviceId')
-                    try:
-                        serv = Service.objects.get(id=sid, salon=salon)
-                    except Service.DoesNotExist:
-                        logger.warning(f"Service ID {sid} not found in salon {salon.id}")
-                        raise ClientError(f"Service with ID {sid} not found in salon.", status=400)
+                    sid = _extract_service_id(svc)
+                    if sid is None:
+                        raise ClientError("Service ID not provided", status=400)
+                    serv = Service.objects.get(id=sid, salon=salon)
                     dur_minutes += int(serv.duration.total_seconds() // 60)
 
                 interval_end = local_start + timedelta(minutes=dur_minutes)
@@ -563,24 +558,14 @@ def book_appointment(request, id):
             abs_obj.save()
 
             # Привязка услуг (барбер- или обычные)
-            for service_info in services_list:
-                service_id = service_info.get('serviceId')
+            for svc in services_list:
+                sid = _extract_service_id(svc)
                 if salonMod == 'barber':
-                    try:
-                        barber_service = BarberService.objects.get(id=service_id, barber=barber)
-                        abs_obj.barberServices.add(barber_service)
-                        logger.debug(f"[BARBER MODE] Added barberService {barber_service.name} (ID: {barber_service.id})")
-                    except BarberService.DoesNotExist:
-                        logger.warning(f"BarberService with ID {service_id} not found for {barber.name}")
-                        raise ClientError(f"BarberService with ID {service_id} not found.", status=400)
+                    barber_service = BarberService.objects.get(id=sid, barber=barber)
+                    abs_obj.barberServices.add(barber_service)
                 else:
-                    try:
-                        serv = Service.objects.get(id=service_id, salon=salon)
-                        abs_obj.services.add(serv)
-                        logger.debug(f"[CATEGORY MODE] Added Service {serv.name} (ID: {serv.id})")
-                    except Service.DoesNotExist:
-                        logger.warning(f"Service with ID {service_id} not found in salon {salon}")
-                        raise ClientError(f"Service with ID {service_id} not found in salon.", status=400)
+                    serv = Service.objects.get(id=sid, salon=salon)
+                    abs_obj.services.add(serv)
 
             appointments_to_create.append(abs_obj)
 
@@ -698,6 +683,12 @@ def book_appointment(request, id):
     except Exception as e:
         logger.error(f"Unhandled exception in booking (Approach A): {e}", exc_info=True)
         return JsonResponse({'error': 'Internal server error.'}, status=500)
+
+def _extract_service_id(svc):
+    # Если элемент — dict с ключом serviceId, вернём его, иначе предполагаем, что это уже int
+    if isinstance(svc, dict):
+        return svc.get('serviceId')
+    return svc
 
 def generate_safe_cache_key(
     salon_id, date_str, hours, booking_details, cache_time_str, selected_barber_id='any'
