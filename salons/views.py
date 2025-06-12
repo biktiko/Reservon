@@ -293,13 +293,17 @@ def book_appointment(request, id):
         date_str = data.get("date")
         time_str = data.get("time")
         booking_details = data.get("booking_details", [])
-        total_service_duration = data.get("total_service_duration", salon.default_duration)
+        # total_service_duration = data.get("total_service_duration", salon.default_duration)
         user_comment = data.get("user_comment", "")
 
         #  нормализуем оба формата services: int → {'serviceId': int}
         for detail in booking_details:
+            raw_svcs = detail.get('services')
+           # если services не список, сбрасываем его в пустой
+            if not isinstance(raw_svcs, list):
+               raw_svcs = []
             normalized = []
-            for svc in detail.get('services', []):
+            for svc in raw_svcs:
                 sid = _extract_service_id(svc)
                 if sid is None:
                     raise ClientError("Service ID not provided", status=400)
@@ -330,17 +334,17 @@ def book_appointment(request, id):
         if booking_details:
             total_minutes = 0
             for detail in booking_details:
-                for svc in detail.get('services', []):
-                    sid = _extract_service_id(svc)
-                    if sid is None:
-                        raise ClientError("Service ID not provided", status=400)
-                    serv = Service.objects.get(id=sid, salon=salon)
-                    total_minutes += int(serv.duration.total_seconds() // 60)
-            total_service_duration = total_minutes
-        else:
-            total_service_duration = salon.default_duration or 30
+                for svc in detail['services']:
+                   sid = svc['serviceId']
+                   serv = Service.objects.get(id=sid, salon=salon)
+                   total_minutes += int(serv.duration.total_seconds() // 60)
+            if total_minutes > 0:
+               total_service_duration = total_minutes
+            else:
+              # если услуг не было или они пустые, используем дефолт
+               total_service_duration = salon.default_duration or 30
 
-        end_datetime = start_datetime + timedelta(minutes=total_service_duration)
+            end_datetime = start_datetime + timedelta(minutes=total_service_duration)
 
         # -----------------------------------
         # 5) Находим или создаём юзера
