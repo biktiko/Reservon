@@ -327,24 +327,25 @@ def book_appointment(request, id):
 
         start_datetime_naive = datetime.combine(date_object, start_time)
         start_datetime = timezone.make_aware(start_datetime_naive, timezone.get_current_timezone())
-
+        end_datetime = start_datetime + timedelta(minutes=total_service_duration)
         # -----------------------------------
         # 4) Считаем общую длительность по моделям, игнорируем любые duration из запроса
         # -----------------------------------
+        total_minutes = 0
         if booking_details:
-            total_minutes = 0
             for detail in booking_details:
                 for svc in detail['services']:
                    sid = svc['serviceId']
                    serv = Service.objects.get(id=sid, salon=salon)
                    total_minutes += int(serv.duration.total_seconds() // 60)
-            if total_minutes > 0:
-               total_service_duration = total_minutes
-            else:
-              # если услуг не было или они пустые, используем дефолт
-               total_service_duration = salon.default_duration or 30
 
-            end_datetime = start_datetime + timedelta(minutes=total_service_duration)
+        if total_minutes > 0:
+            total_service_duration = total_minutes
+        else:
+            # если услуг не было или они пустые, используем дефолт
+            total_service_duration = salon.default_duration or 30
+
+        end_datetime = start_datetime + timedelta(minutes=total_service_duration)
 
         # -----------------------------------
         # 5) Находим или создаём юзера
