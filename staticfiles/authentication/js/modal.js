@@ -4,8 +4,6 @@
  * @param {string} action - Действие для загрузки соответствующего контента (например, 'login').
  */
 
-console.log("Modal.js is loaded")
-
 const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
 function applyIOSCheck() {
