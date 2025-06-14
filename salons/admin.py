@@ -29,8 +29,8 @@ class AppointmentBarberServiceInline(admin.TabularInline):
 @admin.register(Appointment)
 class AppointmentAdmin(ImportExportModelAdmin):
     list_display = ('id', 'salon', 'user', 'start_datetime', 'end_datetime', 'get_barbers_services', 'user_comment', 'created_at')
-    list_filter = ('salon', 'user', 'start_datetime', 'end_datetime', 'created_at')
-    search_fields = ('salon__name', 'user__username')
+    list_filter = ('salon', 'user', 'start_datetime', 'created_at')
+    search_fields = ('id', 'salon__name', 'user__username', 'user_comment')
     inlines = [AppointmentBarberServiceInline, NoteInline]
 
     def get_barbers_services(self, obj):
@@ -60,7 +60,7 @@ class ServiceAdmin(ImportExportModelAdmin):
     resource_class = ServiceResource
     list_display = ('id', 'name', 'price', 'duration', 'salon', 'category', 'status')
     list_filter = ('salon', 'category', 'status')
-    search_fields = ('name',)
+    search_fields = ('id', 'name', 'salon__name', 'category__name', 'status')
     autocomplete_fields = ['salon', 'category']
     actions = ['make_active', 'make_suspend']
 
@@ -170,7 +170,7 @@ class BarberAdmin(ImportExportModelAdmin):
     form = BarberAdminForm
     list_display = ('id', 'user', 'name', 'salon', 'get_categories', 'get_services', 'get_barber_services_names', 'status')
     list_filter = ('salon', 'categories', 'status')
-    search_fields = ('name', 'salon__name')
+    search_fields = ('id', 'user__username', 'name', 'salon__name', 'status')
     filter_horizontal = ('categories', 'services')
     autocomplete_fields = ['salon', 'categories', 'user']
     fields = ('salon', 'user', 'name', 'avatar', 'description', 'categories', 'services', 'status')
@@ -276,7 +276,7 @@ class SalonAdmin(ImportExportModelAdmin):
     form = SalonAdminForm
     list_display = ('id', 'name', 'salon_manager','city', 'status', 'additional_status', 'address', 'mod')
     list_filter = ('status', 'additional_status', 'salon_manager', 'city', 'category')
-    search_fields = ('name', 'address')
+    search_fields = ('id', 'name', 'salon_manager','city', 'status', 'additional_status', 'address', 'mod')
     inlines = [ServiceInline, SalonImageInline, BarberInline, NoteInline]
     autocomplete_fields = ['admins']
 
@@ -356,6 +356,6 @@ class SalonImageAdmin(admin.ModelAdmin):
 class AppointmentBarberServiceAdmin(ImportExportModelAdmin):
     list_display = ('appointment', 'barber', 'start_datetime', 'end_datetime')
     search_fields = ('appointment__salon__name', 'barber__name')
-    list_filter = ('appointment__salon', 'barber', 'start_datetime', 'end_datetime')
+    list_filter = ('appointment__salon', 'barber', 'start_datetime')
     filter_horizontal = ('services',)
     autocomplete_fields = ['appointment', 'barber', 'services']

@@ -1,5 +1,4 @@
-# api/views.py
-
+# C:\Reservon\Reservon\api\views.py
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -129,3 +128,28 @@ def admin_verify(request):
         return JsonResponse({'success': False, 'error': 'Пользователь не является администратором ни одного салона'}, status=403)
     
     return JsonResponse({'success': True, 'salons': salons_list})
+
+@csrf_exempt
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def api_reschedule_appointments(request, salon_id):
+    """
+    Вызов стандартного salons.views.reschedule_appointments
+    и адаптация JsonResponse → DRF Response.
+    """
+    # конвертируем DRF Request → Django HttpRequest
+    django_request = request._request
+
+    # импортируем оригинальную функцию
+    from salons.views import reschedule_appointments as drf_view
+
+    # вызываем её
+    django_response = drf_view(django_request, salon_id)
+
+    # если возвратили JsonResponse — оборачиваем в DRF Response
+    if isinstance(django_response, JsonResponse):
+        data = json.loads(django_response.content)
+        return Response(data, status=django_response.status_code)
+
+    # иначе отдаём «как есть» (HttpResponse, Redirect и т.п.)
+    return django_response
