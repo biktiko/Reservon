@@ -28,8 +28,8 @@ class AppointmentBarberServiceInline(admin.TabularInline):
 # Настройка админки для модели Appointment
 @admin.register(Appointment)
 class AppointmentAdmin(ImportExportModelAdmin):
-    list_display = ('salon', 'user', 'start_datetime', 'end_datetime', 'get_barbers_services', 'user_comment', 'created_at')
-    list_filter = ('salon', 'user')
+    list_display = ('id', 'salon', 'user', 'start_datetime', 'end_datetime', 'get_barbers_services', 'user_comment', 'created_at')
+    list_filter = ('salon', 'user', 'start_datetime', 'end_datetime', 'created_at')
     search_fields = ('salon__name', 'user__username')
     inlines = [AppointmentBarberServiceInline, NoteInline]
 
@@ -58,7 +58,7 @@ class ServiceResource(resources.ModelResource):
 @admin.register(Service)
 class ServiceAdmin(ImportExportModelAdmin):
     resource_class = ServiceResource
-    list_display = ('name', 'price', 'duration', 'salon', 'category', 'status')
+    list_display = ('id', 'name', 'price', 'duration', 'salon', 'category', 'status')
     list_filter = ('salon', 'category', 'status')
     search_fields = ('name',)
     autocomplete_fields = ['salon', 'category']
@@ -168,8 +168,8 @@ class BarberServiceInline(admin.TabularInline):
 @admin.register(Barber)
 class BarberAdmin(ImportExportModelAdmin):
     form = BarberAdminForm
-    list_display = ('user', 'name', 'salon', 'get_categories', 'get_services', 'get_barber_services_names', 'status')
-    list_filter = ('salon', 'categories')
+    list_display = ('id', 'user', 'name', 'salon', 'get_categories', 'get_services', 'get_barber_services_names', 'status')
+    list_filter = ('salon', 'categories', 'status')
     search_fields = ('name', 'salon__name')
     filter_horizontal = ('categories', 'services')
     autocomplete_fields = ['salon', 'categories', 'user']
@@ -251,7 +251,7 @@ class SalonAdminForm(forms.ModelForm):
         model = Salon
         fields = '__all__'
         widgets = {
-            "status": ChoiceWithDescSelect(           # ⬅️ применяем кастом
+            "status": ChoiceWithDescSelect( 
                 descriptions=STATUS_DESCRIPTIONS
             ),
             "additional_status": ChoiceWithDescSelect(
@@ -274,8 +274,8 @@ class BarberInline(admin.StackedInline):
 @admin.register(Salon)
 class SalonAdmin(ImportExportModelAdmin):
     form = SalonAdminForm
-    list_display = ('name', 'salon_manager','city', 'status', 'additional_status', 'address', 'mod')
-    list_filter = ('status', 'mod')
+    list_display = ('id', 'name', 'salon_manager','city', 'status', 'additional_status', 'address', 'mod')
+    list_filter = ('status', 'additional_status', 'salon_manager', 'city', 'category')
     search_fields = ('name', 'address')
     inlines = [ServiceInline, SalonImageInline, BarberInline, NoteInline]
     autocomplete_fields = ['admins']
@@ -356,5 +356,6 @@ class SalonImageAdmin(admin.ModelAdmin):
 class AppointmentBarberServiceAdmin(ImportExportModelAdmin):
     list_display = ('appointment', 'barber', 'start_datetime', 'end_datetime')
     search_fields = ('appointment__salon__name', 'barber__name')
+    list_filter = ('appointment__salon', 'barber', 'start_datetime', 'end_datetime')
     filter_horizontal = ('services',)
     autocomplete_fields = ['appointment', 'barber', 'services']
