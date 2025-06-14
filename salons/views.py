@@ -790,10 +790,7 @@ def reschedule_appointments(request, salon_id):
                     "1": appt.salon.name,
                     "2": appt.start_datetime.strftime("%d.%m в %H:%M")
                 }
-                send_whatsapp_message(
-                    to_number=phone,
-                    template_sid=TEMPLATE_SID,
-                    content_variables=json.dumps(vars, ensure_ascii=False)
+                send_whatsapp_message(phone, TEMPLATE_SID, json.dumps(vars, ensure_ascii=False)
                 )
 
     return JsonResponse({
