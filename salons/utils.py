@@ -18,6 +18,21 @@ from main.tasks import send_push_notification_task
 
 logger = logging.getLogger('booking')
 
+def normalize_phone(phone: str) -> str:
+    """
+    Нормализует номер телефона в формат E.164 (например, +374...), 
+    удаляя лишние символы и пробелы.
+    """
+    if not phone:
+        return ""
+    phone = phone.strip()
+    allowed_chars = set("0123456789+")
+    phone = "".join(ch for ch in phone if ch in allowed_chars)
+    # Если телефон не начинается с '+', добавляем
+    if not phone.startswith("+"):
+        phone = "+" + phone
+    return phone
+
 def round_down_to_5(dt):
     """
     Округляет datetime dt вниз до ближайшей отметки кратной 5 минутам.
@@ -399,7 +414,6 @@ def save_appointment(salon, user, start, end, comment, assignments, mode):
                 logger.debug(f"Added Service {serv.id} to ABS {abs_obj.id}")
     return appt
 
-
 def notify_barbers(appt):
     logger.debug(f"notify_barbers: start for appointment {appt.id}")
     if settings.DEBUG:
@@ -461,3 +475,4 @@ def notify_barbers(appt):
                 except Exception as e:
                     logger.error(f"Error sending push to {barber.id}: {e}")
     logger.debug("notify_barbers: done")
+

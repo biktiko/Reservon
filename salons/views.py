@@ -1,6 +1,7 @@
 # salons/views.py
 from django.shortcuts import render, get_object_or_404
 from .models import Salon, Barber, Service, ServiceCategory, AppointmentBarberService, BarberAvailability, BarberService
+from .utils import get_nearest_suggestion, is_barber_available, send_whatsapp_message, get_or_create_user_by_phone, send_push_notification_task, _extract_service_id, normalize_phone
 from django.core.serializers.json import DjangoJSONEncoder
 from django.http import JsonResponse
 from rest_framework.decorators import api_view
@@ -11,19 +12,16 @@ from django.db.models import Q
 from django.db import transaction
 import json
 from collections import defaultdict
-from django.core.cache import cache
-from django.dispatch import receiver
 from .utils import get_candidate_slots, format_free_ranges
 from django.views.decorators.csrf import csrf_exempt
-from django.db.models.signals import post_save, post_delete
-import hashlib
 import logging
 from .errors import BookingError, ClientError
-from .utils import get_nearest_suggestion, is_barber_available, send_whatsapp_message, get_or_create_user_by_phone, send_push_notification_task, _extract_service_id
 from datetime import timedelta
 from .models import Appointment
 from django.conf import settings
 from authentication.models import PushSubscription
+from django.http import HttpResponse
+from django.utils.dateparse import parse_datetime
 
 logger = logging.getLogger('booking')
 
@@ -47,11 +45,6 @@ def main(request):
         'q': query,
     }
     return render(request, 'salons/salons.html', context)
-
-
-def get_cache_version(salon_id):
-    version = cache.get(f"available_minutes_version_{salon_id}", 1)
-    return version
 
 def salon_detail(request, id):
     # Получаем салон по ID
@@ -701,47 +694,110 @@ def book_appointment(request, id):
         logger.error(f"Unhandled exception in booking (Approach A): {e}", exc_info=True)
         return JsonResponse({'error': 'Internal server error.'}, status=500)
 
-def generate_safe_cache_key(
-    salon_id, date_str, hours, booking_details, cache_time_str, selected_barber_id='any'
-):
-    """Формирует ключ для кэша, используя хеш от параметров."""
-    raw = json.dumps({
-        "salon_id": salon_id,
-        "date_str": date_str,
-        "hours": hours,
-        "booking_details": booking_details,
-        "cache_time": cache_time_str,
-        "selected_barber_id": selected_barber_id
-    }, sort_keys=True)
-    h = hashlib.md5(raw.encode('utf-8')).hexdigest()
-    return f"avail_minutes_{h}"
+@csrf_exempt
+@transaction.atomic
+def reschedule_appointments(request, salon_id):
+    TEMPLATE_SID = "HXb2f720ab353ffcce7849e3aede8348ca"
 
-@receiver([post_save, post_delete], sender=BarberAvailability)
-def increment_cache_version_on_availability_change(sender, instance, **kwargs):
-    salon_id = instance.barber.salon.id
-    current_version = cache.get(f"available_minutes_version_{salon_id}", 1)
-    cache.set(f"available_minutes_version_{salon_id}", current_version + 1, None)
-    logger.debug(f"Версия кэша для салона {salon_id} увеличена до {current_version + 1} из-за изменения расписания барбера.")
+    if request.method != "POST":
+        return HttpResponse("Invalid method", status=405)
 
-@receiver([post_save, post_delete], sender=AppointmentBarberService)
-def increment_cache_version_on_appointment_change(sender, instance, **kwargs):
-    salon_id = instance.appointment.salon.id
-    current_version = cache.get(f"available_minutes_version_{salon_id}", 1)
-    cache.set(f"available_minutes_version_{salon_id}", current_version + 1, None)
-    logger.debug(f"Версия кэша для салона {salon_id} увеличена до {current_version + 1} из-за изменения бронирования.")
+    # 1) Парсим JSON
+    try:
+        body = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
 
-def normalize_phone(phone: str) -> str:
-    """
-    Нормализует номер телефона в формат E.164 (например, +374...), 
-    удаляя лишние символы и пробелы.
-    """
-    if not phone:
-        return ""
-    phone = phone.strip()
-    allowed_chars = set("0123456789+")
-    phone = "".join(ch for ch in phone if ch in allowed_chars)
-    # Если телефон не начинается с '+', добавляем
-    if not phone.startswith("+"):
-        phone = "+" + phone
-    return phone
+    # 2) Извлекаем и валидируем параметры
+    range_start = parse_datetime(body.get("range_start"))
+    range_end   = parse_datetime(body.get("range_end"))
+    if not (range_start and range_end):
+        return JsonResponse({"error": "Invalid or missing range_start/range_end"}, status=400)
 
+    barber_ids    = body.get("barber_ids", "any")
+    service_ids   = body.get("service_ids", "any")
+    try:
+        move_minutes = int(body.get("move_minutes", 0))
+    except (ValueError, TypeError):
+        return JsonResponse({"error": "Invalid move_minutes"}, status=400)
+
+    notify = bool(body.get("notify_whatsapp", False))
+    delta  = timedelta(minutes=move_minutes)
+
+    # 3) Отбираем все ABS внутри окна, с учётом фильтров мастеров и услуг
+    abs_qs = AppointmentBarberService.objects.select_for_update().filter(
+        appointment__salon_id=salon_id,
+        start_datetime__gte=range_start,
+        end_datetime__lte=range_end,
+    )
+    if barber_ids != "any":
+        abs_qs = abs_qs.filter(barber_id__in=barber_ids)
+    if service_ids != "any":
+        abs_qs = abs_qs.filter(
+            Q(services__id__in=service_ids) |
+            Q(barberServices__id__in=service_ids)
+        ).distinct()
+
+    # 4) Получаем все ABS для затронутых Appointment
+    initial_appt_ids = set(abs_qs.values_list('appointment_id', flat=True))
+    all_abs = AppointmentBarberService.objects.select_for_update().filter(
+        appointment__salon_id=salon_id
+    )
+    to_move = set(all_abs.filter(appointment_id__in=initial_appt_ids))
+
+    # 5) Каскад: добавляем любые конфликтующие ABS (чужие записи)
+    changed = True
+    while changed:
+        changed = False
+        for segment in list(to_move):
+            new_start = segment.start_datetime + delta
+            new_end   = segment.end_datetime   + delta
+
+            conflicts = all_abs.filter(
+                start_datetime__lt=new_end,
+                end_datetime__gt=new_start
+            ).exclude(id__in=[s.id for s in to_move])
+
+            for c in conflicts:
+                to_move.add(c)
+                changed = True
+
+    # 6) Сдвигаем все накопленные сегменты
+    appointments_touched = set()
+    for segment in to_move:
+        segment.start_datetime += delta
+        segment.end_datetime   += delta
+        segment.save()
+        appointments_touched.add(segment.appointment_id)
+
+    # 7) Обновляем сами Appointment по min/max из сегментов и отправляем WhatsApp
+    for appt in Appointment.objects.filter(id__in=appointments_touched):
+        segments = list(appt.barber_services.all())
+        if not segments:
+            continue
+
+        new_start = min(s.start_datetime for s in segments)
+        new_end   = max(s.end_datetime   for s in segments)
+
+        appt.start_datetime = new_start
+        appt.end_datetime   = new_end
+        appt.save(update_fields=['start_datetime', 'end_datetime'])
+
+        if notify and appt.user and hasattr(appt.user, 'main_profile'):
+            phone = getattr(appt.user.main_profile, 'phone_number', None)
+            if phone:
+                vars = {
+                    "1": appt.salon.name,
+                    "2": appt.start_datetime.strftime("%d.%m в %H:%M")
+                }
+                send_whatsapp_message(
+                    to_number=phone,
+                    template_sid=TEMPLATE_SID,
+                    content_variables=json.dumps(vars, ensure_ascii=False)
+                )
+
+    return JsonResponse({
+        "success": True,
+        "moved_segments_count": len(to_move),
+        "appointments_updated": list(appointments_touched)
+    })
