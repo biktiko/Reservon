@@ -12,4 +12,10 @@ urlpatterns = [
     path('get_available_minutes/', views.get_available_minutes, name='get_available_minutes'),
     path('get_nearest_available_time/', views.get_nearest_available_time, name='get_nearest_available_time'),
     path('reschedule_appointments/<int:salon_id>/', views.reschedule_appointments, name='reschedule_appointments'),
+
+    path(
+        'whatsapp/callback/',
+        views.whatsapp_callback,
+        name='whatsapp_callback'
+    ),
 ]

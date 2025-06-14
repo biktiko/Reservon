@@ -824,3 +824,83 @@ def reschedule_appointments(request, salon_id):
         "moved_segments_count": len(to_move),
         "appointments_updated": list(touched_appts)
     })
+
+# SID для ответов
+POSITIVE_TEMPLATE_SID = "HX749433e479e5ab60a70ef84b60c17263"
+NEGATIVE_TEMPLATE_SID = "HX7fa05168995cabc827c14fce06f2ef1f"
+
+positive_replies = [
+    # Армянский (кириллица)
+    "այո", "հա", "համոզված եմ", "իհարկե", "դե հա", "լավ է", "հարմար է",
+    "համապատասխանում է", "հաստատ", "լավ", "համոզված", "հաստատ հա",
+    # Армянский (латиницей)
+    "ayo", "ha", "hamozvac em", "iharke", "de ha", "lav e", "harmar e",
+    "hamapataskanum e", "hastat", "hamozvac", "hastat ha",
+    # Русский
+    "да", "конечно", "подходит", "удобно", "все ок", "ок", "да, удобно",
+    "подтверждаю", "да, подтверждаю", "да, всё нормально", "всё хорошо",
+    "хорошо", "да, хорошо",
+    # Английский
+    "yes", "sure", "of course", "okay", "ok", "alright", "confirm",
+    "confirmed", "yes, it’s fine", "yes, that’s good", "yes, works for me",
+    "yes, i’m fine with that", "yes, i confirm", "yes, no problem"
+]
+
+@csrf_exempt
+def whatsapp_callback(request):
+    """
+    Webhook для входящих WhatsApp-ответов через Twilio.
+    При положительном ответе — шлём шаблон POSITIVE_TEMPLATE_SID,
+    при любом другом — удаляем запись и шлём NEGATIVE_TEMPLATE_SID.
+    """
+    if request.method != "POST":
+        return HttpResponse(status=405)
+
+    from_whatsapp = request.POST.get("From", "")             # "whatsapp:+374..."
+    body = request.POST.get("Body", "").strip().lower()      # ответ пользователя
+
+    # Чистим префикс
+    phone = from_whatsapp.replace("whatsapp:", "")
+
+    # Ищем ближайшую запись пользователя (например, самый ранний future-апоинтмент)
+    now = timezone.now()
+    appt = (
+        Appointment.objects
+        .filter(user__main_profile__phone_number=phone, start_datetime__gte=now)
+        .order_by("start_datetime")
+        .first()
+    )
+
+    if not appt:
+        logger.warning(f"No future appointment found for {phone}")
+        return HttpResponse("No appointment", status=404)
+
+    # Формируем переменные для шаблона
+    local_start = timezone.localtime(appt.start_datetime)
+    vars_dict = {
+        "1": appt.salon.name,
+        "2": local_start.strftime("%d.%m %H:%M"),
+    }
+    vars_json = json.dumps(vars_dict, ensure_ascii=False)
+
+    # Позитивный ответ?
+    if body in positive_replies:
+        # Отправляем подтверждение
+        send_whatsapp_message(
+            phone,
+            POSITIVE_TEMPLATE_SID,
+            vars_json
+        )
+        logger.info(f"User {phone} confirmed reschedule for appt {appt.id}")
+    else:
+        # Удаляем сам Appointment (и все связанные ABS через CASCADE)
+        appt.delete()
+        # Шлём отказ
+        send_whatsapp_message(
+            phone,
+            NEGATIVE_TEMPLATE_SID,
+            vars_json
+        )
+        logger.info(f"User {phone} declined reschedule — appointment deleted")
+
+    return HttpResponse("OK")
