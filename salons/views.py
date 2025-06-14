@@ -694,6 +694,27 @@ def book_appointment(request, id):
         logger.error(f"Unhandled exception in booking (Approach A): {e}", exc_info=True)
         return JsonResponse({'error': 'Internal server error.'}, status=500)
 
+def _parse_local(dt_str: str):
+    """
+    Парсим строку:
+    - сначала пытаемся parse_datetime (ISO +зона),
+    - иначе strptime('%d.%m.%Y %H:%M') и локализуем к текущей TZ (+04:00).
+    """
+    if not dt_str:
+        return None
+    # 1) ISO
+    dt = parse_datetime(dt_str)
+    if dt and dt.tzinfo:
+        return dt
+    # 2) формат DD.MM.YYYY HH:MM
+    try:
+        naive = datetime.strptime(dt_str, '%d.%m.%Y %H:%M')
+    except ValueError:
+        return None
+    # делаем aware с вашей TZ (+04:00)
+    return timezone.make_aware(naive, timezone.get_current_timezone())
+
+
 @csrf_exempt
 @transaction.atomic
 def reschedule_appointments(request, salon_id):
@@ -708,23 +729,26 @@ def reschedule_appointments(request, salon_id):
     except json.JSONDecodeError:
         return JsonResponse({"error": "Invalid JSON"}, status=400)
 
-    # 2) Извлекаем и валидируем параметры
-    range_start = parse_datetime(body.get("range_start"))
-    range_end   = parse_datetime(body.get("range_end"))
+    # 2) Извлекаем и валидируем range_start / range_end
+    range_start = _parse_local(body.get("range_start", ""))
+    range_end   = _parse_local(body.get("range_end", ""))
     if not (range_start and range_end):
-        return JsonResponse({"error": "Invalid or missing range_start/range_end"}, status=400)
+        return JsonResponse({
+            "error": "Invalid or missing range_start/range_end. "
+                     "Use DD.MM.YYYY HH:MM or full ISO+offset."
+        }, status=400)
 
+    # 3) Прочие параметры
     barber_ids    = body.get("barber_ids", "any")
     service_ids   = body.get("service_ids", "any")
     try:
         move_minutes = int(body.get("move_minutes", 0))
     except (ValueError, TypeError):
         return JsonResponse({"error": "Invalid move_minutes"}, status=400)
-
     notify = bool(body.get("notify_whatsapp", False))
     delta  = timedelta(minutes=move_minutes)
 
-    # 3) Отбираем все ABS внутри окна, с учётом фильтров мастеров и услуг
+    # 4) Исходный queryset сегментов в окне
     abs_qs = AppointmentBarberService.objects.select_for_update().filter(
         appointment__salon_id=salon_id,
         start_datetime__gte=range_start,
@@ -738,40 +762,38 @@ def reschedule_appointments(request, salon_id):
             Q(barberServices__id__in=service_ids)
         ).distinct()
 
-    # 4) Получаем все ABS для затронутых Appointment
-    initial_appt_ids = set(abs_qs.values_list('appointment_id', flat=True))
+    # 5) Все сегменты тех же Appointment
+    initial_appts = set(abs_qs.values_list('appointment_id', flat=True))
     all_abs = AppointmentBarberService.objects.select_for_update().filter(
         appointment__salon_id=salon_id
     )
-    to_move = set(all_abs.filter(appointment_id__in=initial_appt_ids))
+    to_move = set(all_abs.filter(appointment_id__in=initial_appts))
 
-    # 5) Каскад: добавляем любые конфликтующие ABS (чужие записи)
+    # 6) Добавляем конфликтующие сегменты каскадом
     changed = True
     while changed:
         changed = False
-        for segment in list(to_move):
-            new_start = segment.start_datetime + delta
-            new_end   = segment.end_datetime   + delta
-
+        for seg in list(to_move):
+            new_s = seg.start_datetime + delta
+            new_e = seg.end_datetime   + delta
             conflicts = all_abs.filter(
-                start_datetime__lt=new_end,
-                end_datetime__gt=new_start
+                start_datetime__lt=new_e,
+                end_datetime__gt=new_s
             ).exclude(id__in=[s.id for s in to_move])
-
             for c in conflicts:
                 to_move.add(c)
                 changed = True
 
-    # 6) Сдвигаем все накопленные сегменты
-    appointments_touched = set()
-    for segment in to_move:
-        segment.start_datetime += delta
-        segment.end_datetime   += delta
-        segment.save()
-        appointments_touched.add(segment.appointment_id)
+    # 7) Сдвигаем все накопленные сегменты
+    touched_appts = set()
+    for seg in to_move:
+        seg.start_datetime += delta
+        seg.end_datetime   += delta
+        seg.save()
+        touched_appts.add(seg.appointment_id)
 
-    # 7) Обновляем сами Appointment по min/max из сегментов и отправляем WhatsApp
-    for appt in Appointment.objects.filter(id__in=appointments_touched):
+    # 8) Пересчитываем время у Appointment и шлём WhatsApp
+    for appt in Appointment.objects.filter(id__in=touched_appts):
         segments = list(appt.barber_services.all())
         if not segments:
             continue
@@ -784,17 +806,21 @@ def reschedule_appointments(request, salon_id):
         appt.save(update_fields=['start_datetime', 'end_datetime'])
 
         if notify and appt.user and hasattr(appt.user, 'main_profile'):
-            phone = getattr(appt.user.main_profile, 'phone_number', None)
+            phone = appt.user.main_profile.phone_number
             if phone:
                 vars = {
                     "1": appt.salon.name,
-                    "2": appt.start_datetime.strftime("%d.%m в %H:%M")
+                    # здесь игнорируем TZ, выводим локальное время
+                    "2": new_start.strftime("%d.%m %H:%M")
                 }
-                send_whatsapp_message(phone, TEMPLATE_SID, json.dumps(vars, ensure_ascii=False)
+                send_whatsapp_message(
+                    phone,
+                    TEMPLATE_SID,
+                    json.dumps(vars, ensure_ascii=False)
                 )
 
     return JsonResponse({
         "success": True,
         "moved_segments_count": len(to_move),
-        "appointments_updated": list(appointments_touched)
+        "appointments_updated": list(touched_appts)
     })

@@ -2,6 +2,7 @@
 from datetime import timedelta
 from .models import Salon, BarberAvailability, AppointmentBarberService, ServiceCategory, BarberService
 from django.utils import timezone
+from django.utils.dateparse import parse_datetime
 from django.db.models import Prefetch
 from collections import defaultdict
 from datetime import datetime, time as dtime
@@ -476,3 +477,23 @@ def notify_barbers(appt):
                     logger.error(f"Error sending push to {barber.id}: {e}")
     logger.debug("notify_barbers: done")
 
+
+def _parse_local(dt_str: str):
+    """
+    Парсим строку:
+    - сначала пытаемся parse_datetime (ISO +зона),
+    - иначе strptime('%d.%m.%Y %H:%M') и локализуем к текущей TZ (+04:00).
+    """
+    if not dt_str:
+        return None
+    # 1) ISO
+    dt = parse_datetime(dt_str)
+    if dt and dt.tzinfo:
+        return dt
+    # 2) формат DD.MM.YYYY HH:MM
+    try:
+        naive = datetime.strptime(dt_str, '%d.%m.%Y %H:%M')
+    except ValueError:
+        return None
+    # делаем aware с вашей TZ (+04:00)
+    return timezone.make_aware(naive, timezone.get_current_timezone())
