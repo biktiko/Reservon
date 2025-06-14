@@ -808,10 +808,10 @@ def reschedule_appointments(request, salon_id):
         if notify and appt.user and hasattr(appt.user, 'main_profile'):
             phone = appt.user.main_profile.phone_number
             if phone:
+                local_start = timezone.localtime(appt.start_datetime)
                 vars = {
                     "1": appt.salon.name,
-                    # здесь игнорируем TZ, выводим локальное время
-                    "2": new_start.strftime("%d.%m %H:%M")
+                    "2": local_start.strftime("%d.%m %H:%M")
                 }
                 send_whatsapp_message(
                     phone,
