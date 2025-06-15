@@ -12,7 +12,7 @@ from django.db.models import Q
 from django.db import transaction
 import json
 from collections import defaultdict
-from .utils import get_candidate_slots, format_free_ranges
+from .utils import get_candidate_slots
 from django.views.decorators.csrf import csrf_exempt
 import logging
 from .errors import BookingError, ClientError
@@ -165,7 +165,7 @@ def get_barber_availability(request, barber_id):
     except Barber.DoesNotExist:
         return JsonResponse({'error': 'Barber not found'}, status=404)
     
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view
 @api_view(['POST'])
 def get_available_minutes(request):
     data = request.data
@@ -234,24 +234,6 @@ def get_nearest_available_time(request):
         'nearest_before': nb.strftime(fmt) if nb else None,
         'nearest_after': na.strftime(fmt) if na else None,
     })
-
-@api_view(['POST'])
-def get_free_time_ranges(request):
-    data = request.data
-    salon_id = data.get('salon_id')
-    date_str = data.get('date')
-    booking_details = data.get('booking_details', [])
-    selected_barber_id = data.get('selected_barber_id', 'any')
-    try:
-        total_duration = int(data.get('total_service_duration', 0))
-    except (ValueError, TypeError):
-        return Response({'error': 'Invalid total_service_duration.'}, status=400)
-
-    slots = get_candidate_slots(salon_id, date_str, booking_details, total_duration, selected_barber_id)
-    ranges = format_free_ranges(slots)
-    result = [f"{r[0].strftime('%H:%M')}-{r[1].strftime('%H:%M')}" for r in ranges]
-
-    return Response({'free_time_ranges': result})
 
 @transaction.atomic
 @csrf_exempt
@@ -839,7 +821,7 @@ positive_replies = [
     # Русский
     "да", "конечно", "подходит", "удобно", "все ок", "ок", "да, удобно",
     "подтверждаю", "да, подтверждаю", "да, всё нормально", "всё хорошо",
-    "хорошо", "да, хорошо",
+    "хорошо", "да, хорошо" "ну да", "ну, да", "окей", "да, окей", "устраивает", "да,  устраивает",
     # Английский
     "yes", "sure", "of course", "okay", "ok", "alright", "confirm",
     "confirmed", "yes, it’s fine", "yes, that’s good", "yes, works for me",
@@ -856,8 +838,8 @@ def whatsapp_callback(request):
     if request.method != "POST":
         return HttpResponse(status=405)
 
-    from_whatsapp = request.POST.get("From", "")             # "whatsapp:+374..."
-    body = request.POST.get("Body", "").strip().lower()      # ответ пользователя
+    from_whatsapp = request.POST.get("From", "")         
+    body = request.POST.get("Body", "").strip().lower()     
 
     # Чистим префикс
     phone = from_whatsapp.replace("whatsapp:", "")

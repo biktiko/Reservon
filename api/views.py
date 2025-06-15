@@ -1,5 +1,8 @@
 # C:\Reservon\Reservon\api\views.py
 from rest_framework.decorators import api_view, permission_classes
+from .utils import _parse_local, subtract_intervals, merge_intervals
+from salons.utils import get_barber_busy_times, get_barber_availability
+from salons.models import Barber, Service
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework import status
@@ -7,15 +10,17 @@ from django.shortcuts import get_object_or_404
 from django.db.models import Q
 from django.http import JsonResponse
 from django.contrib.auth import get_user_model
-from datetime import datetime, timedelta, time as dt_time
 from salons.models import Salon
+from django.utils import timezone
+from datetime import datetime
+import datetime as timedelta
 from django.views.decorators.csrf import csrf_exempt
 from .serializers import (
     SalonSerializer, SalonDetailSerializer,
 )
 import json
-
 import logging
+
 
 logger = logging.getLogger('booking')
 
@@ -153,3 +158,97 @@ def api_reschedule_appointments(request, salon_id):
 
     # иначе отдаём «как есть» (HttpResponse, Redirect и т.п.)
     return django_response
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def api_free_ranges(request, salon_id):
+    """
+    Возвращает свободные интервалы стартов записи в формате "HH:MM-HH:MM, ...".
+    """
+    data = request.data
+    rs = _parse_local(data.get('range_start', ''))
+    re = _parse_local(data.get('range_end', ''))
+    if not rs or not re or rs >= re:
+        return Response({'error': 'Invalid range_start/range_end'}, status=400)
+
+    # фильтр по мастерам
+    barber_ids = data.get('barber_ids', 'any')
+    if barber_ids == 'any':
+        barbers = Barber.objects.filter(salon_id=salon_id)
+    else:
+        if not isinstance(barber_ids, list):
+            return Response({'error': 'barber_ids must be list or "any"'}, status=400)
+        barbers = Barber.objects.filter(id__in=barber_ids)
+
+    # вычисляем общую длительность услуг (в минутах)
+    svc_ids = data.get('service_ids', 'any')
+    total_duration = 0
+    if svc_ids != 'any':
+        if not isinstance(svc_ids, list):
+            return Response({'error': 'service_ids must be list or "any"'}, status=400)
+        total_duration = 0
+        for sid in svc_ids:
+            try:
+                svc = Service.objects.get(id=sid)
+                total_duration += int(svc.duration.total_seconds() // 60)
+            except Service.DoesNotExist:
+                return Response({'error': f'Service {sid} not found'}, status=400)
+
+    # получаем занятости и доступности на этот день
+    salon = Salon.objects.get(id=salon_id)
+    day_code = rs.strftime('%A').lower()
+    busy_map = get_barber_busy_times(salon, rs.date())       # { barber_id: [(s,e),...] }
+    avail_map = get_barber_availability(barbers, day_code)   # { barber.id: [Availability,...] }
+
+    free_all = []
+    for barber in barbers:
+        # строим список доступных интервалов в рамках range_start-range_end
+        avails = []
+        for av in avail_map.get(barber.id, []):
+            # av — это dict с ключами 'start_time', 'end_time', 'is_available'
+            if not av.get('is_available', True):
+                continue
+
+            start_time = av['start_time']
+            end_time   = av['end_time']
+
+            start = timezone.make_aware(
+                datetime.combine(rs.date(), start_time),
+                timezone.get_current_timezone()
+            )
+            end = timezone.make_aware(
+                datetime.combine(rs.date(), end_time),
+                timezone.get_current_timezone()
+            )
+            # обрезаем по rs/re
+            if end <= rs or start >= re:
+                continue
+            avails.append((max(start, rs), min(end, re)))
+
+
+        # busy-интервалы
+        busys = busy_map.get(barber.id, [])
+
+        # вычитаем занятости из доступности
+        free = subtract_intervals(avails, busys)
+
+        # если заданы услуги — оставляем только интервалы >= total_duration
+        if total_duration > 0:
+            tmp = []
+            for s, e in free:
+                if (e - s).total_seconds() / 60 >= total_duration:
+                    # допустимые старты: [s ... e - duration]
+                    tmp.append((s, e - timedelta(minutes=total_duration)))
+            free = tmp
+
+        free_all.extend(free)
+
+    # сливаем интервалы по всем мастерам (объединённая зона, где хотя бы один свободен)
+    merged = merge_intervals(free_all)
+
+    # форматируем
+    parts = [
+        f"{interval[0].strftime('%H:%M')}-{interval[1].strftime('%H:%M')}"
+        for interval in merged
+    ]
+    return Response({'free_ranges': ", ".join(parts)})

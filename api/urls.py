@@ -7,7 +7,8 @@ from .views import (
     api_get_available_minutes,
     api_get_nearest_available_time,
     admin_verify,
-    api_reschedule_appointments
+    api_reschedule_appointments,
+    api_free_ranges
 )
 
 urlpatterns = [
@@ -17,5 +18,6 @@ urlpatterns = [
     path('salons/availability/', api_get_available_minutes, name='api_salon_availability'),
     path('salons/get_nearest_available_time/', api_get_nearest_available_time, name='api_salon_availability'),
     path('salons/<int:salon_id>/reschedule/', api_reschedule_appointments, name='api_reschedule'),
+    path('salons/<int:salon_id>/free_ranges/', api_free_ranges ,name='api_free_ranges'),
     path('admin/verify/', admin_verify, name='admin_verify'),
 ]
