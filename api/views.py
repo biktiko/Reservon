@@ -179,22 +179,34 @@ def api_free_ranges(request, salon_id):
             return Response({'error': 'barber_ids must be list or "any"'}, status=400)
         barbers = Barber.objects.filter(id__in=barber_ids)
 
-    # вычисляем общую длительность услуг (в минутах)
-    svc_ids = data.get('service_ids', 'any')
-    total_duration = 0
-    if svc_ids != 'any':
-        if not isinstance(svc_ids, list):
-            return Response({'error': 'service_ids must be list or "any"'}, status=400)
+        svc_ids = data.get('service_ids', 'any')
+        duration_param = data.get('duration')
         total_duration = 0
-        for sid in svc_ids:
+
+        # Priority 1: Use service_ids if it's a valid list
+        if isinstance(svc_ids, list) and svc_ids:
+            if not isinstance(svc_ids, list): # This check is a bit redundant now but safe
+                return Response({'error': 'service_ids must be a list or "any"'}, status=400)
+            for sid in svc_ids:
+                try:
+                    svc = Service.objects.get(id=sid)
+                    total_duration += int(svc.duration.total_seconds() // 60)
+                except Service.DoesNotExist:
+                    return Response({'error': f'Service {sid} not found'}, status=400)
+
+        # Priority 2: Use 'duration' param if service_ids is not used
+        elif duration_param is not None:
             try:
-                svc = Service.objects.get(id=sid)
-                total_duration += int(svc.duration.total_seconds() // 60)
-            except Service.DoesNotExist:
-                return Response({'error': f'Service {sid} not found'}, status=400)
-    else:
-        # Устанавливаем минимальную длительность по умолчанию, если услуги не указаны
-        total_duration = 30
+                total_duration = int(duration_param)
+                if total_duration <= 0:
+                    # Added validation for positive duration
+                    return Response({'error': 'duration must be a positive number'}, status=400)
+            except (ValueError, TypeError):
+                return Response({'error': 'duration must be a valid integer'}, status=400)
+
+        # Priority 3: Fallback to default if neither is provided
+        else:
+            total_duration = 30 # Default to 30 minutes
 
     # получаем занятости и доступности на этот день
     salon = Salon.objects.get(id=salon_id)
