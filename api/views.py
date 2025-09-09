@@ -162,7 +162,7 @@ def api_reschedule_appointments(request, salon_id):
 @permission_classes([AllowAny])
 def api_free_ranges(request, salon_id):
     """
-    Возвращает свободные интервалы стартов записи в формате "HH:MM-HH:MM, ...".
+    Returns available booking start time intervals in "HH:MM-HH:MM, ..." format.
     """
     data = request.data
     rs = _parse_local(data.get('range_start', ''))
@@ -170,96 +170,92 @@ def api_free_ranges(request, salon_id):
     if not rs or not re or rs >= re:
         return Response({'error': 'Invalid range_start/range_end'}, status=400)
 
-    # фильтр по мастерам
+    # Filter by barbers
     barber_ids = data.get('barber_ids', 'any')
     if barber_ids == 'any':
         barbers = Barber.objects.filter(salon_id=salon_id)
     else:
         if not isinstance(barber_ids, list):
-            return Response({'error': 'barber_ids must be list or "any"'}, status=400)
+            return Response({'error': 'barber_ids must be a list or "any"'}, status=400)
         barbers = Barber.objects.filter(id__in=barber_ids)
 
-        svc_ids = data.get('service_ids', 'any')
-        duration_param = data.get('duration')
-        total_duration = 0
+    # --- Duration Calculation Logic ---
+    # Implements a priority system for determining the required appointment duration.
+    svc_ids = data.get('service_ids', 'any')
+    duration_param = data.get('duration')
+    total_duration = 0 # Initialize to prevent UnboundLocalError
 
-        # Priority 1: Use service_ids if it's a valid list
-        if isinstance(svc_ids, list) and svc_ids:
-            if not isinstance(svc_ids, list): # This check is a bit redundant now but safe
-                return Response({'error': 'service_ids must be a list or "any"'}, status=400)
-            for sid in svc_ids:
-                try:
-                    svc = Service.objects.get(id=sid)
-                    total_duration += int(svc.duration.total_seconds() // 60)
-                except Service.DoesNotExist:
-                    return Response({'error': f'Service {sid} not found'}, status=400)
-
-        # Priority 2: Use 'duration' param if service_ids is not used
-        elif duration_param is not None:
+    # Priority 1: Use service_ids if it's a valid list. This has the highest precedence.
+    if isinstance(svc_ids, list) and svc_ids:
+        for sid in svc_ids:
             try:
-                total_duration = int(duration_param)
-                if total_duration <= 0:
-                    # Added validation for positive duration
-                    return Response({'error': 'duration must be a positive number'}, status=400)
-            except (ValueError, TypeError):
-                return Response({'error': 'duration must be a valid integer'}, status=400)
+                svc = Service.objects.get(id=sid)
+                total_duration += int(svc.duration.total_seconds() // 60)
+            except Service.DoesNotExist:
+                return Response({'error': f'Service {sid} not found'}, status=400)
 
-        # Priority 3: Fallback to default if neither is provided
-        else:
-            total_duration = 30 # Default to 30 minutes
+    # Priority 2: Use the 'duration' parameter if service_ids is not used.
+    elif duration_param is not None:
+        try:
+            total_duration = int(duration_param)
+            if total_duration <= 0:
+                return Response({'error': 'duration must be a positive number'}, status=400)
+        except (ValueError, TypeError):
+            return Response({'error': 'duration must be a valid integer'}, status=400)
 
-    # получаем занятости и доступности на этот день
+    # Priority 3: Fallback to a default value if neither of the above is provided.
+    else:
+        total_duration = 30 # Default to 30 minutes
+
+    # --- End of Duration Logic ---
+
+    # Get busy schedules and availability for the requested day
     salon = Salon.objects.get(id=salon_id)
     day_code = rs.strftime('%A').lower()
-    busy_map = get_barber_busy_times(salon, rs.date())       # { barber_id: [(s,e),...] }
-    avail_map = get_barber_availability(barbers, day_code)   # { barber.id: [Availability,...] }
+    busy_map = get_barber_busy_times(salon, rs.date())      # {barber_id: [(start, end), ...]}
+    avail_map = get_barber_availability(barbers, day_code)  # {barber.id: [Availability, ...]}
 
     free_all = []
     for barber in barbers:
-        # строим список доступных интервалов в рамках range_start-range_end
+        # Build a list of available intervals within the requested range_start-range_end window
         avails = []
         for av in avail_map.get(barber.id, []):
-            # av — это dict с ключами 'start_time', 'end_time', 'is_available'
+            # av is a dict with 'start_time', 'end_time', 'is_available' keys
             if not av.get('is_available', True):
                 continue
 
             start_time = av['start_time']
             end_time   = av['end_time']
 
-            start = timezone.make_aware(
-                datetime.combine(rs.date(), start_time),
-                timezone.get_current_timezone()
-            )
-            end = timezone.make_aware(
-                datetime.combine(rs.date(), end_time),
-                timezone.get_current_timezone()
-            )
-            # обрезаем по rs/re
+            start = timezone.make_aware(datetime.combine(rs.date(), start_time), timezone.get_current_timezone())
+            end = timezone.make_aware(datetime.combine(rs.date(), end_time), timezone.get_current_timezone())
+            
+            # Trim the interval to fit within the requested start/end range
             if end <= rs or start >= re:
                 continue
             avails.append((max(start, rs), min(end, re)))
 
-        # busy-интервалы
+        # Get the busy intervals for the current barber
         busys = busy_map.get(barber.id, [])
 
-        # вычитаем занятости из доступности
+        # Subtract busy intervals from available intervals
         free = subtract_intervals(avails, busys)
 
-        # если заданы услуги — оставляем только интервалы >= total_duration
+        # If a duration is set, filter out intervals that are shorter than total_duration
         if total_duration > 0:
             tmp = []
             for s, e in free:
                 if (e - s).total_seconds() / 60 >= total_duration:
-                    # допустимые старты: [s ... e - duration]
+                    # Valid start times are from the beginning of the slot up to (end - duration)
                     tmp.append((s, e - timedelta(minutes=total_duration)))
             free = tmp
 
         free_all.extend(free)
 
-    # сливаем интервалы по всем мастерам (объединённая зона, где хотя бы один свободен)
+    # Merge all free intervals from all barbers to find the total time range where at least one barber is free
     merged = merge_intervals(free_all)
 
-    # форматируем
+    # Format the output string
     parts = [
         f"{interval[0].strftime('%H:%M')}-{interval[1].strftime('%H:%M')}"
         for interval in merged
