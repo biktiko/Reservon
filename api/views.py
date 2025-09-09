@@ -12,8 +12,7 @@ from django.http import JsonResponse
 from django.contrib.auth import get_user_model
 from salons.models import Salon
 from django.utils import timezone
-from datetime import datetime
-import datetime as timedelta
+from datetime import datetime, timedelta
 from django.views.decorators.csrf import csrf_exempt
 from .serializers import (
     SalonSerializer, SalonDetailSerializer,
@@ -193,6 +192,9 @@ def api_free_ranges(request, salon_id):
                 total_duration += int(svc.duration.total_seconds() // 60)
             except Service.DoesNotExist:
                 return Response({'error': f'Service {sid} not found'}, status=400)
+    else:
+        # Устанавливаем минимальную длительность по умолчанию, если услуги не указаны
+        total_duration = 30
 
     # получаем занятости и доступности на этот день
     salon = Salon.objects.get(id=salon_id)
@@ -224,7 +226,6 @@ def api_free_ranges(request, salon_id):
             if end <= rs or start >= re:
                 continue
             avails.append((max(start, rs), min(end, re)))
-
 
         # busy-интервалы
         busys = busy_map.get(barber.id, [])
