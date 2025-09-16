@@ -1,15 +1,50 @@
 from datetime import datetime, timedelta
 from django.utils import timezone
+import re
 
 def _parse_local(dt_str: str):
     """
-    Парсим строку "DD.MM.YYYY HH:MM" как локальное время в settings.TIME_ZONE.
+    Parses a string into a timezone-aware datetime object.
+    Handles "DD.MM.YYYY HH:MM" and relative terms like "today 09:00" or "tomorrow 14:30".
     """
-    try:
-        naive = datetime.strptime(dt_str, '%d.%m.%Y %H:%M')
-    except Exception:
+    if not isinstance(dt_str, str):
         return None
-    return timezone.make_aware(naive, timezone.get_current_timezone())
+
+    normalized_str = dt_str.lower().strip()
+    local_tz = timezone.get_current_timezone()
+    now = timezone.now().astimezone(local_tz)
+    
+    target_day = None
+    time_part = None
+
+    # Step 1: Check for relative day terms
+    if "tomorrow" in normalized_str:
+        target_day = now.date() + timedelta(days=1)
+    elif "today" in normalized_str:
+        target_day = now.date()
+
+    # Step 2: Try to extract time (HH:MM) using regex
+    time_match = re.search(r'(\d{1,2}:\d{2})', normalized_str)
+    if time_match:
+        time_part = datetime.strptime(time_match.group(1), '%H:%M').time()
+
+    # Step 3: Combine day and time or parse full string
+    if target_day:
+        # We found "today" or "tomorrow". Use the extracted time or default to 00:00.
+        final_time = time_part or datetime.min.time()
+        naive_dt = datetime.combine(target_day, final_time)
+        return timezone.make_aware(naive_dt, local_tz)
+    
+    # Step 4: If no relative term, try the full "DD.MM.YYYY HH:MM" format
+    try:
+        naive_dt = datetime.strptime(dt_str, '%d.%m.%Y %H:%M')
+        return timezone.make_aware(naive_dt, local_tz)
+    except ValueError:
+        pass
+
+    # If all parsing fails, return None
+    return None
+
 
 def subtract_intervals(avails, busys):
     """
