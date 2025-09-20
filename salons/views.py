@@ -466,9 +466,10 @@ def book_appointment(request, id):
 
                         candidate_barbers = Barber.objects.select_for_update().filter(
                             salon=salon,
-                            availabilities__day_of_week=start_datetime.strftime('%A').lower(),
-                            availabilities__start_time__lte=start_datetime.time(),
-                            availabilities__end_time__gte=start_datetime.time(),
+                            # Use local_start for all schedule checks
+                            availabilities__day_of_week=local_start.strftime('%A').lower(),
+                            availabilities__start_time__lte=local_start.time(), # <-- CORRECTED
+                            availabilities__end_time__gte=interval_end.time(),  # <-- CORRECTED
                             availabilities__is_available=True,
                             status='active'
                         ).exclude(id__in=busy_barber_ids)
@@ -490,7 +491,7 @@ def book_appointment(request, id):
                             status='active'
                         ).exclude(id__in=busy_barber_ids)
 
-                    # Теперь проверяем, есть ли вообще кандидаты
+                    # Now check if there are any candidates
                     if not candidate_barbers.exists():
                         logger.warning("No available barbers for the chosen time.")
                         suggestion = get_nearest_suggestion(
@@ -506,7 +507,7 @@ def book_appointment(request, id):
                             nearest_after=suggestion["nearest_after"]
                         )
 
-                    # Берём первого подходящего барбера
+                    # Get the first suitable barber
                     found_barber = candidate_barbers.first()
 
                     # Проверяем расписание и доступность именно этого барбера
