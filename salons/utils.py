@@ -574,38 +574,55 @@ def _parse_local(dt_str: str):
 
 def normalize_and_enrich_booking_details(booking_details, salon_id):
     """
-    Normalizes the 'services' field and automatically infers the 'categoryId'
-    if it is set to 'any' but specific services are provided.
+    This function is now the single source of truth for preparing booking data.
+    1. Normalizes services from [91, 92] to [{'serviceId': 91}, ...].
+    2. If services from different categories are grouped together, it splits them
+       into separate detail blocks, each with the correct categoryId.
     """
     if not booking_details:
         return []
 
+    new_booking_details = []
+    salon = get_object_or_404(Salon, id=salon_id)
+
+    # First, normalize all service IDs to the object format for consistency
     for detail in booking_details:
-        # Step 1: Normalize services from [91, 92] to [{'serviceId': 91}, ...]
         services_list = detail.get('services', [])
         if isinstance(services_list, list) and len(services_list) > 0:
             if isinstance(services_list[0], int):
                 detail['services'] = [{'serviceId': sid} for sid in services_list]
 
-        # Step 2: Enrich categoryId if it's 'any' but services are specified
+    # Now, process the (now normalized) details
+    for detail in booking_details:
         services = detail.get('services')
-        category_id = detail.get('categoryId', 'any')
+        if not isinstance(services, list) or not services:
+            # Handle 'any' or empty services - treat as a simple booking detail
+            new_booking_details.append(detail)
+            continue
 
-        if category_id == 'any' and isinstance(services, list) and services:
-            # Get the ID of the first service in the list
-            first_service_id = services[0].get('serviceId')
-            if first_service_id:
-                try:
-                    # Find the service in the DB to get its category
-                    service = Service.objects.get(id=first_service_id, salon_id=salon_id)
-                    if service.category:
-                        # Set the categoryId in the details
-                        detail['categoryId'] = service.category.id
-                        logger.debug(
-                            f"Enriched booking_details: set categoryId to {service.category.id} "
-                            f"based on service {first_service_id}"
-                        )
-                except Service.DoesNotExist:
-                    logger.warning(f"Service with ID {first_service_id} not found during detail enrichment.")
+        # Group services by their category
+        services_by_category = defaultdict(list)
+        for svc_item in services:
+            service_id = svc_item.get('serviceId')
+            if not service_id:
+                continue
+            
+            try:
+                service = Service.objects.select_related('category').get(id=service_id, salon=salon)
+                category_id = service.category.id if service.category else 'any'
+                services_by_category[category_id].append(svc_item)
+            except Service.DoesNotExist:
+                logger.warning(f"Service with ID {service_id} not found during detail enrichment.")
+        
+        # Create a new, separate detail block for each category found
+        for category_id, service_list in services_by_category.items():
+            new_detail = {
+                "categoryId": category_id,
+                "services": service_list,
+                "barberId": detail.get('barberId', 'any'),
+                # You can carry over other fields from the original detail if needed
+            }
+            new_booking_details.append(new_detail)
 
-    return booking_details
+    logger.debug(f"Transformed booking details into: {new_booking_details}")
+    return new_booking_details
