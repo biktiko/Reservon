@@ -274,9 +274,17 @@ def book_appointment(request, id):
         #  нормализуем оба формата services: int → {'serviceId': int}
         for detail in booking_details:
             raw_svcs = detail.get('services')
-           # если services не список, сбрасываем его в пустой
+    
+            #raw_svcs = detail.get('services')
+    
+            # If 'services' is the special string 'any', skip normalization for this detail.
+            if raw_svcs == 'any':
+                continue
+            
+            # If it's not a list (and not 'any'), treat it as an empty list.
             if not isinstance(raw_svcs, list):
-               raw_svcs = []
+                raw_svcs = []
+                
             normalized = []
             for svc in raw_svcs:
                 sid = _extract_service_id(svc)
@@ -394,7 +402,7 @@ def book_appointment(request, id):
             final_barbers_data.append((available_barber, start_datetime, end_datetime, []))
 
         else:
-            # --- СЛУЧАЙ: booking_details не пуст
+            # --- Case: booking_details is not empty ---
             local_start = start_datetime
             for cat_detail in booking_details:
                 cat_id = cat_detail.get('categoryId', 'any')
@@ -403,12 +411,21 @@ def book_appointment(request, id):
 
                 # игнорируем cat_detail['duration'], считаем сумму длительностей из Service
                 dur_minutes = 0
-                for svc in services:
-                    sid = _extract_service_id(svc)
-                    if sid is None:
-                        raise ClientError("Service ID not provided", status=400)
-                    serv = Service.objects.get(id=sid, salon=salon)
-                    dur_minutes += int(serv.duration.total_seconds() // 60)
+                if services == 'any':
+                    # If services is 'any', use the salon's default duration.
+                    dur_minutes = salon.default_duration or 30
+                else:
+                    # Otherwise, calculate it by summing up the actual services.
+                    for svc in services:
+                        sid = _extract_service_id(svc)
+                        if sid is None:
+                            raise ClientError("Service ID not provided", status=400)
+                        serv = Service.objects.get(id=sid, salon=salon)
+                        dur_minutes += int(serv.duration.total_seconds() // 60)
+
+                # If for some reason duration is still zero, fall back to default.
+                if dur_minutes == 0:
+                    dur_minutes = salon.default_duration or 30
 
                 interval_end = local_start + timedelta(minutes=dur_minutes)
 
