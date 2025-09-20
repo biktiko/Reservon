@@ -202,26 +202,38 @@ def get_candidate_slots(salon_id, date_str, booking_details, total_service_durat
         date = datetime.strptime(date_str, '%Y-%m-%d').date()
     except ValueError:
         return []
+    
+    # Step 1: Normalize 'services' from [91, 92] to [{'serviceId': 91}, ...] format.
+    for detail in booking_details:
+        services_list = detail.get('services', [])
+        if isinstance(services_list, list) and len(services_list) > 0:
+            if isinstance(services_list[0], int):
+                normalized_services = [{'serviceId': sid} for sid in services_list]
+                detail['services'] = normalized_services
+                logger.debug(f"Normalized services from {services_list} to {normalized_services}")
 
-    if (not booking_details or 
-                             (len(booking_details) == 1 and 
-                              booking_details[0].get('services', 'any') == 'any' and 
-                              booking_details[0].get('barberId', 'any') == 'any')):
+    # Step 2: Determine the booking type AFTER normalization.
+    is_simple_booking = (not booking_details or 
+                         (len(booking_details) == 1 and 
+                          booking_details[0].get('services') == 'any'))
+
+    # Step 3: If it's a simple booking, clear details to use the default path.
+    # This now works correctly because the INT list has already been converted.
+    if is_simple_booking:
         logger.debug("[get_candidate_slots] Detected 'any' services, treating as simple booking.")
         booking_details = []
-
     # Load salon & barbers
     try:
         salon, barbers = load_salon_and_barbers(salon_id)
     except Salon.DoesNotExist:
         return []
-    
 
     day_code = date.strftime('%A').lower()
     availability = get_barber_availability(barbers, day_code)
     busy_times = get_barber_busy_times(salon, date)
 
     active = compute_active_categories(booking_details, salon_id=salon_id)
+    
     if active:
         duration = sum(c['duration'] for c in active)
     else:
