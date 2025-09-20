@@ -317,17 +317,21 @@ def book_appointment(request, id):
                 raise ClientError("Invalid date format", status=400)
 
         # -----------------------------------
-        # 4) Считаем общую длительность по моделям, игнорируем любые duration из запроса
+        # 4) Calculate Total Duration
         # -----------------------------------
         total_service_duration = 0
-        if total_service_duration is None:
-            total_service_duration = sum(
-                Service.objects.get(id=_extract_service_id(svc), salon=salon)
-                .duration.total_seconds() // 60
-                for detail in booking_details
-                for svc in detail['services']
-            ) or salon.default_duration or 30
+        if booking_details:
+            # If booking_details are provided, sum up the durations from the actual services.
+            for detail in booking_details:
+                for svc in detail.get('services', []):
+                    service_id = _extract_service_id(svc)
+                    try:
+                        service_obj = Service.objects.get(id=service_id, salon=salon)
+                        total_service_duration += int(service_obj.duration.total_seconds() // 60)
+                    except Service.DoesNotExist:
+                        raise ClientError(f"Service with ID {service_id} not found", status=400)
 
+        # If after all calculations duration is still 0, then fall back to default.
         if total_service_duration == 0:
             total_service_duration = salon.default_duration or 30
 
@@ -346,10 +350,8 @@ def book_appointment(request, id):
             user = request.user if request.user.is_authenticated else None
 
         # ---------------------------------------------
-        # 6) Проверяем логику бронирования (НЕ СОХРАНЯЕМ!)
+        # 6) Booking Logic Check
         # ---------------------------------------------
-        # Собираем информацию о том, какие барберы/интервалы/услуги
-        # потом создадим Appointment и AppointmentBarberService, если всё ок
         final_barbers_data = []  # список кортежей (barber, slot_start, slot_end, services)
 
         if not booking_details:
@@ -456,10 +458,9 @@ def book_appointment(request, id):
                 else:  # barber_id == 'any'
                     if cat_id == 'any':
 
-        
                         busy_barber_ids = AppointmentBarberService.objects.filter(
-                            start_datetime__lt=end_datetime,
-                            end_datetime__gt=start_datetime
+                            start_datetime__lt=interval_end, 
+                            end_datetime__gt=local_start 
                         ).values_list('barber_id', flat=True)
                         logger.info(f"Busy barber IDs: {list(busy_barber_ids)}")
 
