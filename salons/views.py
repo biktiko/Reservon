@@ -585,21 +585,19 @@ def book_appointment(request, id):
             )
             abs_obj.save()
 
-            # Привязка услуг (барбер- или обычные)
-            for svc in services_list:
-                sid = _extract_service_id(svc)
-                if salonMod == 'barber':
-                    barber_service = BarberService.objects.get(id=sid, barber=barber)
-                    abs_obj.barberServices.add(barber_service)
-                else:
-                    serv = Service.objects.get(id=sid, salon=salon)
-                    abs_obj.services.add(serv)
+            # only loop if services_list is a list.
+            if isinstance(services_list, list):
+                # Привязка услуг (барбер- или обычные)
+                for svc in services_list:
+                    sid = _extract_service_id(svc)
+                    if salonMod == 'barber':
+                        barber_service = BarberService.objects.get(id=sid, barber=barber)
+                        abs_obj.barberServices.add(barber_service)
+                    else:
+                        serv = Service.objects.get(id=sid, salon=salon) # This line is now safe
+                        abs_obj.services.add(serv)
 
             appointments_to_create.append(abs_obj)
-
-        # Связываем
-        if appointments_to_create:
-            appointment.barber_services.set(appointments_to_create)
 
         # -------------------------------------------------
         # 9) Отправка уведомлений (если не DEBUG)
