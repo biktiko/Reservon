@@ -926,7 +926,7 @@ def check_availability_and_suggest(request, id):
         # --- 2. Determine booking type and duration ---
         is_simple_booking = (not booking_details or 
                              (len(booking_details) == 1 and 
-                              booking_details[0].get('services') == 'any' and 
+                              booking_details[0].get('services', 'any') == 'any' and 
                               booking_details[0].get('barberId', 'any') == 'any'))
 
         duration = 0

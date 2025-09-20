@@ -194,11 +194,19 @@ def get_candidate_slots(salon_id, date_str, booking_details, total_service_durat
     except ValueError:
         return []
 
+    if (not booking_details or 
+                             (len(booking_details) == 1 and 
+                              booking_details[0].get('services', 'any') == 'any' and 
+                              booking_details[0].get('barberId', 'any') == 'any')):
+        logger.debug("[get_candidate_slots] Detected 'any' services, treating as simple booking.")
+        booking_details = []
+
     # Load salon & barbers
     try:
         salon, barbers = load_salon_and_barbers(salon_id)
     except Salon.DoesNotExist:
         return []
+    
 
     day_code = date.strftime('%A').lower()
     availability = get_barber_availability(barbers, day_code)
@@ -368,33 +376,42 @@ def _extract_service_id(svc):
 
 def get_nearest_suggestion(salon_id, date_str, chosen_hour, booking_details, total_service_duration, selected_barber_id='any'):
     """
-    Возвращает ближайшие слоты до и после выбранног=о часа в формате {'nearest_before': 'HH:MM', 'nearest_after': 'HH:MM'}
+    Returns the nearest available slots before and after the chosen hour. {'nearest_before': 'HH:MM', 'nearest_after': 'HH:MM'}
     """
     for detail in booking_details:
-        # приводим все services к словарям {'serviceId': int}
-        normalized = []
-        for svc in detail.get('services', []):
-            sid = _extract_service_id(svc)
-            if sid is None:
-                # если вдруг где-то потеряли ID — бросаем клиентскую ошибку
-                raise ValueError("Service ID not provided in compute_nearest_suggestion")
-            normalized.append({'serviceId': sid})
-        detail['services'] = normalized
+        services_in_detail = detail.get('services', [])
 
+        # приводим все services к словарям {'serviceId': int}
+        if isinstance(services_in_detail, list):
+            normalized = []
+            for svc in detail.get('services', []):
+                sid = _extract_service_id(svc)
+                if sid is None:
+                    # если вдруг где-то потеряли ID — бросаем клиентскую ошибку
+                    raise ValueError("Service ID not provided in compute_nearest_suggestion")
+                normalized.append({'serviceId': sid})
+            detail['services'] = normalized
+    
+    # Now the rest of the function is safe from the ValueError crash.
     slots = get_candidate_slots(salon_id, date_str, booking_details, total_service_duration, selected_barber_id)
     if not slots:
         return {'nearest_before': None, 'nearest_after': None}
     try:
         ref_naive = datetime.strptime(f"{date_str} {int(chosen_hour):02d}:00", '%Y-%m-%d %H:%M')
+        ref_time = timezone.make_aware(ref_naive, timezone.get_current_timezone())
+        # ref_naive = datetime.strptime(f"{date_str} {int(chosen_hour):02d}:00", '%Y-%m-%d %H:%M')
     except ValueError:
         return {'nearest_before': None, 'nearest_after': None}
-    ref_time = timezone.make_aware(ref_naive, timezone.get_current_timezone())
+    
     before = [s for s in slots if s <= ref_time]
     after = [s for s in slots if s >= ref_time]
+
     nb = max(before) if before else None
     na = min(after) if after else None
+
     if nb and na and abs((nb - na).total_seconds())/60 < 30:
         na = None
+
     fmt = '%H:%M'
     return { 'nearest_before': nb.strftime(fmt) if nb else None, 'nearest_after': na.strftime(fmt) if na else None }
 
