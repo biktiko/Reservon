@@ -901,20 +901,15 @@ def whatsapp_callback(request):
     return HttpResponse("OK")
 
 def check_availability_and_suggest(request, id):
-    """
-    Checks if a specific booking slot is available.
-    If available, returns {"available": True}.
-    If not, returns {"available": False, "suggestion": ...}.
-    This function DOES NOT create any bookings.
-    """
-    logger.debug("Start processing availability check")
+    logger.debug("--- [START] Availability Check ---")
     try:
-        # --- 1. Get data and parse date/time (similar to book_appointment) ---
+        # --- 1. Get data and parse date/time ---
         data = json.loads(request.body)
         salon = get_object_or_404(Salon, id=id)
         date_str = data.get("date")
         time_str = data.get("time")
         booking_details = data.get("booking_details", [])
+        logger.debug(f"[Step 1] Data parsed successfully. Date: '{date_str}', Time: '{time_str}'.")
 
         start_datetime = None
         combined_dt_str = f"{date_str} {time_str}"
@@ -923,22 +918,21 @@ def check_availability_and_suggest(request, id):
         if parsed_dt:
             start_datetime = parsed_dt
         else:
-            # Fallback for YYYY-MM-DD format
             date_object = datetime.strptime(date_str, '%Y-%m-%d').date()
             time_object = datetime.strptime(time_str, '%H:%M').time()
             start_datetime = timezone.make_aware(datetime.combine(date_object, time_object))
+        logger.debug(f"[Step 1] Datetime resolved to: {start_datetime}")
 
-        # --- 2. Determine booking type and duration (crucial for accurate check) ---
+        # --- 2. Determine booking type and duration ---
         is_simple_booking = (not booking_details or 
-                     (len(booking_details) == 1 and 
-                      booking_details[0].get('services') == 'any' and 
-                      booking_details[0].get('barberId', 'any') == 'any'))
+                             (len(booking_details) == 1 and 
+                              booking_details[0].get('services') == 'any' and 
+                              booking_details[0].get('barberId', 'any') == 'any'))
 
         duration = 0
         if is_simple_booking:
             duration = salon.default_duration or 30
         else:
-            # Safely calculate duration for detailed bookings
             for detail in booking_details:
                 services = detail.get('services', [])
                 if isinstance(services, list):
@@ -951,18 +945,17 @@ def check_availability_and_suggest(request, id):
             duration = salon.default_duration or 30
             
         end_datetime = start_datetime + timedelta(minutes=duration)
+        logger.debug(f"[Step 2] Duration calculated: {duration} mins. Slot: {start_datetime} to {end_datetime}.")
 
-        # --- 3. The Core Check: Reuse logic from book_appointment to find a barber ---
-        # This is the same logic that decides if a booking is possible.
-        
+        # --- 3. The Core Check ---
         busy_barber_ids = AppointmentBarberService.objects.filter(
             start_datetime__lt=end_datetime,
             end_datetime__gt=start_datetime
         ).values_list('barber_id', flat=True)
+        logger.debug(f"[Step 3] Found busy barber IDs: {list(busy_barber_ids)}")
         
-        # Check based on user's request (any barber or a specific one)
         barber_id_request = 'any'
-        if booking_details and len(booking_details) > 0:
+        if booking_details and len(booking_details) > 0 and not is_simple_booking:
             barber_id_request = booking_details[0].get('barberId', 'any')
 
         candidate_barbers = Barber.objects.filter(
@@ -978,24 +971,42 @@ def check_availability_and_suggest(request, id):
             candidate_barbers = candidate_barbers.filter(id=barber_id_request)
 
         available_barber = candidate_barbers.first()
+        logger.debug(f"[Step 3] Candidate for booking: {available_barber}")
 
-        # --- 4. Return the result ---
-        if available_barber and is_barber_available(available_barber, start_datetime, end_datetime):
-            logger.debug(f"Slot {start_datetime} is available. Found barber: {available_barber.name}")
+        # --- 4. Return the result with DETAILED error catching ---
+        is_available = False
+        if available_barber:
+            try:
+                # Isolate the call to is_barber_available to see if it crashes
+                logger.debug(f"Checking is_barber_available for {available_barber.name}...")
+                is_available = is_barber_available(available_barber, start_datetime, end_datetime)
+                logger.debug(f"is_barber_available result: {is_available}")
+            except Exception as e:
+                logger.error(f"CRASH inside is_barber_available function: {e}", exc_info=True)
+                raise e # Re-raise the exception to trigger the final error response
+
+        if is_available:
+            logger.debug(f"Slot is available. Found barber: {available_barber.name}")
             return JsonResponse({"available": True})
         else:
-            logger.warning(f"Slot {start_datetime} is busy. Looking for suggestions.")
-            # I am assuming your get_nearest_suggestion function works as intended.
-            suggestion = get_nearest_suggestion(
-                salon_id=salon.id,
-                date_str=start_datetime.strftime('%Y-%m-%d'),
-                chosen_hour=start_datetime.hour,
-                booking_details=booking_details,
-                total_service_duration=duration,
-                selected_barber_id=barber_id_request
-            )
-            return JsonResponse({"available": False, "suggestion": suggestion})
+            logger.warning(f"Slot is busy or barber not found. Looking for suggestions.")
+            try:
+                # Isolate the call to get_nearest_suggestion to see if it crashes
+                suggestion = get_nearest_suggestion(
+                    salon_id=salon.id,
+                    date_str=start_datetime.strftime('%Y-%m-%d'),
+                    chosen_hour=start_datetime.hour,
+                    booking_details=booking_details,
+                    total_service_duration=duration,
+                    selected_barber_id=barber_id_request
+                )
+                logger.debug(f"Suggestion found: {suggestion}")
+                return JsonResponse({"available": False, "suggestion": suggestion})
+            except Exception as e:
+                logger.error(f"CRASH inside get_nearest_suggestion function: {e}", exc_info=True)
+                raise e # Re-raise the exception
 
     except Exception as e:
-        logger.error(f"Error in check_availability_and_suggest: {e}", exc_info=True)
+        # This will now catch the re-raised, specific error from above
+        logger.error(f"--- [CRASH] Unhandled exception in check_availability_and_suggest: {e} ---", exc_info=True)
         return JsonResponse({'error': 'Internal server error during availability check.'}, status=500)
