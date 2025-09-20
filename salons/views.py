@@ -286,22 +286,35 @@ def book_appointment(request, id):
             detail['services'] = normalized
 
         # -----------------------------------
-        # 3) Разбор даты и времени
+        # 3) Date and Time Parsing (New universal logic)
         # -----------------------------------
-        try:
-            date_object = datetime.strptime(date_str, '%Y-%m-%d').date()
-        except (ValueError, TypeError):
-            logger.error("Date formatting error")
-            raise ClientError("Invalid date format", status=400)
+        start_datetime = None
 
-        try:
-            start_time = datetime.strptime(time_str, '%H:%M').time()
-        except (ValueError, TypeError):
-            logger.error("Time formatting error")
-            raise ClientError("Invalid time format (HH:MM)", status=400)
+        # Step 1: Try to parse using the new universal parser (_parse_local).
+        # This handles relative terms like "tomorrow 16:00", "сегодня 12:00", etc.
+        # We combine date_str and time_str to let the parser handle both parts.
+        combined_dt_str = f"{date_str} {time_str}"
+        parsed_dt = _parse_local(combined_dt_str)
 
-        start_datetime_naive = datetime.combine(date_object, start_time)
-        start_datetime = timezone.make_aware(start_datetime_naive, timezone.get_current_timezone())
+        if parsed_dt:
+            # Step 2: If the new parser succeeds, we use its result.
+            # The result from _parse_local is already timezone-aware.
+            start_datetime = parsed_dt
+            logger.debug(f"Successfully parsed relative date: '{combined_dt_str}' -> {start_datetime}")
+        else:
+            # Step 3: If _parse_local fails, fall back to the old method for website compatibility.
+            # This handles the rigid "YYYY-MM-DD" format.
+            logger.debug(f"Could not parse as relative date. Falling back to YYYY-MM-DD format for '{date_str}'.")
+            try:
+                date_object = datetime.strptime(date_str, '%Y-%m-%d').date()
+                time_object = datetime.strptime(time_str, '%H:%M').time()
+                
+                start_datetime_naive = datetime.combine(date_object, time_object)
+                start_datetime = timezone.make_aware(start_datetime_naive, timezone.get_current_timezone())
+            except (ValueError, TypeError):
+                # If both the new and the old methods fail, then the format is truly invalid.
+                logger.error(f"Date formatting error. Both parsers failed for date='{date_str}' and time='{time_str}'")
+                raise ClientError("Invalid date format", status=400)
 
         # -----------------------------------
         # 4) Считаем общую длительность по моделям, игнорируем любые duration из запроса
