@@ -329,17 +329,24 @@ def book_appointment(request, id):
         # -----------------------------------
         total_service_duration = 0
         if booking_details:
-            # If booking_details are provided, sum up the durations from the actual services.
             for detail in booking_details:
-                for svc in detail.get('services', []):
-                    service_id = _extract_service_id(svc)
-                    try:
-                        service_obj = Service.objects.get(id=service_id, salon=salon)
-                        total_service_duration += int(service_obj.duration.total_seconds() // 60)
-                    except Service.DoesNotExist:
-                        raise ClientError(f"Service with ID {service_id} not found", status=400)
+                services_in_detail = detail.get('services', [])
+                
+                # --- THE MINIMAL FIX IS HERE ---
+                # Only try to sum durations if 'services' is actually a list of services,
+                # not the string 'any'.
+                if isinstance(services_in_detail, list):
+                    for svc in services_in_detail:
+                        service_id = _extract_service_id(svc)
+                        try:
+                            service_obj = Service.objects.get(id=service_id, salon=salon)
+                            total_service_duration += int(service_obj.duration.total_seconds() // 60)
+                        except Service.DoesNotExist:
+                            raise ClientError(f"Service with ID {service_id} not found", status=400)
+                # If services_in_detail is 'any', we simply do nothing here. The duration remains 0.
 
-        # If after all calculations duration is still 0, then fall back to default.
+        # If after all calculations duration is still 0 (e.g., for 'any' service), 
+        # then fall back to the default salon duration. This is the desired behavior.
         if total_service_duration == 0:
             total_service_duration = salon.default_duration or 30
 
