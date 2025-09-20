@@ -1,7 +1,7 @@
 # salons/views.py
 from django.shortcuts import render, get_object_or_404
 from .models import Salon, Barber, Service, ServiceCategory, AppointmentBarberService, BarberAvailability, BarberService
-from .utils import get_nearest_suggestion, is_barber_available, send_whatsapp_message, get_or_create_user_by_phone, send_push_notification_task, _extract_service_id, normalize_phone
+from .utils import get_nearest_suggestion, is_barber_available, send_whatsapp_message, get_or_create_user_by_phone, send_push_notification_task, _extract_service_id, normalize_and_enrich_booking_details
 from django.core.serializers.json import DjangoJSONEncoder
 from django.http import JsonResponse
 from rest_framework.decorators import api_view
@@ -268,6 +268,7 @@ def book_appointment(request, id):
         date_str = data.get("date")
         time_str = data.get("time")
         booking_details = data.get("booking_details", [])
+        booking_details = normalize_and_enrich_booking_details(booking_details, salon_id=id)
         # total_service_duration = data.get("total_service_duration", salon.default_duration)
         user_comment = data.get("user_comment", "")
 
@@ -908,6 +909,7 @@ def check_availability_and_suggest(request, id):
         date_str = data.get("date")
         time_str = data.get("time")
         booking_details = data.get("booking_details", [])
+        booking_details = normalize_and_enrich_booking_details(booking_details, salon_id=id)
 
         # --- 1. Resolve date and time from request ---
         start_datetime = None

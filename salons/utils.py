@@ -204,6 +204,7 @@ def get_candidate_slots(salon_id, date_str, booking_details, total_service_durat
         return []
     
     # Step 1: Normalize 'services' from [91, 92] to [{'serviceId': 91}, ...] format.
+    booking_details = normalize_and_enrich_booking_details(booking_details, salon_id=salon_id)
     for detail in booking_details:
         services_list = detail.get('services', [])
         if isinstance(services_list, list) and len(services_list) > 0:
@@ -332,13 +333,10 @@ def format_free_ranges(slots):
     ranges.append((start, prev))
     return ranges
 
-
 # booking 
-
 def parse_booking_request(request, salon_id):
     logger.debug("parse_booking_request: start")
     
-
     if request.method != 'POST' or request.headers.get('Content-Type') != 'application/json':
         logger.warning("Invalid request method or content type")
         raise ClientError('Invalid request', status=400)
@@ -376,7 +374,6 @@ def parse_booking_request(request, salon_id):
     logger.debug(f"Parsed: start={start}, end={end}, total={total}, phone={phone}")
     return salon, data.get('salonMod', 'category'), start, end, details, total, comment, phone
 
-
 def choose_user(request, phone):
     logger.debug(f"choose_user: phone={phone}")
     if phone:
@@ -413,7 +410,6 @@ def get_nearest_suggestion(salon_id, date_str, chosen_hour, booking_details, tot
                 normalized.append({'serviceId': sid})
             detail['services'] = normalized
     
-    # Now the rest of the function is safe from the ValueError crash.
     slots = get_candidate_slots(salon_id, date_str, booking_details, total_service_duration, selected_barber_id)
     if not slots:
         return {'nearest_before': None, 'nearest_after': None}
@@ -575,3 +571,41 @@ def _parse_local(dt_str: str):
 
     logger.warning(f"[_parse_local] All parsing methods failed. Returning None.")
     return None
+
+def normalize_and_enrich_booking_details(booking_details, salon_id):
+    """
+    Normalizes the 'services' field and automatically infers the 'categoryId'
+    if it is set to 'any' but specific services are provided.
+    """
+    if not booking_details:
+        return []
+
+    for detail in booking_details:
+        # Step 1: Normalize services from [91, 92] to [{'serviceId': 91}, ...]
+        services_list = detail.get('services', [])
+        if isinstance(services_list, list) and len(services_list) > 0:
+            if isinstance(services_list[0], int):
+                detail['services'] = [{'serviceId': sid} for sid in services_list]
+
+        # Step 2: Enrich categoryId if it's 'any' but services are specified
+        services = detail.get('services')
+        category_id = detail.get('categoryId', 'any')
+
+        if category_id == 'any' and isinstance(services, list) and services:
+            # Get the ID of the first service in the list
+            first_service_id = services[0].get('serviceId')
+            if first_service_id:
+                try:
+                    # Find the service in the DB to get its category
+                    service = Service.objects.get(id=first_service_id, salon_id=salon_id)
+                    if service.category:
+                        # Set the categoryId in the details
+                        detail['categoryId'] = service.category.id
+                        logger.debug(
+                            f"Enriched booking_details: set categoryId to {service.category.id} "
+                            f"based on service {first_service_id}"
+                        )
+                except Service.DoesNotExist:
+                    logger.warning(f"Service with ID {first_service_id} not found during detail enrichment.")
+
+    return booking_details
