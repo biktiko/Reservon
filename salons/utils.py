@@ -163,24 +163,33 @@ def compute_active_categories(booking_details, salon_id=None):
     active = []
     for d in booking_details or []:
         dur_minutes = 0
-        for svc in d.get('services', []):
-            sid = svc.get('serviceId')
-            try:
-                if salon_id:
-                    serv = Service.objects.get(id=sid, salon_id=salon_id)
-                else:
-                    serv = Service.objects.get(id=sid)
-                dur_minutes += int(serv.duration.total_seconds() // 60)
-            except Service.DoesNotExist:
-                continue
+        services_in_detail = d.get('services', [])
+
+        # Only loop to calculate duration if 'services' is a list.
+        # This prevents the crash when it's the string 'any'.
+        if isinstance(services_in_detail, list):
+            for svc in services_in_detail:
+                # Assuming svc is a dict like {'serviceId': 123} after normalization
+                sid = svc.get('serviceId') 
+                try:
+                    if salon_id:
+                        serv = Service.objects.get(id=sid, salon_id=salon_id)
+                    else:
+                        serv = Service.objects.get(id=sid)
+                    dur_minutes += int(serv.duration.total_seconds() // 60)
+                except Service.DoesNotExist:
+                    continue
+        
+        # If duration is still 0 (either from 'any' or an empty list), try to get it from the detail itself.
         if dur_minutes == 0:
             try:
                 dur_minutes = int(d.get('duration', 0))
             except (ValueError, TypeError):
                 dur_minutes = 0
+
         active.append({
             'category_id': d.get('categoryId'),
-            'services': d.get('services', []),
+            'services': services_in_detail, # Pass the original services through
             'barber_id': d.get('barberId', 'any'),
             'duration': dur_minutes
         })
