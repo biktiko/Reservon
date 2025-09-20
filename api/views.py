@@ -260,3 +260,21 @@ def api_free_ranges(request, salon_id):
         for interval in merged
     ]
     return Response({'free_ranges': ", ".join(parts)})
+
+    # Add this new API wrapper to api/views.py
+
+@api_view(['POST'])
+def api_check_availability(request, salon_id):
+    """
+    API endpoint wrapper for the availability check function.
+    """
+    from salons.views import check_availability_and_suggest
+    django_request = request._request
+    django_response = check_availability_and_suggest(django_request, id=salon_id)
+    
+    # This logic safely returns the JSON response from our function
+    if isinstance(django_response, JsonResponse):
+        content_dict = json.loads(django_response.content)
+        return Response(content_dict, status=django_response.status_code)
+    
+    return django_response
