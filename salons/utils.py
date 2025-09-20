@@ -487,62 +487,53 @@ def _parse_local(dt_str: str):
         return None
 
     normalized_str = dt_str.lower().strip()
+    logger.debug(f"[_parse_local] Received string to parse: '{normalized_str}'")
+
     local_tz = timezone.get_current_timezone()
     now = timezone.now().astimezone(local_tz)
     
     target_day = None
     time_part = None
 
-    TODAY_KEYWORDS = [
-        # English
-        "today", "tonight", "this day",
-        # Russian
-        "сегодня", "сегодняшний", "сегодняшняя", "сегодняшнее",
-        # Armenian
-        "այսօր", "այսօրին", "սոր",
-        # Persian (Farsi)
-        "امروز",
-        # Hindi (and common transliteration)
-        "आज", "aaj"
-    ]
+    # --- Keyword Lists (same as before) ---
+    TODAY_KEYWORDS = ["today", "tonight", "сегодня", "այսօր", "սոր", "امروز", "आज", "aaj"]
+    TOMORROW_KEYWORDS = ["tomorrow", "tmrw", "завтра", "վաղը", "Էքուց", "فردا", "कल", "kal"]
 
-    TOMORROW_KEYWORDS = [
-        # English
-        "tomorrow", "tmrw", "next day",
-        # Russian
-        "завтра", "завтрашний", "завтрашняя", "завтрашнее",
-        # Armenian
-        "վաղը", "վաղվա", "Էքուց"
-        # Persian (Farsi)
-        "فردا",
-        # Hindi
-        "कल", "kal"  # context may mean yesterday, handle carefully
-    ]
-
-    # Step 1: Check for relative day terms
-    if any(word in normalized_str for word in TOMORROW_KEYWORDS):
+    # --- NEW, MORE RELIABLE LOGIC ---
+    # Split the string into words to check for whole words, not substrings.
+    words_in_string = set(re.split(r'\s+|,|\.', normalized_str))
+    logger.debug(f"[_parse_local] Split into words: {words_in_string}")
+    
+    # Check for intersection between user's words and our keywords
+    if not set(TOMORROW_KEYWORDS).isdisjoint(words_in_string):
         target_day = now.date() + timedelta(days=1)
-    elif any(word in normalized_str for word in TODAY_KEYWORDS):
+        logger.debug(f"[_parse_local] Matched a TOMORROW keyword. Target day: {target_day}")
+    elif not set(TODAY_KEYWORDS).isdisjoint(words_in_string):
         target_day = now.date()
+        logger.debug(f"[_parse_local] Matched a TODAY keyword. Target day: {target_day}")
 
-    # Step 2: Try to extract time (HH:MM) using regex
+    # Step 2: Try to extract time (HH:MM) using regex (this part is fine)
     time_match = re.search(r'(\d{1,2}:\d{2})', normalized_str)
     if time_match:
         time_part = datetime.strptime(time_match.group(1), '%H:%M').time()
+        logger.debug(f"[_parse_local] Extracted time part: {time_part}")
 
     # Step 3: Combine day and time or parse full string
     if target_day:
-        # We found "today" or "tomorrow". Use the extracted time or default to 00:00.
         final_time = time_part or datetime.min.time()
         naive_dt = datetime.combine(target_day, final_time)
-        return timezone.make_aware(naive_dt, local_tz)
+        aware_dt = timezone.make_aware(naive_dt, local_tz)
+        logger.debug(f"[_parse_local] Successfully parsed relative date. Returning: {aware_dt}")
+        return aware_dt
     
-    # Step 4: If no relative term, try the full "DD.MM.YYYY HH:MM" format
+    # Step 4: If no relative term, try the full "DD.MM.YYYY HH:MM" format (this is fine)
     try:
         naive_dt = datetime.strptime(dt_str, '%d.%m.%Y %H:%M')
-        return timezone.make_aware(naive_dt, local_tz)
+        aware_dt = timezone.make_aware(naive_dt, local_tz)
+        logger.debug(f"[_parse_local] Successfully parsed absolute date. Returning: {aware_dt}")
+        return aware_dt
     except ValueError:
         pass
 
-    # If all parsing fails, return None
+    logger.warning(f"[_parse_local] All parsing methods failed. Returning None.")
     return None
