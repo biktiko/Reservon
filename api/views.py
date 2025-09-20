@@ -68,7 +68,6 @@ def api_create_booking(request, salon_id):
     # Иначе return django_response
     return django_response
 
-
 @api_view(['POST'])
 def api_get_available_minutes(request):
     # DRF Request -> Django HttpRequest
