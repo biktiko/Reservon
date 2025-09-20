@@ -12,7 +12,7 @@ from django.db.models import Q
 from django.db import transaction
 import json
 from collections import defaultdict
-from .utils import get_candidate_slots
+from .utils import get_candidate_slots, _parse_local
 from django.views.decorators.csrf import csrf_exempt
 import logging
 from .errors import BookingError, ClientError
@@ -675,27 +675,6 @@ def book_appointment(request, id):
     except Exception as e:
         logger.error(f"Unhandled exception in booking (Approach A): {e}", exc_info=True)
         return JsonResponse({'error': 'Internal server error.'}, status=500)
-
-def _parse_local(dt_str: str):
-    """
-    Парсим строку:
-    - сначала пытаемся parse_datetime (ISO +зона),
-    - иначе strptime('%d.%m.%Y %H:%M') и локализуем к текущей TZ (+04:00).
-    """
-    if not dt_str:
-        return None
-    # 1) ISO
-    dt = parse_datetime(dt_str)
-    if dt and dt.tzinfo:
-        return dt
-    # 2) формат DD.MM.YYYY HH:MM
-    try:
-        naive = datetime.strptime(dt_str, '%d.%m.%Y %H:%M')
-    except ValueError:
-        return None
-    # делаем aware с вашей TZ (+04:00)
-    return timezone.make_aware(naive, timezone.get_current_timezone())
-
 
 @csrf_exempt
 @transaction.atomic

@@ -16,6 +16,7 @@ from authentication.models import PushSubscription
 from authentication.utils import get_or_create_user_by_phone
 from django.conf import settings
 from main.tasks import send_push_notification_task
+import re
 
 logger = logging.getLogger('booking')
 
@@ -477,23 +478,71 @@ def notify_barbers(appt):
                     logger.error(f"Error sending push to {barber.id}: {e}")
     logger.debug("notify_barbers: done")
 
-
 def _parse_local(dt_str: str):
     """
-    Парсим строку:
-    - сначала пытаемся parse_datetime (ISO +зона),
-    - иначе strptime('%d.%m.%Y %H:%M') и локализуем к текущей TZ (+04:00).
+    Parses a string into a timezone-aware datetime object.
+    Handles "DD.MM.YYYY HH:MM" and relative terms like "today 09:00" or "tomorrow 14:30".
     """
-    if not dt_str:
+    if not isinstance(dt_str, str):
         return None
-    # 1) ISO
-    dt = parse_datetime(dt_str)
-    if dt and dt.tzinfo:
-        return dt
-    # 2) формат DD.MM.YYYY HH:MM
+
+    normalized_str = dt_str.lower().strip()
+    local_tz = timezone.get_current_timezone()
+    now = timezone.now().astimezone(local_tz)
+    
+    target_day = None
+    time_part = None
+
+    TODAY_KEYWORDS = [
+        # English
+        "today", "tonight", "this day",
+        # Russian
+        "сегодня", "сегодняшний", "сегодняшняя", "сегодняшнее",
+        # Armenian
+        "այսօր", "այսօրին", "սոր",
+        # Persian (Farsi)
+        "امروز",
+        # Hindi (and common transliteration)
+        "आज", "aaj"
+    ]
+
+    TOMORROW_KEYWORDS = [
+        # English
+        "tomorrow", "tmrw", "next day",
+        # Russian
+        "завтра", "завтрашний", "завтрашняя", "завтрашнее",
+        # Armenian
+        "վաղը", "վաղվա", "Էքուց"
+        # Persian (Farsi)
+        "فردا",
+        # Hindi
+        "कल", "kal"  # context may mean yesterday, handle carefully
+    ]
+
+    # Step 1: Check for relative day terms
+    if any(word in normalized_str for word in TOMORROW_KEYWORDS):
+        target_day = now.date() + timedelta(days=1)
+    elif any(word in normalized_str for word in TODAY_KEYWORDS):
+        target_day = now.date()
+
+    # Step 2: Try to extract time (HH:MM) using regex
+    time_match = re.search(r'(\d{1,2}:\d{2})', normalized_str)
+    if time_match:
+        time_part = datetime.strptime(time_match.group(1), '%H:%M').time()
+
+    # Step 3: Combine day and time or parse full string
+    if target_day:
+        # We found "today" or "tomorrow". Use the extracted time or default to 00:00.
+        final_time = time_part or datetime.min.time()
+        naive_dt = datetime.combine(target_day, final_time)
+        return timezone.make_aware(naive_dt, local_tz)
+    
+    # Step 4: If no relative term, try the full "DD.MM.YYYY HH:MM" format
     try:
-        naive = datetime.strptime(dt_str, '%d.%m.%Y %H:%M')
+        naive_dt = datetime.strptime(dt_str, '%d.%m.%Y %H:%M')
+        return timezone.make_aware(naive_dt, local_tz)
     except ValueError:
-        return None
-    # делаем aware с вашей TZ (+04:00)
-    return timezone.make_aware(naive, timezone.get_current_timezone())
+        pass
+
+    # If all parsing fails, return None
+    return None

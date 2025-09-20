@@ -1,7 +1,7 @@
 # C:\Reservon\Reservon\api\views.py
 from rest_framework.decorators import api_view, permission_classes
-from .utils import _parse_local, subtract_intervals, merge_intervals
-from salons.utils import get_barber_busy_times, get_barber_availability
+from .utils import subtract_intervals, merge_intervals
+from salons.utils import get_barber_busy_times, get_barber_availability, _parse_local
 from salons.models import Barber, Service
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
