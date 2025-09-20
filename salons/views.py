@@ -418,11 +418,8 @@ def book_appointment(request, id):
 
                 # игнорируем cat_detail['duration'], считаем сумму длительностей из Service
                 dur_minutes = 0
-                if services == 'any':
-                    # If services is 'any', use the salon's default duration.
-                    dur_minutes = salon.default_duration or 30
-                else:
-                    # Otherwise, calculate it by summing up the actual services.
+                if isinstance(services, list):
+                    # This code is now safe because it will only run for lists of services.
                     for svc in services:
                         sid = _extract_service_id(svc)
                         if sid is None:
