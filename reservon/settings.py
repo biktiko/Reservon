@@ -270,12 +270,19 @@ LOGGING = {
         },
     },
     'handlers': {
+        # 'console': {
+        #     'level': 'INFO',
+        #     'class': 'logging.StreamHandler',
+        #     'formatter': 'json',
+        #     'filters': ['ignore_static'],
+        #     'stream': sys.stderr,
+        # },
         'console': {
-            'level': 'INFO',
+            'level': 'DEBUG',
             'class': 'logging.StreamHandler',
-            'formatter': 'json',
+            'formatter': 'simple', 
             'filters': ['ignore_static'],
-            'stream': sys.stderr,
+            'stream': sys.stdout, 
         },
         'file': {
             'level': 'INFO',

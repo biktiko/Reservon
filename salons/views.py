@@ -909,7 +909,6 @@ def check_availability_and_suggest(request, id):
         date_str = data.get("date")
         time_str = data.get("time")
         booking_details = data.get("booking_details", [])
-        booking_details = normalize_and_enrich_booking_details(booking_details, salon_id=id)
 
         # --- 1. Resolve date and time from request ---
         start_datetime = None
@@ -931,6 +930,7 @@ def check_availability_and_suggest(request, id):
                               booking_details[0].get('barberId', 'any') == 'any'))
 
         if is_simple_booking:
+            booking_details = normalize_and_enrich_booking_details(booking_details, salon_id=id)
             duration = salon.default_duration or 30
         else:
             for detail in booking_details:
@@ -943,7 +943,7 @@ def check_availability_and_suggest(request, id):
                             serv = Service.objects.get(id=sid)
                             duration += int(serv.duration.total_seconds() // 60)
         
-        if duration == 0:
+        if duration <= 0:
             duration = salon.default_duration or 30
         
         # --- 3. Call the POWERFUL `get_candidate_slots` function to check the specific time ---
