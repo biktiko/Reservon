@@ -50,6 +50,7 @@ class Salon(models.Model):
     ]
 
     name = models.CharField('Salon name', max_length=50)
+    reservon_partner_id = models.IntegerField('Reservon Partner ID', null=True, blank=True)
     salon_manager = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='managed_salons')
     category = models.CharField('Category', max_length=50, blank=False, null=True, default='Beauty Salon')
     logo = models.ImageField('Logo', upload_to='salon_logos/', blank=True, null=True)
@@ -86,7 +87,6 @@ class Salon(models.Model):
 
     def __str__(self):
         return self.name
-
     class Meta:
         verbose_name = 'Salon'
         verbose_name_plural = 'Salons'

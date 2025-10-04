@@ -11,7 +11,7 @@ from django.contrib.auth.models import User
 class ServiceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Service
-        fields = ['id', 'name', 'price', 'duration', 'category', 'status']
+        fields = ['id', 'name', 'description', 'price', 'duration', 'category', 'status']
 
 class BarberServiceSerializer(serializers.ModelSerializer):
     """
@@ -22,7 +22,7 @@ class BarberServiceSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = BarberService
-        fields = ['id', 'name', 'image', 'price', 'duration', 'category', 'status']
+        fields = ['id', 'name', 'description', 'image', 'price', 'duration', 'category', 'status']
 
 
 class BarberSerializer(serializers.ModelSerializer):
