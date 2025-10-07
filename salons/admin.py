@@ -275,7 +275,7 @@ class BarberInline(admin.StackedInline):
 class SalonAdmin(ImportExportModelAdmin):
     form = SalonAdminForm
     list_display = ('id', 'name', 'salon_manager','city', 'status', 'additional_status', 'address', 'mod')
-    list_filter = ('status', 'additional_status', 'salon_manager', 'city', 'category')
+    list_filter = ('status', 'additional_status', 'salon_manager', 'city', 'category', 'jackbot_format', 'jackbot_AI_mod')
     search_fields = ('id', 'name', 'salon_manager','city', 'status', 'additional_status', 'address', 'mod')
     inlines = [ServiceInline, SalonImageInline, BarberInline, NoteInline]
     autocomplete_fields = ['admins']
@@ -287,11 +287,13 @@ class SalonAdmin(ImportExportModelAdmin):
         ('Partnership status', {
             'fields': ('status', 'additional_status')
         }),
+        ('Jackbot settings', {
+            'fields': ('reservon_partner_id', 'jackbot_format', 'jackbot_AI_mod')
+        }),
         ('Address', {
             'fields': ('city', 'address', 'coordinates')
         }),
         ('Salon visual', {
-            # Для одного элемента в кортеже ставим запятую
             'fields': ('logo',)
         }),
         ('Salon contacts', {

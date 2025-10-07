@@ -45,13 +45,19 @@ class Salon(models.Model):
     ]
 
     BARBERS_MOD_CHOICES = [
-        ('without_images', 'Without images'),  # Мастера без изображений
-        ('with_images', 'With images'),        # Мастера с изображениями
+        ('without_images', 'Without images'),  
+        ('with_images', 'With images'), 
+    ]
+
+    JACKBOT_FORMAT_CHOICES = [
+        ('personal', 'Personal'), # Just one business
+        ('platfom', 'Platform'), # Platform with multiple businesses
     ]
 
     name = models.CharField('Salon name', max_length=50)
-    reservon_partner_id = models.IntegerField('Reservon Partner ID', null=True, blank=True)
+
     salon_manager = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='managed_salons')
+
     category = models.CharField('Category', max_length=50, blank=False, null=True, default='Beauty Salon')
     logo = models.ImageField('Logo', upload_to='salon_logos/', blank=True, null=True)
     city = models.CharField('City', max_length=20, default='Yerevan', blank=False)
@@ -85,6 +91,11 @@ class Salon(models.Model):
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='new', verbose_name="Status")
     additional_status = models.CharField(max_length=20, choices=ADDITIONAL_STATUS_CHOICES, verbose_name="Additional Status", blank=True, null=True)
 
+    #Jackbot
+    reservon_partner_id = models.IntegerField('Reservon Partner ID', null=True, blank=True, )
+    jackbot_format = models.CharField('Jackbot format', choices=JACKBOT_FORMAT_CHOICES, default='personal', max_length=20)
+    jackbot_AI_mod = models.BooleanField('Jackbot AI mod', default=True)
+
     def __str__(self):
         return self.name
     class Meta:
@@ -92,7 +103,7 @@ class Salon(models.Model):
         verbose_name_plural = 'Salons'
 
 class ServiceCategory(models.Model):
-    name = models.CharField(max_length=100, unique=True)  # Название категории
+    name = models.CharField(max_length=100, unique=True)
     default_duration = models.IntegerField('Default duration (minutes)', default=15)
 
     def __str__(self):
