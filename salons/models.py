@@ -92,6 +92,7 @@ class Salon(models.Model):
     additional_status = models.CharField(max_length=20, choices=ADDITIONAL_STATUS_CHOICES, verbose_name="Additional Status", blank=True, null=True)
 
     #Jackbot
+    platform_name = models.CharField('Platform name', max_length=50, blank=True, null=True)
     reservon_partner_id = models.IntegerField('Reservon Partner ID', null=True, blank=True, )
     jackbot_format = models.CharField('Jackbot format', choices=JACKBOT_FORMAT_CHOICES, default='personal', max_length=20)
     jackbot_AI_mod = models.BooleanField('Jackbot AI mod', default=True)

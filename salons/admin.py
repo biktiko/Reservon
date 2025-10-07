@@ -288,7 +288,7 @@ class SalonAdmin(ImportExportModelAdmin):
             'fields': ('status', 'additional_status')
         }),
         ('Jackbot settings', {
-            'fields': ('reservon_partner_id', 'jackbot_format', 'jackbot_AI_mod')
+            'fields': ('platform_name', 'reservon_partner_id', 'jackbot_format', 'jackbot_AI_mod')
         }),
         ('Address', {
             'fields': ('city', 'address', 'coordinates')

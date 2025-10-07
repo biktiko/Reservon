@@ -62,7 +62,6 @@ def api_platform_partners_list(request, partner_id):
             status=status.HTTP_404_NOT_FOUND
         )
 
-    # Используем существующий SalonSerializer для краткой информации
     serializer = SalonSerializer(salons, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
