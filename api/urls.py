@@ -9,12 +9,14 @@ from .views import (
     admin_verify,
     api_reschedule_appointments,
     api_free_ranges,
-    api_check_availability
+    api_check_availability,
+    api_platform_partners_list
 )
 
 urlpatterns = [
     path('salons/', api_salons_list, name='api_salons_list'),
     path('salons/<int:salon_id>/', api_salon_detail, name='api_salon_detail'),
+    path('platform/<int:partner_id>/partners/', api_platform_partners_list, name='api_platform_partners_list'),
     path('salons/<int:salon_id>/book/', api_create_booking, name='api_create_booking'),
     path('salons/<int:salon_id>/check_slot/', api_check_availability, name='api_check_slot_availability'),
     path('salons/availability/', api_get_available_minutes, name='api_salon_availability'),

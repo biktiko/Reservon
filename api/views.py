@@ -43,6 +43,28 @@ def api_salons_list(request):
     serializer = SalonSerializer(salons, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def api_platform_partners_list(request, partner_id):
+    """
+    Returns a list of active sub-partners for a given platform partner ID.
+    Filters by reservon_partner_id and jackbot_AI_mod=True.
+    """
+    salons = Salon.objects.filter(
+        reservon_partner_id=partner_id,
+        status='active',
+        jackbot_AI_mod=True
+    )
+    
+    if not salons.exists():
+        return Response(
+            {'error': f'No active partners found for platform ID {partner_id} or platform does not exist.'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    # Используем существующий SalonSerializer для краткой информации
+    serializer = SalonSerializer(salons, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
