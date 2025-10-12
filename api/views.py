@@ -15,7 +15,7 @@ from django.utils import timezone
 from datetime import datetime, timedelta
 from django.views.decorators.csrf import csrf_exempt
 from .serializers import (
-    SalonSerializer, SalonDetailSerializer,
+    SalonSerializer, SalonDetailSerializer, PlatformPartnerSerializer
 )
 import json
 import logging
@@ -54,7 +54,7 @@ def api_platform_partners_list(request, partner_id):
         reservon_partner_id=partner_id,
         status='active',
         jackbot_AI_mod=True
-    )
+    ).prefetch_related('services') # Оптимизируем запрос для получения услуг
     
     if not salons.exists():
         return Response(
@@ -62,7 +62,7 @@ def api_platform_partners_list(request, partner_id):
             status=status.HTTP_404_NOT_FOUND
         )
 
-    serializer = SalonSerializer(salons, many=True)
+    serializer = PlatformPartnerSerializer(salons, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 @api_view(['GET'])

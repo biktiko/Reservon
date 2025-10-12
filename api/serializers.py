@@ -13,6 +13,30 @@ class ServiceSerializer(serializers.ModelSerializer):
         model = Service
         fields = ['id', 'name', 'description', 'price', 'duration', 'category', 'status']
 
+class SimpleServiceSerializer(serializers.ModelSerializer):
+    """
+    Облегченный сериализатор услуг только с необходимой для AI информацией.
+    """
+    class Meta:
+        model = Service
+        fields = ['name', 'description', 'price', 'duration']
+
+
+class PlatformPartnerSerializer(serializers.ModelSerializer):
+    """
+    Сериализатор для списка партнеров на платформе.
+    Включает основную информацию о салоне и список его услуг.
+    """
+    services = SimpleServiceSerializer(many=True, read_only=True)
+    category = serializers.CharField(source='get_category_display', read_only=True)
+
+    class Meta:
+        model = Salon
+        fields = [
+            'id', 'name', 'address', 'category', 'status',
+            'shortDescription_ru',
+            'services'
+        ]
 class BarberServiceSerializer(serializers.ModelSerializer):
     """
     Сериализатор для BarberService (услуг мастера),
