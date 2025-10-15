@@ -940,8 +940,12 @@ def check_availability_and_suggest(request, id):
                         # Use a safe extraction method for service ID
                         sid = _extract_service_id(svc)
                         if sid:
-                            serv = Service.objects.get(id=sid)
-                            duration += int(serv.duration.total_seconds() // 60)
+                            try:
+                                serv = Service.objects.get(id=sid, salon_id=id)
+                                duration += int(serv.duration.total_seconds() // 60)
+                            except Service.DoesNotExist:
+                                # Return a clear error if the service doesn't belong to the salon
+                                return JsonResponse({'error': f'Service with ID {sid} not found in this business.'}, status=400)
         
         if duration <= 0:
             duration = salon.default_duration or 30
