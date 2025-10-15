@@ -910,6 +910,12 @@ def check_availability_and_suggest(request, id):
         time_str = data.get("time")
         booking_details = data.get("booking_details", [])
 
+        # --- Hotfix to handle both "barberId": 42 and "barberId": [42] ---
+        for detail in booking_details:
+            if 'barberId' in detail and isinstance(detail['barberId'], list) and len(detail['barberId']) == 1:
+                detail['barberId'] = detail['barberId'][0]
+        # --- End Hotfix ---
+
         # --- 1. Resolve date and time from request ---
         start_datetime = None
         combined_dt_str = f"{date_str} {time_str}"
