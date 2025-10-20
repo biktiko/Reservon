@@ -112,7 +112,7 @@
   </body>
 
   <!-- Add this before closing </body> tag -->
-  <script>
+  <!-- <script>
       window.chatWidgetConfig = {
           apiKey: "7b30b5242eea40738e85a7465e1c8a32", 
           apiEndpoint: 'https://jackbot-widget-backend.onrender.com/api/chat',
@@ -126,7 +126,24 @@
           model: 'gemini-2.0-flash'
       };
   </script>
-  <script src="https://cdn.jsdelivr.net/gh/MohammedRashad/jackbot-widget@0.1/widget.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/MohammedRashad/jackbot-widget@0.1/widget.js"></script> -->
+
+  <!-- Add this before closing </body> tag -->
+<script>
+    window.chatWidgetConfig = {
+        apiKey: "7b30b5242eea40738e85a7465e1c8a32", 
+        apiEndpoint: 'https://jackbot-widget-backend.onrender.com/api/chat',
+        title: 'AI Assistant',
+        subtitle: 'Powered by Our Service',
+        primaryColor: '#4F46E5',
+        secondaryColor: '#F3F4F6',
+        welcomeMessage: `Hello! I'm your AI assistant. How can I help you today?`,
+        temperature: 0.3,
+        maxTokens: 800,
+        model: 'gemini-2.5-flash'
+    };
+</script>
+<script src="https://cdn.jsdelivr.net/gh/MohammedRashad/jackbot-widget@0.3/widget.js"></script>
 
 </html>
 

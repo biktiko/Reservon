@@ -185,6 +185,14 @@ def get_available_minutes(request):
     if not all(isinstance(h, int) for h in hours):
         return Response({'available_minutes': {}, 'error': 'Field hours must be list of ints.'}, status=400)
 
+    # Resolve natural-language dates (e.g., weekday names) into ISO date string
+    try:
+        parsed = _parse_local(date_str)
+        if parsed:
+            date_str = parsed.strftime('%Y-%m-%d')
+    except Exception:
+        pass
+
     slots = get_candidate_slots(salon_id, date_str, booking_details, total_duration, selected_barber_id)
     by_hour = defaultdict(list)
     for slot in slots:
@@ -210,6 +218,14 @@ def get_nearest_available_time(request):
         total_duration = int(data.get('total_service_duration', 0))
     except (ValueError, TypeError):
         return Response({'error': 'Invalid total_service_duration.'}, status=400)
+
+    # Resolve natural-language dates to ISO for downstream functions
+    try:
+        parsed = _parse_local(date_str)
+        if parsed:
+            date_str = parsed.strftime('%Y-%m-%d')
+    except Exception:
+        pass
 
     slots = get_candidate_slots(salon_id, date_str, booking_details, total_duration, selected_barber_id)
     if not slots:
@@ -924,11 +940,22 @@ def check_availability_and_suggest(request, id):
         if parsed_dt:
             start_datetime = parsed_dt
         else:
-            date_object = datetime.strptime(date_str, '%Y-%m-%d').date()
-            time_object = datetime.strptime(time_str, '%H:%M').time()
-            start_datetime = timezone.make_aware(datetime.combine(date_object, time_object))
+            # Fallback: try to parse natural-language date (e.g., weekday names)
+            try:
+                date_guess = _parse_local(date_str)
+                if date_guess:
+                    date_object = date_guess.date()
+                else:
+                    # If still not parsed, try strict ISO as a last resort
+                    date_object = datetime.strptime(date_str, '%Y-%m-%d').date()
+                time_object = datetime.strptime(time_str, '%H:%M').time()
+                start_datetime = timezone.make_aware(datetime.combine(date_object, time_object))
+            except Exception:
+                # Report a clear 400 error when date/time cannot be parsed
+                return JsonResponse({'error': 'Invalid date or time. Use ISO date or natural phrases like "понедельник 09:00".'}, status=400)
 
         # --- 2. Normalize booking_details for use in helper functions ---
+        # Prefer client-provided total_service_duration when details are missing
         duration = 0
         is_simple_booking = (not booking_details or 
                              (len(booking_details) == 1 and 
@@ -936,8 +963,15 @@ def check_availability_and_suggest(request, id):
                               booking_details[0].get('barberId', 'any') == 'any'))
 
         if is_simple_booking:
+            # Try to respect client-provided total duration if sent
+            try:
+                duration = int(data.get('total_service_duration', 0))
+            except (ValueError, TypeError):
+                duration = 0
+            if duration <= 0:
+                duration = salon.default_duration or 30
+            # Keep details empty for simple flow
             booking_details = normalize_and_enrich_booking_details(booking_details, salon_id=id)
-            duration = salon.default_duration or 30
         else:
             for detail in booking_details:
                 services = detail.get('services', [])

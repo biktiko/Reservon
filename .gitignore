@@ -11,3 +11,4 @@ premium.txt
 /venv
 __pycache__/
 *.pyc
+draft.py

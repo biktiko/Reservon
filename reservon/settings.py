@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'user_account.apps.UserAccountConfig',
     'salons',
     'api',
+    'events',
     'debug_toolbar'
 ]
 

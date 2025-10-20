@@ -133,7 +133,8 @@ def load_salon_and_barbers(salon_id):
     salon = Salon.objects.prefetch_related(
         Prefetch('barbers__availabilities', queryset=BarberAvailability.objects.all())
     ).get(id=salon_id)
-    return salon, salon.barbers.all()
+    # Consider only active barbers for availability calculations
+    return salon, salon.barbers.filter(status='active')
 
 def get_barber_availability(barbers, day_code):
     return {
@@ -147,14 +148,32 @@ def get_barber_availability(barbers, day_code):
     }
 
 def get_barber_busy_times(salon, date):
-    apps = AppointmentBarberService.objects.filter(
-        barber__salon=salon,
-        start_datetime__date=date
-    ).select_related('barber')
+    """
+    Return a map {barber_id: [(start_local, end_local), ...]} of all busy intervals
+    overlapping the given LOCAL calendar day. Using an overlap filter avoids
+    missing segments that start on the previous/next day but spill into this day
+    (and also avoids timezone pitfalls of __date lookups).
+    """
+    # Local day window [day_start, day_end)
+    local_tz = timezone.get_current_timezone()
+    day_start_naive = datetime.combine(date, dtime.min)
+    day_start = timezone.make_aware(day_start_naive, local_tz)
+    day_end = day_start + timedelta(days=1)
+
+    apps = (
+        AppointmentBarberService.objects
+        .filter(
+            barber__salon=salon,
+            start_datetime__lt=day_end,
+            end_datetime__gt=day_start,
+        )
+        .select_related('barber')
+    )
+
     busy = defaultdict(list)
     for app in apps:
-        start_local = timezone.localtime(app.start_datetime)
-        end_local = timezone.localtime(app.end_datetime)
+        start_local = timezone.localtime(app.start_datetime, local_tz)
+        end_local = timezone.localtime(app.end_datetime, local_tz)
         busy[app.barber_id].append((start_local, end_local))
     return busy
 
@@ -214,14 +233,22 @@ def get_candidate_slots(salon_id, date_str, booking_details, total_service_durat
                 logger.debug(f"Normalized services from {services_list} to {normalized_services}")
 
     # Step 2: Determine the booking type AFTER normalization.
-    is_simple_booking = (not booking_details or 
-                         (len(booking_details) == 1 and 
-                          booking_details[0].get('services') == 'any'))
+    # Treat as simple when:
+    #  - booking_details is empty
+    #  - OR a single detail with services == 'any'
+    #  - OR a single detail with services missing or []
+    is_simple_booking = False
+    if not booking_details:
+        is_simple_booking = True
+    elif len(booking_details) == 1:
+        sv = booking_details[0].get('services', 'any')
+        if sv == 'any' or sv is None or (isinstance(sv, list) and len(sv) == 0):
+            is_simple_booking = True
 
     # Step 3: If it's a simple booking, clear details to use the default path.
     # This now works correctly because the INT list has already been converted.
     if is_simple_booking:
-        logger.debug("[get_candidate_slots] Detected 'any' services, treating as simple booking.")
+        logger.debug("[get_candidate_slots] Detected simple booking (any/empty services).")
         booking_details = []
     # Load salon & barbers
     try:
@@ -284,7 +311,7 @@ def get_candidate_slots(salon_id, date_str, booking_details, total_service_durat
                         else:
                             try:
                                 sc = ServiceCategory.objects.get(id=cat['category_id'])
-                                candidates = sc.barbers.filter(salon=salon)
+                                candidates = sc.barbers.filter(salon=salon, status='active')
                             except ServiceCategory.DoesNotExist:
                                 possible = False
                                 break
@@ -305,15 +332,17 @@ def get_candidate_slots(salon_id, date_str, booking_details, total_service_durat
                     slots.append(slot)
             else:
                 end_slot = slot + timedelta(minutes=duration)
-                works = any(
+                # A slot is valid if there exists at least one barber who is
+                # (a) available by schedule AND (b) not busy at this time.
+                ok = any(
                     is_barber_available_in_memory(b, slot.time(), end_slot.time(), availability)
+                    and not any(
+                        slot < be and end_slot > bs
+                        for (bs, be) in busy_times.get(b.id, [])
+                    )
                     for b in barbers
                 )
-                conflict = any(
-                    slot < be and end_slot > bs
-                    for times in busy_times.values() for bs, be in times
-                )
-                if works and not conflict:
+                if ok:
                     slots.append(slot)
 
     slots.sort()
@@ -512,65 +541,73 @@ def notify_barbers(appt):
                     logger.error(f"Error sending push to {barber.id}: {e}")
     logger.debug("notify_barbers: done")
 
+from utils.text_parser import parse_natural_language_date
+
 def _parse_local(dt_str: str):
     """
-    Parses a string into a timezone-aware datetime object.
-    Handles "DD.MM.YYYY HH:MM" and relative terms like "today 09:00" or "tomorrow 14:30".
+    Parses a string into a timezone-aware datetime object using the centralized parser.
     """
-    if not isinstance(dt_str, str):
-        return None
+    return parse_natural_language_date(dt_str)
 
-    normalized_str = dt_str.lower().strip()
-    logger.debug(f"[_parse_local] Received string to parse: '{normalized_str}'")
+# def _parse_local(dt_str: str):
+#     """
+#     Parses a string into a timezone-aware datetime object.
+#     Handles "DD.MM.YYYY HH:MM" and relative terms like "today 09:00" or "tomorrow 14:30".
+#     """
+#     if not isinstance(dt_str, str):
+#         return None
 
-    local_tz = timezone.get_current_timezone()
-    now = timezone.now().astimezone(local_tz)
+#     normalized_str = dt_str.lower().strip()
+#     logger.debug(f"[_parse_local] Received string to parse: '{normalized_str}'")
+
+#     local_tz = timezone.get_current_timezone()
+#     now = timezone.now().astimezone(local_tz)
     
-    target_day = None
-    time_part = None
+#     target_day = None
+#     time_part = None
 
-    # --- Keyword Lists (same as before) ---
-    TODAY_KEYWORDS = ["today", "tonight", "сегодня", "այսօր", "սոր", "امروز", "आज", "aaj"]
-    TOMORROW_KEYWORDS = ["tomorrow", "tmrw", "завтра", "վաղը", "Էքուց", "فردا", "कल", "kal"]
+#     # --- Keyword Lists (same as before) ---
+#     TODAY_KEYWORDS = ["today", "tonight", "сегодня", "այսօր", "սոր", "امروز", "आज", "aaj"]
+#     TOMORROW_KEYWORDS = ["tomorrow", "tmrw", "завтра", "վաղը", "Էքուց", "فردا", "कल", "kal"]
 
-    # --- NEW, MORE RELIABLE LOGIC ---
-    # Split the string into words to check for whole words, not substrings.
-    words_in_string = set(re.split(r'\s+|,|\.', normalized_str))
-    logger.debug(f"[_parse_local] Split into words: {words_in_string}")
+#     # --- NEW, MORE RELIABLE LOGIC ---
+#     # Split the string into words to check for whole words, not substrings.
+#     words_in_string = set(re.split(r'\s+|,|\.', normalized_str))
+#     logger.debug(f"[_parse_local] Split into words: {words_in_string}")
     
-    # Check for intersection between user's words and our keywords
-    if not set(TOMORROW_KEYWORDS).isdisjoint(words_in_string):
-        target_day = now.date() + timedelta(days=1)
-        logger.debug(f"[_parse_local] Matched a TOMORROW keyword. Target day: {target_day}")
-    elif not set(TODAY_KEYWORDS).isdisjoint(words_in_string):
-        target_day = now.date()
-        logger.debug(f"[_parse_local] Matched a TODAY keyword. Target day: {target_day}")
+#     # Check for intersection between user's words and our keywords
+#     if not set(TOMORROW_KEYWORDS).isdisjoint(words_in_string):
+#         target_day = now.date() + timedelta(days=1)
+#         logger.debug(f"[_parse_local] Matched a TOMORROW keyword. Target day: {target_day}")
+#     elif not set(TODAY_KEYWORDS).isdisjoint(words_in_string):
+#         target_day = now.date()
+#         logger.debug(f"[_parse_local] Matched a TODAY keyword. Target day: {target_day}")
 
-    # Step 2: Try to extract time (HH:MM) using regex (this part is fine)
-    time_match = re.search(r'(\d{1,2}:\d{2})', normalized_str)
-    if time_match:
-        time_part = datetime.strptime(time_match.group(1), '%H:%M').time()
-        logger.debug(f"[_parse_local] Extracted time part: {time_part}")
+#     # Step 2: Try to extract time (HH:MM) using regex (this part is fine)
+#     time_match = re.search(r'(\d{1,2}:\d{2})', normalized_str)
+#     if time_match:
+#         time_part = datetime.strptime(time_match.group(1), '%H:%M').time()
+#         logger.debug(f"[_parse_local] Extracted time part: {time_part}")
 
-    # Step 3: Combine day and time or parse full string
-    if target_day:
-        final_time = time_part or datetime.min.time()
-        naive_dt = datetime.combine(target_day, final_time)
-        aware_dt = timezone.make_aware(naive_dt, local_tz)
-        logger.debug(f"[_parse_local] Successfully parsed relative date. Returning: {aware_dt}")
-        return aware_dt
+#     # Step 3: Combine day and time or parse full string
+#     if target_day:
+#         final_time = time_part or datetime.min.time()
+#         naive_dt = datetime.combine(target_day, final_time)
+#         aware_dt = timezone.make_aware(naive_dt, local_tz)
+#         logger.debug(f"[_parse_local] Successfully parsed relative date. Returning: {aware_dt}")
+#         return aware_dt
     
-    # Step 4: If no relative term, try the full "DD.MM.YYYY HH:MM" format (this is fine)
-    try:
-        naive_dt = datetime.strptime(dt_str, '%d.%m.%Y %H:%M')
-        aware_dt = timezone.make_aware(naive_dt, local_tz)
-        logger.debug(f"[_parse_local] Successfully parsed absolute date. Returning: {aware_dt}")
-        return aware_dt
-    except ValueError:
-        pass
+#     # Step 4: If no relative term, try the full "DD.MM.YYYY HH:MM" format (this is fine)
+#     try:
+#         naive_dt = datetime.strptime(dt_str, '%d.%m.%Y %H:%M')
+#         aware_dt = timezone.make_aware(naive_dt, local_tz)
+#         logger.debug(f"[_parse_local] Successfully parsed absolute date. Returning: {aware_dt}")
+#         return aware_dt
+#     except ValueError:
+#         pass
 
-    logger.warning(f"[_parse_local] All parsing methods failed. Returning None.")
-    return None
+#     logger.warning(f"[_parse_local] All parsing methods failed. Returning None.")
+#     return None
 
 def normalize_and_enrich_booking_details(booking_details, salon_id):
     """

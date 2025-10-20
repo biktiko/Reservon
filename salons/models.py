@@ -250,6 +250,7 @@ class Appointment(models.Model):
     end_datetime = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     user_comment = models.TextField('Комментарий клиента', null=True, blank=True)
+    date_hierarchy = 'start_datetime'
 
     barbers = models.ManyToManyField(
         Barber,
