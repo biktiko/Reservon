@@ -1974,3 +1974,4 @@ ERROR 2025-10-20 20:45:30,637 log Internal Server Error: /api/salons/1/check_slo
 ERROR 2025-10-20 20:49:56,804 log Internal Server Error: /api/salons/1/check_slot/
 ERROR 2025-10-20 20:50:00,734 log Internal Server Error: /api/salons/1/check_slot/
 ERROR 2025-10-20 20:57:34,564 log Internal Server Error: /api/salons/1/check_slot/
+ERROR 2025-10-21 16:10:50,733 log Internal Server Error: /api/salons/1/check_slot/

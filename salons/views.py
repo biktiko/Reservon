@@ -920,6 +920,12 @@ def whatsapp_callback(request):
 def check_availability_and_suggest(request, id):
     logger.debug("--- [START] Unified Availability Check ---")
     try:
+        try:
+            raw_body = request.body.decode('utf-8', 'ignore')
+        except Exception:
+            raw_body = str(request.body)
+        logger.info(f"[check_slot] RAW BODY: {raw_body}")
+
         data = json.loads(request.body)
         salon = get_object_or_404(Salon, id=id)
         date_str = data.get("date")
@@ -970,8 +976,8 @@ def check_availability_and_suggest(request, id):
                 duration = 0
             if duration <= 0:
                 duration = salon.default_duration or 30
-            # Keep details empty for simple flow
-            booking_details = normalize_and_enrich_booking_details(booking_details, salon_id=id)
+            # Keep details empty for simple flow to ensure simple path downstream
+            booking_details = []
         else:
             for detail in booking_details:
                 services = detail.get('services', [])
@@ -989,6 +995,8 @@ def check_availability_and_suggest(request, id):
         
         if duration <= 0:
             duration = salon.default_duration or 30
+
+        logger.info(f"[check_slot] Parsed start={start_datetime}, is_simple={is_simple_booking}, duration={duration}, details={booking_details}")
         
         # --- 3. Call the POWERFUL `get_candidate_slots` function to check the specific time ---
         # We check if our exact start_datetime is present in the list of all possible slots.
@@ -1001,6 +1009,7 @@ def check_availability_and_suggest(request, id):
         )
 
         is_slot_available = start_datetime in all_possible_slots
+        logger.info(f"[check_slot] candidates={len(all_possible_slots)}; first={all_possible_slots[0] if all_possible_slots else None}; last={all_possible_slots[-1] if all_possible_slots else None}; contains={is_slot_available}")
 
         # --- 4. Return the result ---
         if is_slot_available:
