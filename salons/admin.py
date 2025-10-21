@@ -274,8 +274,8 @@ class BarberInline(admin.StackedInline):
 @admin.register(Salon)
 class SalonAdmin(ImportExportModelAdmin):
     form = SalonAdminForm
-    list_display = ('id', 'name', 'salon_manager','city', 'status', 'additional_status', 'address', 'mod')
-    list_filter = ('status', 'additional_status', 'salon_manager', 'city', 'category', 'jackbot_format', 'jackbot_AI_mod')
+    list_display = ('id', 'name', 'salon_manager','city', 'status', 'additional_status', 'address', 'mod', 'is_visible')
+    list_filter = ('status', 'additional_status', 'salon_manager', 'city', 'category', 'jackbot_format', 'jackbot_AI_mod', 'is_visible')
     search_fields = ('id', 'name', 'salon_manager','city', 'status', 'additional_status', 'address', 'mod')
     inlines = [ServiceInline, SalonImageInline, BarberInline, NoteInline]
     autocomplete_fields = ['admins']
@@ -321,7 +321,8 @@ class SalonAdmin(ImportExportModelAdmin):
                 'default_duration',
                 'default_price',
                 'IsCheckDays',
-                'anyBarberMode'
+                'anyBarberMode',
+                'is_visible',
             )
         }),
     )

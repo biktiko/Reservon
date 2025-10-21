@@ -36,6 +36,9 @@ def main(request):
         )
     else:
         salons = Salon.objects.filter(status='active')
+
+    # Always respect explicit visibility toggle regardless of partner status
+    salons = salons.filter(is_visible=True)
     if city_filter:
         salons = salons.filter(city=city_filter)
     if category_filter:

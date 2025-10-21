@@ -82,6 +82,10 @@ class Salon(models.Model):
     appointment_mod = models.CharField(choices=APPOINTMENT_MOD_CHOICES, max_length=10, default='auto')
     IsCheckDays = models.BooleanField('Is Check Days', default=True)
     anyBarberMode = models.BooleanField('Any Barber Mod', default=True)
+    
+    # Controls whether the salon should appear in public listings (e.g., salons.html),
+    # regardless of partner status or other state.
+    is_visible = models.BooleanField('Show in listings', default=True)
 
     # telegram
     telegram_status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='active')
