@@ -299,3 +299,23 @@ def api_check_availability(request, salon_id):
         return Response(content_dict, status=django_response.status_code)
     
     return django_response
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def api_events_create_booking(request):
+    """
+    Proxy to events.views.create_booking (JSON in -> JSON out).
+    """
+    django_request = request._request
+    from events.views import create_booking as events_create_booking
+
+    django_response = events_create_booking(django_request)
+
+    if isinstance(django_response, JsonResponse):
+        try:
+            data = json.loads(django_response.content)
+        except Exception:
+            data = json.loads(django_response.content.decode('utf-8'))
+        return Response(data, status=django_response.status_code)
+
+    return django_response

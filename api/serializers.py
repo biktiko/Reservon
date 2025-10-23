@@ -6,7 +6,31 @@ from salons.models import (
     Appointment, AppointmentBarberService, BarberAvailability
 )
 from django.contrib.auth.models import User
+from events.models import Event, EventTariff  # add
 
+# --- move these to module level to avoid NameError ---
+class EventTariffSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EventTariff
+        fields = [
+            'id', 'title', 'price', 'currency', 'status',
+            'availability_type', 'days_of_week', 'specific_dates', 'months',
+            'max_people', 'parallel_events', 'requires_time', 'time_slots',
+            'duration', 'requires_confirmation'
+        ]
+
+class EventSerializer(serializers.ModelSerializer):
+    tariffs = EventTariffSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Event
+        fields = [
+            'id', 'title', 'status', 'short_description', 'details', 'photo',
+            'type', 'link', 'organizer_name', 'organizer_phone',
+            'location_address', 'location_coordinates', 'language',
+            'min_age', 'has_multiple_tariffs', 'tariffs'
+        ]
+# --- end module-level serializers ---
 
 class ServiceSerializer(serializers.ModelSerializer):
     class Meta:
@@ -78,32 +102,46 @@ class SalonSerializer(serializers.ModelSerializer):
             'shortDescription_hy', 'shortDescription_ru', 'shortDescription_eng',
             'description_hy', 'description_ru', 'description_eng'
         ]
+
+# Поля салона, которые не хотим возвращать по умолчанию
+SALON_FIELDS_BLACKLIST = (
+    'telegram_status', 'telegram_appointmentMod', 'telegram_barbersMod'
+    'shortDescription_hy', 'shortDescription_ru',
+    'description_hy', 'description_ru',
+    'reservDays',
+    'mod',
+    'appointment_mod',
+    'IsCheckDays',
+    'additional_status',
+    'salon_manager',
+    'is_visible',
+    'logo'
+)
+
 class SalonDetailSerializer(serializers.ModelSerializer):
     """
     Детальный сериализатор салона:
-    - services (обычные услуги, связанные через related_name='services')
-    - barbers (список мастеров, у каждого - barber_services, если есть)
+    - services
+    - barbers
+    - events (с тарифами)
     """
     services = ServiceSerializer(many=True, read_only=True)
     barbers = BarberSerializer(many=True, read_only=True)
-    
-    # Если понадобится список категорий, раскомментируйте и реализуйте метод
-    # service_categories = serializers.SerializerMethodField()
+    events = EventSerializer(many=True, read_only=True)
 
     class Meta:
         model = Salon
-        # fields = [
-        #     'id', 'name', 'logo', 'address', 'status', 'mod',
-        #     'IsCheckDays', 'reservDays',
-        #     'shortDescription_hy', 'shortDescription_ru', 'shortDescription_eng',
-        #     'description_hy', 'description_ru', 'description_eng',
-        #     'services',
-        #     'barbers',
-        #     'appointment_mod',
-        #     'telegram_status', 'telegram_appointmentMod', 'telegram_barbersMod',
-        # ]
+        fields = '__all__'  # берем все, потом вычитаем blacklist
 
-        fields = '__all__'
+    def get_fields(self):
+        fields = super().get_fields()
+        # Объединяем дефолтный blacklist и динамический из контекста
+        extra_exclude = self.context.get('exclude_fields', []) or []
+        blacklist = set(SALON_FIELDS_BLACKLIST) | set(extra_exclude)
+        for name in blacklist:
+            fields.pop(name, None)
+        return fields
+
 class BookingServiceSerializer(serializers.Serializer):
     serviceId = serializers.IntegerField()
     duration = serializers.IntegerField()

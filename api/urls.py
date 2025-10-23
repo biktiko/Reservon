@@ -10,7 +10,8 @@ from .views import (
     api_reschedule_appointments,
     api_free_ranges,
     api_check_availability,
-    api_platform_partners_list
+    api_platform_partners_list,
+    api_events_create_booking
 )
 
 urlpatterns = [
@@ -23,5 +24,6 @@ urlpatterns = [
     path('salons/get_nearest_available_time/', api_get_nearest_available_time, name='api_salon_availability'),
     path('salons/<int:salon_id>/reschedule/', api_reschedule_appointments, name='api_reschedule'),
     path('salons/<int:salon_id>/free_ranges/', api_free_ranges ,name='api_free_ranges'),
+    path('event/create_booking/', api_events_create_booking ,name='api_events_create_booking'),
     path('admin/verify/', admin_verify, name='admin_verify'),
 ]

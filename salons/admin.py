@@ -16,6 +16,9 @@ from .models import (
 from import_export import resources
 from import_export.admin import ImportExportModelAdmin
 from main.admin import NoteInline
+from django.db import models as dj_models
+from .forms import FriendlyJSONField
+from events.models import Event, Booking  # add
 
 # --- Настройка админки для AppointmentBarberService ---
 
@@ -63,6 +66,9 @@ class ServiceAdmin(ImportExportModelAdmin):
     search_fields = ('id', 'name', 'salon__name', 'category__name', 'status')
     autocomplete_fields = ['salon', 'category']
     actions = ['make_active', 'make_suspend']
+    formfield_overrides = {
+        dj_models.JSONField: {"form_class": FriendlyJSONField},
+    }
 
     def make_active(self, request, queryset):
         queryset.update(status='active')
@@ -77,7 +83,25 @@ class ServiceInline(admin.TabularInline):
     extra = 1
     autocomplete_fields = ['category']
     show_change_link = True
+    formfield_overrides = {
+        dj_models.JSONField: {"form_class": FriendlyJSONField},
+    }
 
+# NEW: Events inline under Salon (assumes Event.business -> Salon)
+class EventInlineForSalon(admin.TabularInline):
+    model = Event
+    fk_name = 'business'
+    extra = 0
+    show_change_link = True
+    fields = ('title', 'status', 'type', 'language', 'has_multiple_tariffs')
+
+# NEW: Appointments inline under Salon
+class AppointmentInlineForSalon(admin.TabularInline):
+    model = Appointment
+    extra = 0
+    show_change_link = True
+    fields = ('user', 'start_datetime', 'end_datetime', 'user_comment')
+    autocomplete_fields = ('user',)
 
 # --- Настройка админки для ServiceCategory ---
 
@@ -163,6 +187,9 @@ class BarberServiceInline(admin.TabularInline):
     extra = 1
     fields = ('name', 'image', 'description', 'price', 'duration', 'category', 'status')
     show_change_link = True
+    formfield_overrides = {
+        dj_models.JSONField: {"form_class": FriendlyJSONField},
+    }
 
 
 @admin.register(Barber)
@@ -277,7 +304,7 @@ class SalonAdmin(ImportExportModelAdmin):
     list_display = ('id', 'name', 'salon_manager','city', 'status', 'additional_status', 'address', 'mod', 'is_visible')
     list_filter = ('status', 'additional_status', 'salon_manager', 'city', 'category', 'jackbot_format', 'jackbot_AI_mod', 'is_visible')
     search_fields = ('id', 'name', 'salon_manager','city', 'status', 'additional_status', 'address', 'mod')
-    inlines = [ServiceInline, SalonImageInline, BarberInline, NoteInline]
+    inlines = [ServiceInline, EventInlineForSalon, SalonImageInline, BarberInline, AppointmentInlineForSalon, NoteInline]
     autocomplete_fields = ['admins']
 
     fieldsets = (
@@ -297,7 +324,7 @@ class SalonAdmin(ImportExportModelAdmin):
             'fields': ('logo',)
         }),
         ('Salon contacts', {
-            'fields': ('phone_number', 'instagram', 'facebook')
+            'fields': ('phone_number', 'website', 'instagram', 'facebook', 'linkedin', 'email', 'youtube', 'whatsapp')
         }),
         ('Descriptions', {
             'fields': (

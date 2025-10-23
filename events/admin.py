@@ -7,6 +7,8 @@ import json
 from django.utils.html import format_html
 import json
 from django import forms
+from django.db import models as dj_models
+from salons.forms import FriendlyJSONField
 
 def pretty_json(obj):
     """Отображает JSON красиво в админке"""
@@ -90,6 +92,12 @@ class EventTariffAdminForm(forms.ModelForm):
     class Meta:
         model = EventTariff
         fields = '__all__'
+
+    # Use friendly JSON editor specifically for price
+    price = FriendlyJSONField(required=False, label='Price')
+
+    class Media:
+        js = ('salons/js/friendly_json.js',)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
