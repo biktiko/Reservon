@@ -54,11 +54,17 @@ class Salon(models.Model):
         ('platfom', 'Platform'), # Platform with multiple businesses
     ]
 
+    BOOKING_TYPE_CHOICES = [
+        ('service', 'Service'),
+        ('event', 'Event'),
+    ]
+
     name = models.CharField('Salon name', max_length=50)
 
     salon_manager = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='managed_salons')
 
     category = models.CharField('Category', max_length=50, blank=False, null=True, default='Beauty Salon')
+    default_booking_type = models.CharField('Default Booking Type', choices=BOOKING_TYPE_CHOICES, max_length=10, default='service')
     logo = models.ImageField('Logo', upload_to='salon_logos/', blank=True, null=True)
     city = models.CharField('City', max_length=20, default='Yerevan', blank=False)
     address = models.CharField('Address', max_length=100, blank=True, null=True)
