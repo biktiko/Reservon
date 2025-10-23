@@ -9,6 +9,7 @@ from .utils import normalize_day_of_week, normalize_month, normalize_specific_da
 from django.contrib.auth.models import User
 from datetime import datetime, date
 import json
+from utils.text_parser import parse_natural_language_date
 
 @csrf_exempt
 @api_view(['POST'])
@@ -45,9 +46,14 @@ def create_booking(request):
 
         # 2. Validate date and time
         try:
+            # Try strict ISO first
             booking_date = datetime.strptime(booking_date_str, '%Y-%m-%d').date()
         except (ValueError, TypeError):
-            return JsonResponse({'error': 'Invalid date format. Use YYYY-MM-DD.'}, status=400)
+            # Fallback to natural language parser (today/tomorrow/weekday, RU/EN/AM)
+            dt_parsed = parse_natural_language_date(booking_date_str) if booking_date_str else None
+            if not dt_parsed:
+                return JsonResponse({'error': 'Invalid date format. Use YYYY-MM-DD or a natural expression like "tomorrow".'}, status=400)
+            booking_date = dt_parsed.date()
 
         if booking_date < date.today():
             return JsonResponse({'error': 'Booking date cannot be in the past.'}, status=400)
@@ -86,7 +92,8 @@ def create_booking(request):
 
         elif tariff.availability_type == 'specific_dates':
             normalized_dates = normalize_specific_dates(tariff.specific_dates)
-            if booking_date_str not in normalized_dates:
+            # Compare against the actual parsed date in ISO form
+            if booking_date.strftime('%Y-%m-%d') not in normalized_dates:
                 return JsonResponse({'error': 'Event is not available on this date.'}, status=400)
 
         # 4. Check age (if user has a profile with age)
